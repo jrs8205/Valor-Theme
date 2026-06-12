@@ -119,10 +119,10 @@
   flex-shrink: 0;
 }
 .valor-mp__inventory--in .valor-mp__inventory-dot {
-  background-color: #2e8540;
+  background-color: var(--valor-color-success);
 }
 .valor-mp__inventory--low .valor-mp__inventory-dot {
-  background-color: #d49000;
+  background-color: var(--valor-color-warning);
 }
 .valor-mp__inventory--out .valor-mp__inventory-dot {
   background-color: var(--valor-color-error);

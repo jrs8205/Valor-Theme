@@ -152,7 +152,7 @@
   font-weight: 500;
 }
 .valor-card__price-current--sale {
-  color: #c0392b;
+  color: var(--valor-color-error);
 }
 .valor-card__price-compare {
   color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
