@@ -12,7 +12,7 @@
     Toolbar (only if a search was performed AND there are results)
       → result count, mobile "Filter and sort" button, desktop sort.
     Layout (only if search was performed)
-      → Optional facets sidebar (uses Shopify Search & Discovery filters).
+      → Optional facets sidebar (uses Shopify Search and Discovery filters).
       → Results grid using product-card / article / page renderers.
     Pagination
       → Valor's BEM-styled pagination snippet.
@@ -27,7 +27,7 @@
 
   Filters:
     Uses Shopify's storefront filter API (search.filters), populated
-    by the Search & Discovery app. Only meaningful if the merchant
+    by the Search and Discovery app. Only meaningful if the merchant
     has filters enabled for the search context. We let the same
     facets snippet handle UI just like the collection page does.
 {%- endcomment -%}
@@ -176,7 +176,7 @@
           aria-label="{{ 'search.placeholder' | t }}"
         >
         {%- if predictive_enabled -%}
-          <span class="predictive-search-status visually-hidden" role="status" aria-hidden="true"></span>
+          <span class="valor-predictive-search-status visually-hidden" role="status" aria-hidden="true"></span>
         {%- endif -%}
         <a
           href="{{ routes.search_url }}"
@@ -560,7 +560,7 @@
       "type": "checkbox",
       "id": "enable_filtering",
       "label": "Enable filtering",
-      "info": "Configure filters in the [Search & Discovery app](/admin/apps/search-and-discovery/configuration/filters).",
+      "info": "Configure filters in the Shopify Search and Discovery app.",
       "default": true
     },
     {

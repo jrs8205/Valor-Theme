@@ -4,13 +4,8 @@
    price, SKU, inventory, variant picker, quantity, buy buttons, etc.
    They are kept separate from sections/main-product.liquid's own
    {% stylesheet %} block (which only handles section-level layout)
-   so that other product-rendering sections (featured-product, future
-   related-products, etc.) can adopt the same component styles.
-
-   v0.22.1 — class names are still .valor-mp__* to avoid breaking
-   anything during the asset extraction. They will be renamed to a
-   neutral prefix (e.g. .valor-pi__*) once featured-product begins
-   sharing these styles. */
+   so that other product-rendering sections can adopt the same component
+   styles. */
 
 /* === Text block (vendor-style or subtitle) === */
 .valor-mp__text {

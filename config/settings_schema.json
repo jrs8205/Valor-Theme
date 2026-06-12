@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "1.3.1",
+    "theme_version": "1.3.2",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -132,7 +132,7 @@
         "type": "image_picker",
         "id": "favicon",
         "label": "Favicon image",
-        "info": "Will be scaled down to 32 × 32 pixels. Use a square PNG; 512 × 512 is a good upload size."
+        "info": "Will be scaled down to 32 x 32 pixels. Use a square PNG; 512 x 512 is a good upload size."
       },
       {
         "type": "header",

@@ -117,7 +117,7 @@
     data-cart-live-region
   ></div>
 
-  <div class="valor-cart__container page-width">
+  <div class="valor-cart__container">
     <header class="valor-cart__header">
       <h1 class="valor-heading {{ heading_size_class }} valor-cart__heading">
         {{ cart_heading | escape }}
@@ -456,7 +456,7 @@
        .shopify-section, so this block aligns to the same content
        column as featured-collection / related-products on other pages
        — flush with the page edges, not nested inside the cart's
-       .page-width container which would create double padding.
+       container which would create double padding.
 
     2. The .valor-featured-collection--mobile-full-bleed class targets
        direct children of .shopify-section to break out to the full
@@ -862,7 +862,7 @@
           "type": "richtext",
           "id": "note",
           "label": "Note",
-          "default": "<p>Shipping & taxes calculated at checkout</p>"
+          "default": "<p>Shipping and taxes calculated at checkout</p>"
         }
       ]
     },

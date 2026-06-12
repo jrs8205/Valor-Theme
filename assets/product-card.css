@@ -20,10 +20,8 @@
              .valor-card__price-current
              .valor-card__price-compare
 
-   v0.22.4 — extracted from sections/featured-collection.liquid so it
-   can be reused by related-products without duplication. Hover swap
-   wrapped in @media (hover: hover) so it doesn't fire on long press
-   on touch devices. */
+   Hover swap is wrapped in @media (hover: hover) so it doesn't fire on
+   long press on touch devices. */
 
 /* === Card root === */
 .valor-card {

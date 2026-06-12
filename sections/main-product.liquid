@@ -2,33 +2,11 @@
 <script src="{{ 'product-info.js' | asset_url }}" defer></script>
 
 {%- comment -%}
-  Main product section — the heart of the product page.
+  Main product section.
 
   This is the section used by templates/product.json. It renders the
   media gallery alongside merchant-configurable info blocks (title,
   price, variant picker, buy buttons, etc.).
-
-  Current state (v0.23.x):
-    - Layout: media + info grid, sticky info on desktop, media_width
-      and media_position controls, mobile full-bleed image option,
-      configurable aspect ratio and fit.
-    - Gallery: shared snippets/product-media-gallery.liquid with
-      lightbox / thumbnails / arrows togglable per section or globally.
-    - Variant picker: option-based styles for pills, dropdowns, swatches, and optional minimal size values.
-      Switches resolve to a variant client-side and update price, SKU,
-      inventory, gallery image, URL and Add-to-cart state without a
-      page reload.
-    - Cart sync: in-cart count next to the quantity label updates on
-      add-to-cart and cart-drawer changes via custom events. Three-mode
-      counter handles selected variant only / selected + others / others
-      only with the right localised string.
-    - Block types:
-        Core info        @app, vendor, text, title, price, payment_terms,
-                         sku, inventory
-        Buy flow         variant_picker, quantity_selector, buy_buttons,
-                         pickup_availability, complementary
-        Below-the-fold   description, rating, collapsible_tab, popup,
-                         custom_liquid, share
 
   Structure:
     - Block-level rendering for the more complex blocks (price, sku,
@@ -409,7 +387,7 @@
 {
   "name": "Product information",
   "tag": "section",
-  "class": "section valor-section-main-product",
+  "class": "valor-section-main-product",
   "blocks": [
     { "type": "@app" },
     {
@@ -595,7 +573,7 @@
       "settings": [
         {
           "type": "paragraph",
-          "content": "Set complementary products in the Shopify Search & Discovery app (Apps → Search & Discovery → Recommendations). The block stays hidden on the storefront when no recommendations are configured."
+          "content": "Set complementary products in the Shopify Search and Discovery app under Recommendations. The block stays hidden on the storefront when no recommendations are configured."
         },
         {
           "type": "text",

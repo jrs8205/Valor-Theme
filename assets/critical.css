@@ -1,5 +1,4 @@
 /** Critical CSS for the theme. This file is included on every page. */
-/* Valor v0.15.1 — typography scale (phase 1 fix) */
 
 /* Reset styles inspired by https://www.joshwcomeau.com/css/custom-css-reset/ */
 * {
@@ -118,7 +117,7 @@ body {
  * sides of the section and the content is centered in the viewport to
  * not exceed the maximum page width.
  *
- * When a child element is given the `full-width` class, it will span
+ * When a child element is given the `valor-full-width` class, it will span
  * the entire viewport.
  */
 .shopify-section {
@@ -139,12 +138,12 @@ body {
 }
 
 /* Child elements that use the full-width utility class span the entire viewport. */
-.shopify-section > .full-width {
+.shopify-section > .valor-full-width {
   grid-column: 1 / -1;
 }
 
 /* Skip to content link - accessible for keyboard users */
-.skip-to-content-link {
+.valor-skip-to-content-link {
   position: absolute;
   top: 0;
   left: 0;
@@ -157,7 +156,7 @@ body {
   transform: translateY(-100%);
 }
 
-.skip-to-content-link:focus {
+.valor-skip-to-content-link:focus {
   transform: translateY(0);
 }
 

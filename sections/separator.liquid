@@ -8,7 +8,7 @@
 -%}
 
 <section
-  class="valor-separator valor-separator--width-{{ width_mode }} valor-separator--align-{{ alignment }} valor-separator--style-{{ line_style }}{% if width_mode == 'full' %} full-width{% endif %}"
+  class="valor-separator valor-separator--width-{{ width_mode }} valor-separator--align-{{ alignment }} valor-separator--style-{{ line_style }}{% if width_mode == 'full' %} valor-full-width{% endif %}"
   style="
     --valor-section-padding-top: {{ section.settings.padding_top }}px;
     --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;
@@ -53,7 +53,7 @@
   }
 
   /* Width modes.
-     - full        → section spans the viewport (.full-width on parent grid),
+     - full        → section spans the viewport (.valor-full-width on parent grid),
                      line fills 100% of section.
      - container   → section is constrained to --content-width by the
                      Shopify section grid, line fills 100% of that.

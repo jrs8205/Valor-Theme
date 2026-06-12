@@ -25,8 +25,8 @@
    level listeners are cleaned up in disconnectedCallback() so they
    don't accumulate across reloads.
 
-   v0.22.1 — class names remain .valor-mp__* until featured-product is
-   migrated to share these snippets/assets. Renaming will happen then. */
+   Product interactions are self-contained so the section can be reloaded
+   safely in the Theme Editor. */
 
 class ValorProductInfo extends HTMLElement {
   constructor() {

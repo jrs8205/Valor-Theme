@@ -34,13 +34,13 @@
   </head>
 
   <body>
-    <a class="skip-to-content-link" href="#MainContent">
+    <a class="valor-skip-to-content-link" href="#MainContent">
       {{ 'accessibility.skip_to_content' | t }}
     </a>
 
     {% sections 'header-group' %}
 
-    <main id="MainContent" role="main">
+    <main id="MainContent" role="main" tabindex="-1">
       {{ content_for_layout }}
     </main>
 
