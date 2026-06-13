@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest an improvement for Valor Theme.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please keep feature requests focused on merchant or shopper value. For broad redesigns, describe the actual workflow problem first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What merchant or shopper problem would this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior, settings, and affected theme areas.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Theme area
+      options:
+        - Product page
+        - Product cards
+        - Collection or search
+        - Cart or checkout flow
+        - Header or navigation
+        - Homepage sections
+        - Theme settings
+        - Performance
+        - Accessibility
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: If you already tried an app, custom Liquid, or CSS workaround, describe it.
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or references
+      description: Optional screenshots, links, or comparable theme behavior.

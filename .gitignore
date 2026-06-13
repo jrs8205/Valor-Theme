@@ -2,5 +2,12 @@ node_modules/
 dist/
 *.zip
 .env
+.env.*
+.shopify/
+*.log
+.cache/
+coverage/
+playwright-report/
+test-results/
 .DS_Store
 Thumbs.db

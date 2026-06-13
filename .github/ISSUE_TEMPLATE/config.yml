@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Official website
+    url: https://valortheme.com
+    about: Download Valor Theme and read the official documentation.
+  - name: Documentation
+    url: https://valortheme.com/docs.html
+    about: Installation, updating, and common setup questions.
+  - name: License
+    url: https://valortheme.com/license.html
+    about: Read the canonical Valor Free License.
+  - name: Security report
+    url: https://valortheme.com/#contact
+    about: Report security issues privately. Do not open public security issues.
