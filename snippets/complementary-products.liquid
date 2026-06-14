@@ -46,6 +46,7 @@
 {%- liquid
   assign limit = block.settings.product_list_limit
   assign heading = block.settings.heading
+  assign mobile_layout = block.settings.mobile_layout | default: 'list'
 
   assign has_complementary = false
   if recommendations.performed and recommendations.products_count > 0
@@ -54,7 +55,7 @@
 -%}
 
 <div
-  class="valor-mp__complementary"
+  class="valor-mp__complementary valor-mp__complementary--mobile-{{ mobile_layout }}"
   {{ block.shopify_attributes }}
   {%- unless has_complementary or request.design_mode %}
     hidden

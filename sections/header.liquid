@@ -75,7 +75,28 @@
     <nav class="valor-header__menu">
       <ul class="valor-header__menu-list">
         {% for link in section.settings.menu.links %}
-          <li class="valor-header__menu-item">
+          {%- liquid
+            assign mega_menu_block = blank
+            assign link_title_normalized = link.title | strip | downcase
+            for block in section.blocks
+              if block.type == 'mega_menu'
+                assign target_title_normalized = block.settings.menu_item_title | strip | downcase
+                if target_title_normalized != blank and target_title_normalized == link_title_normalized
+                  assign mega_menu_block = block
+                  break
+                endif
+              endif
+            endfor
+            assign has_mega_menu = false
+            assign has_mega_promo = false
+            if mega_menu_block != blank and link.links.size > 0
+              assign has_mega_menu = true
+              if mega_menu_block.settings.promo_image != blank or mega_menu_block.settings.promo_heading != blank or mega_menu_block.settings.promo_text != blank or mega_menu_block.settings.promo_badge != blank or mega_menu_block.settings.promo_product != blank or mega_menu_block.settings.promo_collection != blank
+                assign has_mega_promo = true
+              endif
+            endif
+          -%}
+          <li class="valor-header__menu-item{% if has_mega_menu %} valor-header__menu-item--mega{% endif %}">
             {%- if link.links.size > 0 -%}
               <a href="{{ link.url }}" class="valor-header__menu-link valor-header__menu-link--has-submenu">
                 <span>{{ link.title }}</span>
@@ -83,16 +104,51 @@
                   {{ 'icon-chevron-down.svg' | inline_asset_content }}
                 </span>
               </a>
-              <ul class="valor-header__submenu">
-                <li class="valor-header__submenu-view-all">
-                  <a href="{{ link.url }}">{{ 'header.view_all' | t: title: link.title }}</a>
-                </li>
-                {% for child in link.links %}
-                  <li>
-                    <a href="{{ child.url }}">{{ child.title }}</a>
+              {%- if has_mega_menu -%}
+                <div class="valor-header__mega">
+                  <div class="valor-header__mega-inner{% unless has_mega_promo %} valor-header__mega-inner--links-only{% endunless %}">
+                    <div class="valor-header__mega-links">
+                      <a href="{{ link.url }}" class="valor-header__mega-view-all">
+                        {{ 'header.view_all' | t: title: link.title }}
+                      </a>
+                      <ul class="valor-header__mega-list">
+                        {% for child in link.links %}
+                          <li class="valor-header__mega-column">
+                            <a href="{{ child.url }}" class="valor-header__mega-heading">{{ child.title }}</a>
+                            {%- if child.links.size > 0 -%}
+                              <ul class="valor-header__mega-sublist">
+                                {% for grandchild in child.links %}
+                                  <li>
+                                    <a href="{{ grandchild.url }}">{{ grandchild.title }}</a>
+                                  </li>
+                                {% endfor %}
+                              </ul>
+                            {%- endif -%}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    {%- if has_mega_promo -%}
+                      {%- render 'header-menu-promo',
+                        block: mega_menu_block,
+                        class: 'valor-header__mega-promo',
+                        include_attributes: true
+                      -%}
+                    {%- endif -%}
+                  </div>
+                </div>
+              {%- else -%}
+                <ul class="valor-header__submenu">
+                  <li class="valor-header__submenu-view-all">
+                    <a href="{{ link.url }}">{{ 'header.view_all' | t: title: link.title }}</a>
                   </li>
-                {% endfor %}
-              </ul>
+                  {% for child in link.links %}
+                    <li>
+                      <a href="{{ child.url }}">{{ child.title }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {%- endif -%}
             {%- else -%}
               <a href="{{ link.url }}" class="valor-header__menu-link">{{ link.title }}</a>
             {%- endif -%}
@@ -214,6 +270,25 @@
   <div class="valor-mobile-drawer__inner">
     <nav class="valor-mobile-drawer__nav">
       {% for link in section.settings.menu.links %}
+        {%- liquid
+          assign mega_menu_block = blank
+          assign link_title_normalized = link.title | strip | downcase
+          for block in section.blocks
+            if block.type == 'mega_menu'
+              assign target_title_normalized = block.settings.menu_item_title | strip | downcase
+              if target_title_normalized != blank and target_title_normalized == link_title_normalized
+                assign mega_menu_block = block
+                break
+              endif
+            endif
+          endfor
+          assign has_mega_promo = false
+          if mega_menu_block != blank
+            if mega_menu_block.settings.promo_image != blank or mega_menu_block.settings.promo_heading != blank or mega_menu_block.settings.promo_text != blank or mega_menu_block.settings.promo_badge != blank or mega_menu_block.settings.promo_product != blank or mega_menu_block.settings.promo_collection != blank
+              assign has_mega_promo = true
+            endif
+          endif
+        -%}
         {%- if link.links.size > 0 -%}
           <details class="valor-mobile-drawer__group">
             <summary class="valor-mobile-drawer__summary">
@@ -227,6 +302,13 @@
               {% for child in link.links %}
                 <a href="{{ child.url }}">{{ child.title }}</a>
               {% endfor %}
+              {%- if has_mega_promo -%}
+                {%- render 'header-menu-promo',
+                  block: mega_menu_block,
+                  class: 'valor-mobile-drawer__promo',
+                  include_attributes: false
+                -%}
+              {%- endif -%}
             </div>
           </details>
         {%- else -%}
@@ -425,6 +507,7 @@
   }
 
   .valor-header {
+    position: relative;
     min-height: 5rem;
     padding-block: 0.75rem;
     display: grid;
@@ -639,6 +722,164 @@
   .valor-header__menu-item:hover .valor-header__submenu,
   .valor-header__menu-item:focus-within .valor-header__submenu {
     display: block;
+  }
+  .valor-header__menu-item--mega {
+    position: static;
+  }
+  .valor-header__mega {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: none;
+    padding-top: 0.75rem;
+    z-index: 20;
+  }
+  .valor-header__mega-inner {
+    width: min(100%, 75rem);
+    margin: 0 auto;
+    padding: 1.75rem clamp(1rem, 4vw, 3rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    gap: 2rem;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    border: 1px solid color-mix(in srgb, var(--color-foreground) 10%, transparent);
+    box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--color-foreground) 10%, transparent);
+  }
+  .valor-header__mega-inner--links-only {
+    grid-template-columns: 1fr;
+  }
+  .valor-header__mega-links {
+    min-width: 0;
+  }
+  .valor-header__mega-view-all {
+    width: fit-content;
+    margin-bottom: 1.25rem;
+    justify-content: flex-start;
+    font-weight: var(--font-body--weight-bold);
+    border-bottom: 1px solid currentColor;
+  }
+  .valor-header__mega-list,
+  .valor-header__mega-sublist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .valor-header__mega-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1.5rem 2rem;
+  }
+  .valor-header__mega-column {
+    min-width: 0;
+  }
+  .valor-header__mega-heading,
+  .valor-header__mega-sublist a {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .valor-header__mega-heading {
+    width: fit-content;
+    margin-bottom: 0.65rem;
+    font-weight: var(--font-body--weight-bold);
+  }
+  .valor-header__mega-sublist {
+    display: grid;
+    gap: 0.45rem;
+  }
+  .valor-header__mega-sublist a {
+    font-size: 0.9375rem;
+    color: color-mix(in srgb, var(--color-foreground) 82%, transparent);
+  }
+  .valor-header__menu-item--mega:hover .valor-header__mega,
+  .valor-header__menu-item--mega:focus-within .valor-header__mega {
+    display: block;
+  }
+  .valor-header-promo {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+  }
+  .valor-header-promo__feature,
+  .valor-header-promo__resource {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    color: var(--color-foreground);
+    text-align: left;
+    justify-content: stretch;
+  }
+  .valor-header-promo__feature {
+    gap: 0.85rem;
+  }
+  .valor-header-promo__image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+  .valor-header-promo__copy {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .valor-header-promo__badge,
+  .valor-header-promo__resource-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-foreground) 66%, transparent);
+  }
+  .valor-header-promo__heading {
+    font-family: var(--font-heading--family);
+    font-weight: var(--font-heading--weight-bold);
+    font-size: calc(var(--font-heading-scale, 1) * 1.1rem);
+    line-height: 1.2;
+  }
+  .valor-header-promo__text {
+    font-size: 0.9rem;
+    color: color-mix(in srgb, var(--color-foreground) 78%, transparent);
+  }
+  .valor-header-promo__text p {
+    margin: 0;
+  }
+  .valor-header-promo__link-label {
+    width: fit-content;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid currentColor;
+  }
+  .valor-header-promo__resource {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.8rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-foreground) 10%, transparent);
+  }
+  .valor-header-promo__resource-image {
+    width: 4.75rem;
+    height: 4.75rem;
+    object-fit: cover;
+    display: block;
+  }
+  .valor-header-promo__resource-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .valor-header-promo__resource-title {
+    overflow-wrap: anywhere;
+  }
+  .valor-header-promo__resource-price {
+    color: color-mix(in srgb, var(--color-foreground) 75%, transparent);
+  }
+  .valor-header .valor-header-promo__feature,
+  .valor-header .valor-header-promo__resource {
+    display: grid;
+    justify-content: stretch;
+  }
+  .valor-header .valor-header-promo__resource {
+    align-items: center;
   }
 
   /* Hamburger button: hidden on desktop, shown on mobile.
@@ -937,6 +1178,26 @@
     text-decoration: none;
     padding: 0.75rem 0 0.75rem 1rem;
     font-size: 1rem;
+  }
+  .valor-mobile-drawer__promo {
+    margin: 0.75rem 0 1rem 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-foreground) 10%, transparent);
+  }
+  .valor-mobile-drawer__sublist .valor-mobile-drawer__promo .valor-header-promo__feature,
+  .valor-mobile-drawer__sublist .valor-mobile-drawer__promo .valor-header-promo__resource {
+    padding: 0;
+    font-size: inherit;
+  }
+  .valor-mobile-drawer__promo .valor-header-promo__image {
+    aspect-ratio: 16 / 10;
+  }
+  .valor-mobile-drawer__promo .valor-header-promo__resource {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+  .valor-mobile-drawer__promo .valor-header-promo__resource-image {
+    width: 4rem;
+    height: 4rem;
   }
 
   /* Drawer footer: account link + social icons */
@@ -2008,6 +2269,69 @@
       "id": "enable_search",
       "label": "t:labels.enable_search",
       "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "mega_menu",
+      "name": "Mega menu",
+      "settings": [
+        {
+          "type": "text",
+          "id": "menu_item_title",
+          "label": "Menu item title",
+          "info": "Must exactly match a top-level menu item title."
+        },
+        {
+          "type": "header",
+          "content": "Promo block"
+        },
+        {
+          "type": "image_picker",
+          "id": "promo_image",
+          "label": "Promo image"
+        },
+        {
+          "type": "text",
+          "id": "promo_badge",
+          "label": "Badge"
+        },
+        {
+          "type": "text",
+          "id": "promo_heading",
+          "label": "Heading"
+        },
+        {
+          "type": "richtext",
+          "id": "promo_text",
+          "label": "Text"
+        },
+        {
+          "type": "url",
+          "id": "promo_link",
+          "label": "Link"
+        },
+        {
+          "type": "text",
+          "id": "promo_link_label",
+          "label": "Link label",
+          "default": "Shop now"
+        },
+        {
+          "type": "header",
+          "content": "Featured content"
+        },
+        {
+          "type": "product",
+          "id": "promo_product",
+          "label": "Featured product"
+        },
+        {
+          "type": "collection",
+          "id": "promo_collection",
+          "label": "Featured collection"
+        }
+      ]
     }
   ]
 }

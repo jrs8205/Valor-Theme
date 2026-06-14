@@ -1,0 +1,300 @@
+<script src="{{ 'countdown-timer.js' | asset_url }}" defer></script>
+
+<valor-countdown-timer
+  class="valor-countdown valor-countdown--align-{{ section.settings.alignment }}"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  data-end-date="{{ section.settings.end_date | escape }}"
+  data-end-time="{{ section.settings.end_time | escape }}"
+  data-timezone-offset="{{ section.settings.timezone_offset | escape }}"
+  data-expired-behavior="{{ section.settings.expired_behavior }}"
+  {% if section.settings.end_date == blank
+    and section.settings.expired_behavior == 'hide'
+    and request.design_mode == false
+  %}
+    hidden
+  {% endif %}
+>
+  <div class="valor-countdown__inner">
+    <div class="valor-countdown__copy">
+      {%- if section.settings.badge != blank -%}
+        <p class="valor-countdown__badge">{{ section.settings.badge | escape }}</p>
+      {%- endif -%}
+      {%- if section.settings.title != blank -%}
+        <h2 class="valor-countdown__title valor-heading valor-heading--{{ section.settings.heading_size }}">
+          {{ section.settings.title }}
+        </h2>
+      {%- endif -%}
+      {%- if section.settings.text != blank -%}
+        <div class="valor-countdown__text rte">{{ section.settings.text }}</div>
+      {%- endif -%}
+      {%- if section.settings.button_label != blank and section.settings.button_link != blank -%}
+        <a href="{{ section.settings.button_link }}" class="valor-button valor-button--primary valor-countdown__button">
+          {{ section.settings.button_label | escape }}
+        </a>
+      {%- endif -%}
+    </div>
+
+    <div class="valor-countdown__timer">
+      {%- if section.settings.end_date == blank and request.design_mode -%}
+        <p class="valor-countdown__editor-info">Set an end date to start the countdown.</p>
+      {%- endif -%}
+      <div class="valor-countdown__values" data-countdown-values aria-live="polite">
+        <span class="valor-countdown__unit">
+          <span class="valor-countdown__number" data-countdown-days>00</span>
+          <span class="valor-countdown__label">Days</span>
+        </span>
+        <span class="valor-countdown__unit">
+          <span class="valor-countdown__number" data-countdown-hours>00</span>
+          <span class="valor-countdown__label">Hours</span>
+        </span>
+        <span class="valor-countdown__unit">
+          <span class="valor-countdown__number" data-countdown-minutes>00</span>
+          <span class="valor-countdown__label">Minutes</span>
+        </span>
+        <span class="valor-countdown__unit">
+          <span class="valor-countdown__number" data-countdown-seconds>00</span>
+          <span class="valor-countdown__label">Seconds</span>
+        </span>
+      </div>
+      <p class="valor-countdown__expired" data-countdown-expired hidden>
+        {{ section.settings.expired_message | escape }}
+      </p>
+    </div>
+  </div>
+</valor-countdown-timer>
+
+{% stylesheet %}
+  .valor-countdown {
+    display: block;
+    padding-top: var(--valor-section-padding-top, 48px);
+    padding-bottom: var(--valor-section-padding-bottom, 48px);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+  .valor-countdown__inner {
+    width: min(100%, 75rem);
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2rem;
+  }
+  .valor-countdown--align-center .valor-countdown__inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .valor-countdown--align-right .valor-countdown__inner {
+    text-align: right;
+  }
+  .valor-countdown__copy {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+  .valor-countdown--align-center .valor-countdown__copy,
+  .valor-countdown--align-center .valor-countdown__timer {
+    justify-items: center;
+  }
+  .valor-countdown--align-right .valor-countdown__copy {
+    justify-items: end;
+  }
+  .valor-countdown__badge {
+    margin: 0;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-foreground) 68%, transparent);
+  }
+  .valor-countdown__title {
+    margin: 0;
+  }
+  .valor-countdown__text {
+    max-width: 40rem;
+    color: color-mix(in srgb, var(--color-foreground) 82%, transparent);
+  }
+  .valor-countdown__text p,
+  .valor-countdown__expired,
+  .valor-countdown__editor-info {
+    margin: 0;
+  }
+  .valor-countdown__button {
+    margin-top: 0.25rem;
+  }
+  .valor-countdown__timer {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: end;
+  }
+  .valor-countdown__values {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(4.25rem, 1fr));
+    gap: 0.5rem;
+  }
+  .valor-countdown__unit {
+    min-width: 0;
+    padding: 0.85rem 0.75rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.2rem;
+    border: 1px solid color-mix(in srgb, var(--color-foreground) 12%, transparent);
+  }
+  .valor-countdown__number {
+    font-family: var(--font-heading--family);
+    font-weight: var(--font-heading--weight-bold);
+    font-size: calc(var(--font-heading-scale, 1) * 1.65rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .valor-countdown__label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-foreground) 64%, transparent);
+  }
+  .valor-countdown__expired,
+  .valor-countdown__editor-info {
+    color: color-mix(in srgb, var(--color-foreground) 75%, transparent);
+  }
+  @media (max-width: 749px) {
+    .valor-countdown__inner {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    .valor-countdown__copy,
+    .valor-countdown__timer {
+      justify-items: stretch;
+      text-align: inherit;
+    }
+    .valor-countdown__values {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Countdown timer",
+  "tag": "section",
+  "class": "valor-section-countdown-timer",
+  "settings": [
+    {
+      "type": "text",
+      "id": "badge",
+      "label": "Badge",
+      "default": "Limited time"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "Heading",
+      "default": "Promotion ends soon"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" }
+      ],
+      "default": "medium"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Add a short promo message for the campaign.</p>"
+    },
+    {
+      "type": "text",
+      "id": "end_date",
+      "label": "End date",
+      "info": "Use YYYY-MM-DD, for example 2026-12-31."
+    },
+    {
+      "type": "text",
+      "id": "end_time",
+      "label": "End time",
+      "info": "Use 24-hour HH:MM format.",
+      "default": "23:59"
+    },
+    {
+      "type": "text",
+      "id": "timezone_offset",
+      "label": "Timezone offset",
+      "info": "Use +02:00, -05:00, etc.",
+      "default": "+00:00"
+    },
+    {
+      "type": "select",
+      "id": "expired_behavior",
+      "label": "When timer ends",
+      "options": [
+        { "value": "message", "label": "Show expired message" },
+        { "value": "hide", "label": "Hide section" }
+      ],
+      "default": "message"
+    },
+    {
+      "type": "text",
+      "id": "expired_message",
+      "label": "Expired message",
+      "default": "This promotion has ended."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Content alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Countdown timer"
+    }
+  ]
+}
+{% endschema %}

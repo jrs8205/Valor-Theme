@@ -17,6 +17,8 @@ class ValorProductMedia extends HTMLDivElement {
   constructor() {
     super();
     this._handleThumbClick = this.onThumbClick.bind(this);
+    this._handleProgressClick = this.onProgressClick.bind(this);
+    this._handleGridClick = this.onGridClick.bind(this);
     this._handleMainClick = this.onMainClick.bind(this);
     this._handleSetMedia = this.onSetMedia.bind(this);
     this._handleTouchStart = this.onTouchStart.bind(this);
@@ -36,12 +38,17 @@ class ValorProductMedia extends HTMLDivElement {
     this.prevBtn = this.querySelector("[data-gallery-prev]");
     this.nextBtn = this.querySelector("[data-gallery-next]");
     this.counterEl = this.querySelector("[data-gallery-counter]");
+    this.progressEl = this.querySelector("[data-gallery-progress]");
+    this.progressButtons = Array.from(this.querySelectorAll("[data-gallery-progress-button]"));
+    this.gridItems = Array.from(this.querySelectorAll("[data-gallery-grid-item]"));
     this.thumbsTrack = this.querySelector("[data-thumbs-track]");
     this.thumbsPrev = this.querySelector("[data-thumbs-prev]");
     this.thumbsNext = this.querySelector("[data-thumbs-next]");
     this.lightboxEnabled = this.dataset.lightboxEnabled !== "false";
 
     this.thumbs.forEach((t) => t.addEventListener("click", this._handleThumbClick));
+    this.progressButtons.forEach((button) => button.addEventListener("click", this._handleProgressClick));
+    this.gridItems.forEach((button) => button.addEventListener("click", this._handleGridClick));
     this.mainItems.forEach((m) => m.addEventListener("click", this._handleMainClick));
     this.addEventListener("valor:gallery:set-media", this._handleSetMedia);
 
@@ -78,6 +85,20 @@ class ValorProductMedia extends HTMLDivElement {
     if (mediaId) this.setActiveMedia(mediaId);
   }
 
+  onProgressClick(e) {
+    const btn = e.currentTarget;
+    const mediaId = btn.dataset.mediaId;
+    if (mediaId) this.setActiveMedia(mediaId);
+  }
+
+  onGridClick(e) {
+    if (!this.lightboxEnabled) return;
+    e.preventDefault();
+    const btn = e.currentTarget;
+    const index = parseInt(btn.dataset.mediaIndex, 10) || 0;
+    this.openLightbox(index);
+  }
+
   onSetMedia(e) {
     const mediaId = e.detail && e.detail.mediaId;
     if (mediaId) this.setActiveMedia(mediaId);
@@ -96,6 +117,12 @@ class ValorProductMedia extends HTMLDivElement {
     });
     this.thumbs.forEach((thumb) => {
       thumb.classList.toggle("is-active", String(thumb.dataset.thumbFor) === String(mediaId));
+    });
+    this.progressButtons.forEach((button) => {
+      button.setAttribute("aria-current", String(button.dataset.mediaId) === String(mediaId) ? "true" : "false");
+    });
+    this.gridItems.forEach((button) => {
+      button.classList.toggle("is-active", String(button.dataset.mediaId) === String(mediaId));
     });
     const activeThumb = this.thumbs.find((t) => t.classList.contains("is-active"));
     if (activeThumb) {
@@ -140,14 +167,21 @@ class ValorProductMedia extends HTMLDivElement {
   }
 
   updateNavState() {
+    const i = this.getActiveIndex();
     if (this.counterEl) {
-      const i = this.getActiveIndex();
       if (i >= 0 && this.mainItems.length > 1) {
         this.counterEl.textContent = i + 1 + " / " + this.mainItems.length;
         this.counterEl.removeAttribute("hidden");
       } else {
         this.counterEl.setAttribute("hidden", "");
       }
+    }
+
+    if (this.progressEl && i >= 0 && this.mainItems.length > 1) {
+      const width = 100 / this.mainItems.length;
+      this.progressEl.dataset.activeIndex = String(i);
+      this.progressEl.style.setProperty("--gallery-progress-width", width + "%");
+      this.progressEl.style.setProperty("--gallery-progress-left", i * width + "%");
     }
   }
 
@@ -161,6 +195,10 @@ class ValorProductMedia extends HTMLDivElement {
     const clickedItem = e.currentTarget;
     const clickedIndex = parseInt(clickedItem.dataset.mediaIndex, 10) || 0;
 
+    this.openLightbox(clickedIndex);
+  }
+
+  openLightbox(clickedIndex) {
     const images = this.mainItems.map((item) => ({
       src: item.dataset.mediaSrc,
       srcset: item.dataset.mediaSrcset,

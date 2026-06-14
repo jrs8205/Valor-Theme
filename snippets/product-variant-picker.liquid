@@ -18,6 +18,8 @@
     section_id         {String} required
     class_prefix       {String} optional, default 'valor-mp'
     picker_style       {String} optional override
+    swatch_shape       {String} optional, 'circle' or 'square'
+    swatch_size        {Number} optional, pixel size
     size_option_style  {String} optional override, 'default' or 'minimal'
     size_guide_block   {Block} optional popup block rendered inline for size options
 {%- endcomment -%}
@@ -26,6 +28,8 @@
   {%- liquid
     assign prefix = class_prefix | default: 'valor-mp'
     assign resolved_picker_style = picker_style | default: block.settings.picker_style | default: 'pills'
+    assign resolved_swatch_shape = swatch_shape | default: block.settings.swatch_shape | default: 'circle'
+    assign resolved_swatch_size = swatch_size | default: block.settings.swatch_size | default: 36
     assign resolved_size_option_style = size_option_style | default: block.settings.size_option_style | default: 'default'
   -%}
 
@@ -212,7 +216,12 @@
             </span>
           </legend>
 
-          <div class="{{ prefix }}__option-values {{ prefix }}__option-values--{{ values_modifier }}">
+          <div
+            class="{{ prefix }}__option-values {{ prefix }}__option-values--{{ values_modifier }}{% if render_swatches %} {{ prefix }}__option-values--swatches-{{ resolved_swatch_shape }}{% endif %}"
+            {% if render_swatches %}
+              style="--valor-swatch-size: {{ resolved_swatch_size }}px;"
+            {% endif %}
+          >
             {%- for value in option.values -%}
               {%- liquid
                 assign input_id = prefix | append: '-opt-' | append: section_id | append: '-' | append: option_index | append: '-' | append: forloop.index0

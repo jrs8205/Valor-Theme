@@ -11,3 +11,9 @@ package-lock.json
 .gitignore
 shopify.theme.toml
 README.md
+CONTRIBUTING.md
+LICENSE.md
+SECURITY.md
+diagnostic-*.png
+progress-line-*.png
+_theme-dev-test*.log

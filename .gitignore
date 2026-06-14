@@ -9,5 +9,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+diagnostic-*.png
+progress-line-*.png
 .DS_Store
 Thumbs.db

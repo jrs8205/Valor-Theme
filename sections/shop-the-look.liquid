@@ -323,55 +323,60 @@
 
 {% schema %}
 {
-  "name": "Shop the look",
+  "name": "t:sections.shop_the_look.name",
   "tag": "section",
   "class": "valor-section-shop-the-look",
   "settings": [
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
-    { "type": "inline_richtext", "id": "heading", "label": "Heading", "default": "Shop the look" },
+    { "type": "text", "id": "eyebrow", "label": "t:sections.shop_the_look.settings.eyebrow.label" },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "t:sections.shop_the_look.settings.heading.label",
+      "default": "Shop the look"
+    },
     {
       "type": "richtext",
       "id": "text",
-      "label": "Text",
+      "label": "t:sections.shop_the_look.settings.text.label",
       "default": "<p>Connect lifestyle imagery with the products featured in it.</p>"
     },
     {
       "type": "select",
       "id": "heading_size",
-      "label": "Heading size",
+      "label": "t:sections.shop_the_look.settings.heading_size.label",
       "options": [
-        { "value": "h1", "label": "Large" },
-        { "value": "h2", "label": "Medium" }
+        { "value": "h1", "label": "t:sections.shop_the_look.settings.heading_size.options.large" },
+        { "value": "h2", "label": "t:sections.shop_the_look.settings.heading_size.options.medium" }
       ],
       "default": "h2"
     },
-    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "image_picker", "id": "image", "label": "t:sections.shop_the_look.settings.image.label" },
     {
       "type": "select",
       "id": "layout",
-      "label": "Desktop layout",
+      "label": "t:sections.shop_the_look.settings.layout.label",
       "options": [
-        { "value": "stacked", "label": "Stacked" },
-        { "value": "side_by_side", "label": "Side by side" }
+        { "value": "stacked", "label": "t:sections.shop_the_look.settings.layout.options.stacked" },
+        { "value": "side_by_side", "label": "t:sections.shop_the_look.settings.layout.options.side_by_side" }
       ],
       "default": "stacked"
     },
     {
       "type": "select",
       "id": "image_width",
-      "label": "Image width",
+      "label": "t:sections.shop_the_look.settings.image_width.label",
       "options": [
-        { "value": "narrow", "label": "Narrow" },
-        { "value": "wide", "label": "Wide" },
-        { "value": "left", "label": "Image left in side-by-side layout" }
+        { "value": "narrow", "label": "t:sections.shop_the_look.settings.image_width.options.narrow" },
+        { "value": "wide", "label": "t:sections.shop_the_look.settings.image_width.options.wide" },
+        { "value": "left", "label": "t:sections.shop_the_look.settings.image_width.options.left" }
       ],
       "default": "wide"
     },
-    { "type": "header", "content": "Section padding" },
+    { "type": "header", "content": "t:sections.shop_the_look.settings.section_padding.content" },
     {
       "type": "range",
       "id": "padding_top",
-      "label": "Top padding",
+      "label": "t:sections.shop_the_look.settings.padding_top.label",
       "min": 0,
       "max": 120,
       "step": 4,
@@ -381,7 +386,7 @@
     {
       "type": "range",
       "id": "padding_bottom",
-      "label": "Bottom padding",
+      "label": "t:sections.shop_the_look.settings.padding_bottom.label",
       "min": 0,
       "max": 120,
       "step": 4,
@@ -392,14 +397,18 @@
   "blocks": [
     {
       "type": "hotspot",
-      "name": "Hotspot",
+      "name": "t:sections.shop_the_look.blocks.hotspot.name",
       "settings": [
-        { "type": "product", "id": "product", "label": "Product" },
-        { "type": "text", "id": "label", "label": "Accessible label" },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:sections.shop_the_look.blocks.hotspot.settings.product.label"
+        },
+        { "type": "text", "id": "label", "label": "t:sections.shop_the_look.blocks.hotspot.settings.label.label" },
         {
           "type": "range",
           "id": "x_position",
-          "label": "Horizontal position",
+          "label": "t:sections.shop_the_look.blocks.hotspot.settings.x_position.label",
           "min": 5,
           "max": 95,
           "step": 1,
@@ -409,7 +418,7 @@
         {
           "type": "range",
           "id": "y_position",
-          "label": "Vertical position",
+          "label": "t:sections.shop_the_look.blocks.hotspot.settings.y_position.label",
           "min": 5,
           "max": 95,
           "step": 1,
@@ -421,7 +430,7 @@
   ],
   "presets": [
     {
-      "name": "Shop the look",
+      "name": "t:sections.shop_the_look.presets.name",
       "blocks": [{ "type": "hotspot" }, { "type": "hotspot" }]
     }
   ]

@@ -38,20 +38,22 @@
 
 /* === Price === */
 .valor-mp__price {
+  --valor-product-price-size: 24px;
+  --valor-product-compare-price-size: 18px;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0.5rem 0.875rem;
 }
 .valor-mp__price-current {
-  font-size: 1.5rem;
+  font-size: var(--valor-product-price-size);
   font-weight: var(--font-body--weight-bold);
 }
 .valor-mp__price-current--sale {
   color: var(--color-foreground);
 }
 .valor-mp__price-compare {
-  font-size: 1.125rem;
+  font-size: var(--valor-product-compare-price-size);
   color: color-mix(in srgb, var(--color-foreground) 55%, transparent);
   text-decoration: line-through;
 }
@@ -295,7 +297,6 @@
   gap: 0.625rem;
 }
 .valor-mp__option-swatch {
-  --valor-swatch-size: 36px;
   position: relative;
   display: inline-block;
   width: var(--valor-swatch-size);
@@ -313,6 +314,18 @@
     transform 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+}
+.valor-mp__option-values--swatches-circle {
+  --valor-swatch-size: 36px;
+}
+.valor-mp__option-values--swatches-circle .valor-mp__option-swatch {
+  border-radius: 50%;
+}
+.valor-mp__option-values--swatches-square {
+  --valor-swatch-size: 36px;
+}
+.valor-mp__option-values--swatches-square .valor-mp__option-swatch {
+  border-radius: var(--style-border-radius-inputs, 4px);
 }
 @media (hover: hover) and (pointer: fine) {
   .valor-mp__option-swatch:hover {
@@ -945,4 +958,65 @@
 }
 .valor-mp__complementary-editor p {
   margin: 0;
+}
+
+@media (max-width: 749px) {
+  .valor-mp__complementary--mobile-two-up-swipe .valor-mp__complementary-list {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-mp__complementary-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal {
+    flex: 0 0 calc((100% - 0.75rem) / 2);
+    min-width: 0;
+    scroll-snap-align: start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal__media {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal__info {
+    gap: 0.35rem;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal__title {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal__price {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal__price-compare {
+    font-size: 12px;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-card-horizontal__unit-price {
+    font-size: 11px;
+  }
+
+  .valor-mp__complementary--mobile-two-up-swipe .valor-mp__complementary-editor {
+    flex: 0 0 100%;
+  }
 }

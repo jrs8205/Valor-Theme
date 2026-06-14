@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "1.3.6",
+    "theme_version": "1.4.0",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -246,6 +246,45 @@
       },
       {
         "type": "header",
+        "content": "t:labels.product_cards"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_quick_add",
+        "label": "t:labels.show_quick_add",
+        "default": false,
+        "info": "t:labels.show_quick_add_info"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_color_swatches",
+        "label": "t:labels.show_color_swatches",
+        "default": false,
+        "info": "t:labels.show_color_swatches_info"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_product_card_rating",
+        "label": "t:labels.show_product_card_rating",
+        "default": false,
+        "info": "t:labels.show_product_card_rating_info"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_product_card_subtitle",
+        "label": "t:labels.show_product_card_subtitle",
+        "default": false,
+        "info": "t:labels.show_product_card_subtitle_info"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_sale_percentage",
+        "label": "t:labels.show_sale_percentage",
+        "default": false,
+        "info": "t:labels.show_sale_percentage_info"
+      },
+      {
+        "type": "header",
         "content": "Product gallery"
       },
       {
@@ -270,9 +309,20 @@
         "info": "Show clickable arrows on the main image to browse photos."
       },
       {
+        "type": "select",
+        "id": "gallery_mobile_indicator",
+        "label": "t:labels.mobile_gallery_indicator",
+        "options": [
+          { "value": "counter", "label": "Counter" },
+          { "value": "progress", "label": "t:labels.progress_line" }
+        ],
+        "default": "counter",
+        "info": "t:labels.mobile_gallery_indicator_info"
+      },
+      {
         "type": "range",
         "id": "gallery_arrow_size",
-        "label": "Arrow size",
+        "label": "t:labels.arrow_size",
         "min": 32,
         "max": 56,
         "step": 4,

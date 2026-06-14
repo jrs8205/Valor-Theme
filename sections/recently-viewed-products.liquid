@@ -1,0 +1,256 @@
+{%- comment -%}
+  Recently viewed products.
+
+  The visible grid intentionally mirrors sections/related-products.liquid:
+  same wrapper classes, same card render, same layout settings. The only
+  difference is the data source. JavaScript reads the visitor's local
+  recently-viewed list, fetches each product page through the Section
+  Rendering API, and extracts the Liquid-rendered card template below.
+{%- endcomment -%}
+
+{{ 'product-card.css' | asset_url | stylesheet_tag }}
+{{ 'featured-collection.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'recently-viewed-products.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign products_to_show = section.settings.products_to_show
+  assign columns_desktop = section.settings.columns_desktop
+  assign columns_mobile = section.settings.columns_mobile
+-%}
+
+<section
+  class="valor-featured-collection valor-related-products valor-recently-viewed-products{% if section.settings.swipe_on_mobile %} valor-featured-collection--mobile-full-bleed{% endif %}"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-grid-gap: {{ section.settings.column_gap }}px; --valor-grid-gap-mobile: {{ section.settings.column_gap_mobile }}px; --valor-mobile-card-width: {{ section.settings.mobile_card_width }}%;"
+  data-recently-viewed-section
+  {%- unless request.design_mode %}
+    hidden
+  {% endunless -%}
+>
+  <valor-recently-viewed-products
+    class="valor-featured-collection__inner{% if section.settings.full_width %} valor-featured-collection__inner--full-width{% endif %}"
+    data-section-id="{{ section.id }}"
+    data-current-product-id="{{ product.id }}"
+    data-current-product-handle="{{ product.handle | escape }}"
+    data-current-product-url="{{ product.url }}"
+    data-products-to-show="{{ products_to_show }}"
+  >
+    <div data-recently-viewed-content hidden>
+      {%- if section.settings.title != blank -%}
+        <header class="valor-featured-collection__header valor-featured-collection__header--align-{{ section.settings.heading_alignment }}">
+          <h2 class="valor-featured-collection__title valor-heading valor-heading--{{ section.settings.heading_size }}">
+            {{ section.settings.title }}
+          </h2>
+        </header>
+      {%- endif -%}
+
+      <div
+        class="valor-featured-collection__grid valor-featured-collection__grid--cols-{{ columns_desktop }} valor-featured-collection__grid--mobile-{{ columns_mobile }}{% if section.settings.swipe_on_mobile %} valor-featured-collection__grid--swipe-mobile{% endif %}"
+        data-recently-viewed-grid
+      ></div>
+    </div>
+
+    {%- if request.design_mode -%}
+      <div class="valor-recently-viewed-products__editor-info" data-recently-viewed-empty>
+        <p>Recently viewed products appear here after a visitor opens at least one other product.</p>
+      </div>
+    {%- endif -%}
+  </valor-recently-viewed-products>
+
+  <template data-recently-viewed-card-template>
+    {%- render 'product-card',
+      product: product,
+      image_ratio: section.settings.image_ratio,
+      show_secondary_image: section.settings.show_secondary_image,
+      show_vendor: section.settings.show_vendor,
+      show_price: true
+    -%}
+  </template>
+</section>
+
+{% stylesheet %}
+  .valor-recently-viewed-products__editor-info {
+    padding: 2rem clamp(1rem, 4vw, 3rem);
+    text-align: center;
+    color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--color-foreground) 20%, transparent);
+    border-radius: var(--style-border-radius-inputs, 4px);
+    background-color: color-mix(in srgb, var(--color-foreground) 2%, transparent);
+  }
+  .valor-recently-viewed-products__editor-info p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Recently viewed products",
+  "tag": "section",
+  "class": "valor-section-recently-viewed-products",
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "default": "Recently viewed",
+      "label": "Heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" }
+      ],
+      "default": "medium",
+      "label": "Heading size"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left",
+      "label": "Heading alignment"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "default": 4,
+      "label": "Products to show"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "default": false,
+      "label": "Full width"
+    },
+    {
+      "type": "header",
+      "content": "Product cards"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        { "value": "adapt", "label": "Adapt to image" },
+        { "value": "portrait", "label": "Portrait (4:5)" },
+        { "value": "square", "label": "Square (1:1)" },
+        { "value": "landscape", "label": "Landscape (4:3)" }
+      ],
+      "default": "portrait",
+      "label": "Image ratio"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_secondary_image",
+      "default": true,
+      "label": "Show second image on hover"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "default": false,
+      "label": "Show vendor"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 4,
+      "label": "Columns on desktop"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "2",
+      "label": "Columns on mobile"
+    },
+    {
+      "type": "checkbox",
+      "id": "swipe_on_mobile",
+      "default": false,
+      "label": "Swipe on mobile"
+    },
+    {
+      "type": "range",
+      "id": "mobile_card_width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 70,
+      "label": "Mobile card width",
+      "info": "Only applies when swipe on mobile is enabled."
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16,
+      "label": "Column gap (desktop)"
+    },
+    {
+      "type": "range",
+      "id": "column_gap_mobile",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 12,
+      "label": "Column gap (mobile)"
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 56
+    }
+  ],
+  "presets": [
+    {
+      "name": "Recently viewed products"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

@@ -10,10 +10,12 @@
 
       this.slides = Array.prototype.slice.call(this.querySelectorAll("[data-slide]"));
       this.dots = Array.prototype.slice.call(this.querySelectorAll("[data-slide-dot]"));
+      this.viewport = this.querySelector(".valor-slideshow__viewport") || this;
       this.previousButton = this.querySelector("[data-slide-previous]");
       this.nextButton = this.querySelector("[data-slide-next]");
       this.autoplay = this.dataset.autoplay === "true";
       this.interval = Math.max(parseInt(this.dataset.interval, 10) || 5000, 3000);
+      this.pauseOnHover = this.dataset.pauseOnHover !== "false";
       this.currentIndex = Math.max(
         this.slides.findIndex(function (slide) {
           return !slide.hidden;
@@ -22,6 +24,10 @@
       );
       this.timer = null;
       this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      this.swipeStartX = null;
+      this.swipeStartY = null;
+      this.swipePointerId = null;
+      this.swipeThreshold = 48;
 
       if (this.slides.length < 2) return;
 
@@ -55,6 +61,10 @@
         }.bind(this),
       );
 
+      this.viewport.addEventListener("pointerdown", this.onPointerDown.bind(this));
+      this.viewport.addEventListener("pointerup", this.onPointerUp.bind(this));
+      this.viewport.addEventListener("pointercancel", this.resetSwipe.bind(this));
+
       this.addEventListener(
         "keydown",
         function (event) {
@@ -70,8 +80,10 @@
         }.bind(this),
       );
 
-      this.addEventListener("mouseenter", this.stopAutoplay.bind(this));
-      this.addEventListener("mouseleave", this.startAutoplay.bind(this));
+      if (this.pauseOnHover) {
+        this.addEventListener("mouseenter", this.stopAutoplay.bind(this));
+        this.addEventListener("mouseleave", this.startAutoplay.bind(this));
+      }
       this.addEventListener("focusin", this.stopAutoplay.bind(this));
       this.addEventListener("focusout", this.startAutoplay.bind(this));
 
@@ -85,6 +97,51 @@
           }
         }.bind(this),
       );
+    }
+
+    onPointerDown(event) {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (event.target.closest && event.target.closest("a, button, input, select, textarea, summary")) return;
+
+      this.swipeStartX = event.clientX;
+      this.swipeStartY = event.clientY;
+      this.swipePointerId = event.pointerId;
+
+      if (this.viewport.setPointerCapture) {
+        this.viewport.setPointerCapture(event.pointerId);
+      }
+    }
+
+    onPointerUp(event) {
+      if (this.swipePointerId !== event.pointerId || this.swipeStartX === null || this.swipeStartY === null) return;
+
+      var deltaX = event.clientX - this.swipeStartX;
+      var deltaY = event.clientY - this.swipeStartY;
+      var isHorizontalSwipe = Math.abs(deltaX) >= this.swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+
+      this.resetSwipe(event);
+
+      if (!isHorizontalSwipe) return;
+
+      if (deltaX < 0) {
+        this.next();
+      } else {
+        this.previous();
+      }
+    }
+
+    resetSwipe(event) {
+      if (event && this.viewport.releasePointerCapture && this.swipePointerId !== null) {
+        try {
+          this.viewport.releasePointerCapture(this.swipePointerId);
+        } catch (error) {
+          // Browser may already have released this pointer.
+        }
+      }
+
+      this.swipeStartX = null;
+      this.swipeStartY = null;
+      this.swipePointerId = null;
     }
 
     previous() {

@@ -11,7 +11,7 @@ accessories, and other visual product brands.
 
 ## Current Version
 
-The current release is `1.3.6`.
+The current release is `1.4.0`.
 
 Downloadable release ZIPs are published from the official website. This
 repository contains the theme source so issues, fixes, and improvements can be

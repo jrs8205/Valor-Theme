@@ -15,10 +15,89 @@
   if show_price == null
     assign show_price = true
   endif
+
+  assign show_quick_add = settings.show_quick_add
+  assign show_card_swatches = settings.show_color_swatches
+  assign show_card_rating = settings.show_product_card_rating
+  assign show_card_subtitle = settings.show_product_card_subtitle
+  assign show_sale_percentage = settings.show_sale_percentage
+
+  assign is_on_sale = false
+  assign sale_percent = 0
+  if product.compare_at_price > product.price and product.compare_at_price > 0
+    assign is_on_sale = true
+    assign sale_savings = product.compare_at_price | minus: product.price
+    assign sale_percent = sale_savings | times: 100.0 | divided_by: product.compare_at_price | round
+  endif
+
+  assign card_subtitle = product.metafields.descriptors.subtitle.value | default: product.metafields.descriptors.subtitle
+
+  assign rating_obj = product.metafields.reviews.rating.value
+  assign rating_count_meta = product.metafields.reviews.rating_count
+  assign rating_count = 0
+  if rating_count_meta.value
+    assign rating_count = rating_count_meta.value
+  elsif rating_count_meta != blank
+    assign rating_count = rating_count_meta
+  endif
+  assign rating_value = 0
+  assign rating_scale = 5
+  assign rating_percent = 0
+  if rating_obj != blank and rating_obj.rating != blank and rating_count > 0
+    assign rating_value = rating_obj.rating | times: 1.0
+    assign rating_scale = rating_obj.scale_max | default: 5
+    if rating_scale == 0
+      assign rating_scale = 5
+    endif
+    assign rating_percent = rating_value | times: 100 | divided_by: rating_scale
+  endif
+
+  assign color_option = blank
+  assign color_option_index = 0
+  if show_card_swatches
+    for option in product.options_with_values
+      assign normalized_option = option.name | downcase | strip
+      assign is_color_option = false
+      if normalized_option == 'color' or normalized_option == 'colour' or normalized_option == 'väri' or normalized_option == 'färg' or normalized_option == 'farbe' or normalized_option == 'couleur' or normalized_option == 'colore'
+        assign is_color_option = true
+      endif
+      if is_color_option
+        assign color_option = option
+        assign color_option_index = forloop.index0
+        break
+      endif
+    endfor
+  endif
+
+  assign render_card_swatches = false
+  if color_option != blank and color_option.values.size > 0
+    assign all_card_values_have_swatch = true
+    for value in color_option.values
+      unless value.swatch.color or value.swatch.image
+        assign all_card_values_have_swatch = false
+        break
+      endunless
+    endfor
+    if all_card_values_have_swatch
+      assign render_card_swatches = true
+    endif
+  endif
+
+  assign has_quantity_rules = false
+  if card_variant.quantity_rule.min > 1 or card_variant.quantity_rule.increment > 1 or card_variant.quantity_rule.max != null
+    assign has_quantity_rules = true
+  endif
+
+  assign can_quick_add_direct = false
+  unless product.requires_selling_plan
+    if product.has_only_default_variant and card_variant.available and has_quantity_rules == false
+      assign can_quick_add_direct = true
+    endif
+  endunless
 -%}
 
 <article class="valor-card valor-card--ratio-{{ image_ratio }}{% if show_secondary_image and product.media.size > 1 %} valor-card--swap-image{% endif %}">
-  <a href="{{ product.url }}" class="valor-card__link" aria-label="{{ product.title | escape }}">
+  <a href="{{ product.url }}" class="valor-card__media-link" aria-label="{{ product.title | escape }}">
     <div class="valor-card__media">
       {%- if product.featured_media != blank -%}
         <img
@@ -50,9 +129,13 @@
         </div>
       {%- endif -%}
 
-      {%- if product.compare_at_price > product.price and product.available and settings.show_sale_badge -%}
+      {%- if is_on_sale and product.available and settings.show_sale_badge -%}
         <span class="valor-card__badge valor-card__badge--sale">
-          {{- settings.sale_badge_text | default: 'Sale' | escape -}}
+          {%- if show_sale_percentage and sale_percent > 0 -%}
+            {{- 'product.save_percent' | t: percent: sale_percent -}}
+          {%- else -%}
+            {{- settings.sale_badge_text | default: 'Sale' | escape -}}
+          {%- endif -%}
         </span>
       {%- elsif product.available == false and settings.show_soldout_badge -%}
         <span class="valor-card__badge valor-card__badge--soldout">
@@ -60,28 +143,118 @@
         </span>
       {%- endif -%}
     </div>
-
-    <div class="valor-card__info">
-      {%- if show_vendor and product.vendor != blank -%}
-        <div class="valor-card__vendor">{{ product.vendor }}</div>
-      {%- endif -%}
-      <h3 class="valor-card__title">{{ product.title | escape }}</h3>
-      {%- if show_price -%}
-        <div class="valor-card__price">
-          {%- if product.compare_at_price > product.price -%}
-            <span class="valor-card__price-current valor-card__price-current--sale">{{ product.price | money }}</span>
-            <span class="valor-card__price-compare"
-              ><s>{{ product.compare_at_price | money }}</s></span
-            >
-          {%- elsif product.price_varies -%}
-            {%- assign from_price = product.price | money -%}
-            <span class="valor-card__price-current">{{ 'product.from_price' | t: price: from_price }}</span>
-          {%- else -%}
-            <span class="valor-card__price-current">{{ product.price | money }}</span>
-          {%- endif -%}
-        </div>
-        {%- render 'product-unit-price', variant: card_variant, class_name: 'valor-card__unit-price' -%}
-      {%- endif -%}
-    </div>
   </a>
+
+  <div class="valor-card__info">
+    {%- if show_vendor and product.vendor != blank -%}
+      <div class="valor-card__vendor">{{ product.vendor }}</div>
+    {%- endif -%}
+    <h3 class="valor-card__title">
+      <a href="{{ product.url }}" class="valor-card__title-link">{{ product.title | escape }}</a>
+    </h3>
+    {%- if show_card_subtitle and card_subtitle != blank -%}
+      <p class="valor-card__subtitle">{{ card_subtitle | escape }}</p>
+    {%- endif -%}
+    {%- if show_card_rating and rating_obj != blank and rating_obj.rating != blank and rating_count > 0 -%}
+      <div class="valor-card__rating">
+        <span
+          class="valor-card__rating-stars"
+          role="img"
+          aria-label="{{ 'product.rating' | t: rating: rating_value, scale: rating_scale }}"
+          style="--valor-card-rating-percent: {{ rating_percent }}%;"
+        >
+          <span class="valor-card__rating-stars-empty" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="valor-card__rating-stars-filled" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+        </span>
+        <span class="valor-card__rating-text">
+          {{- rating_value }}
+          ({{ 'product.review_count' | t: count: rating_count }})
+        </span>
+      </div>
+    {%- endif -%}
+    {%- if show_price -%}
+      <div class="valor-card__price">
+        {%- if is_on_sale -%}
+          <span class="valor-card__price-current valor-card__price-current--sale">{{ product.price | money }}</span>
+          <span class="valor-card__price-compare"
+            ><s>{{ product.compare_at_price | money }}</s></span
+          >
+        {%- elsif product.price_varies -%}
+          {%- assign from_price = product.price | money -%}
+          <span class="valor-card__price-current">{{ 'product.from_price' | t: price: from_price }}</span>
+        {%- else -%}
+          <span class="valor-card__price-current">{{ product.price | money }}</span>
+        {%- endif -%}
+      </div>
+      {%- render 'product-unit-price', variant: card_variant, class_name: 'valor-card__unit-price' -%}
+    {%- endif -%}
+
+    {%- if render_card_swatches -%}
+      <div class="valor-card__swatches" aria-label="{{ color_option.name | escape }}">
+        {%- assign selected_color = card_variant.options[color_option_index] -%}
+        {%- for value in color_option.values -%}
+          {%- liquid
+            assign swatch_color = null
+            assign swatch_image_url = null
+            if value.swatch.color
+              assign swatch_color = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+            elsif value.swatch.image
+              assign swatch_image_url = value.swatch.image | image_url: width: 96
+            endif
+          -%}
+          {%- if swatch_color or swatch_image_url -%}
+            {%- liquid
+              assign swatch_variant_url = product.url
+              assign swatch_available = false
+              for variant in product.variants
+                assign variant_option = variant.options[color_option_index]
+                if variant_option == value
+                  assign swatch_variant_url = product.url | append: '?variant=' | append: variant.id
+                  assign swatch_available = variant.available
+                  break
+                endif
+              endfor
+            -%}
+            <a
+              href="{{ swatch_variant_url }}"
+              class="valor-card__swatch{% if selected_color == value %} is-active{% endif %}{% unless swatch_available %} is-unavailable{% endunless %}"
+              aria-label="{{ color_option.name | escape }}: {{ value | escape }}"
+              {% if selected_color == value %}
+                aria-current="true"
+              {% endif %}
+              {% if swatch_color %}
+                style="--valor-card-swatch-color: {{ swatch_color }};"
+              {% elsif swatch_image_url %}
+                style="--valor-card-swatch-image: url('{{ swatch_image_url }}');"
+              {% endif %}
+            >
+              <span class="visually-hidden">{{ value }}</span>
+            </a>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    {%- if show_quick_add -%}
+      <div class="valor-card__quick-add">
+        {%- if product.available == false -%}
+          <button type="button" class="valor-button valor-button--secondary valor-card__quick-add-button" disabled>
+            {{- 'product.sold_out' | t -}}
+          </button>
+        {%- elsif can_quick_add_direct -%}
+          <form method="post" action="{{ routes.cart_add_url }}" class="valor-card__quick-add-form">
+            <input type="hidden" name="id" value="{{ card_variant.id }}">
+            <button type="submit" name="add" class="valor-button valor-button--primary valor-card__quick-add-button">
+              {{- 'product.add_to_cart' | t -}}
+            </button>
+            <div class="valor-card__quick-add-error" data-cart-error role="alert" hidden></div>
+          </form>
+        {%- else -%}
+          <a href="{{ product.url }}" class="valor-button valor-button--secondary valor-card__quick-add-button">
+            {{- 'product.choose_options' | t -}}
+          </a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
 </article>

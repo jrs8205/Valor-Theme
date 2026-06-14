@@ -173,6 +173,125 @@
   display: none;
 }
 
+/* Desktop stacked grid: Lounge-style PDP media presentation. Hidden by
+   default and enabled only on wider product-page layouts, so mobile keeps
+   the swipe gallery and existing thumbnail/counter/progress behaviour. */
+.valor-product-media__desktop-grid {
+  display: none;
+}
+.valor-product-media__desktop-grid-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background-color: color-mix(in srgb, var(--color-foreground) 4%, transparent);
+  overflow: hidden;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+.valor-product-media__desktop-grid-item--wide {
+  grid-column: 1 / -1;
+}
+.valor-product-media__desktop-grid-item img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.valor-product-media--fit-contain .valor-product-media__desktop-grid-item {
+  background-color: color-mix(in srgb, var(--color-foreground) 4%, var(--color-background));
+}
+.valor-product-media--fit-contain .valor-product-media__desktop-grid-item img {
+  object-fit: contain;
+}
+.valor-product-media--no-lightbox .valor-product-media__desktop-grid-item {
+  cursor: default;
+}
+.valor-product-media__desktop-grid-item:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 3px;
+}
+
+@media (min-width: 990px) {
+  .valor-product-media--desktop-layout-stacked {
+    gap: 0;
+  }
+  .valor-product-media--desktop-layout-stacked .valor-product-media__main,
+  .valor-product-media--desktop-layout-stacked .valor-product-media__progress,
+  .valor-product-media--desktop-layout-stacked .valor-product-media__thumbs-wrap {
+    display: none;
+  }
+  .valor-product-media--desktop-layout-stacked .valor-product-media__desktop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+}
+
+/* Mobile progress indicator. Inspired by segmented PDP galleries: the
+   full row is clickable by segment, while the active bar slides from
+   left to right as images change. Hidden on desktop so existing desktop
+   gallery controls stay unchanged. */
+.valor-product-media__progress {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 4px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-foreground) 24%, transparent);
+  background: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+.valor-product-media__progress-indicator {
+  position: absolute;
+  left: var(--gallery-progress-left, 0%);
+  top: 0;
+  z-index: 1;
+  display: block;
+  width: var(--gallery-progress-width, 0%);
+  height: 4px;
+  background: currentColor;
+  transition:
+    left 0.18s ease,
+    width 0.18s ease;
+  pointer-events: none;
+}
+.valor-product-media__progress-button {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.valor-product-media__progress-button:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 4px;
+}
+
+@media (max-width: 749px) {
+  .valor-product-media--mobile-indicator-progress .valor-product-media__progress {
+    display: flex;
+  }
+  .valor-product-media--mobile-indicator-progress .valor-product-media__counter {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valor-product-media__progress-indicator {
+    transition: none;
+  }
+}
+
 /* Placeholder */
 .valor-product-media__placeholder {
   width: 100%;

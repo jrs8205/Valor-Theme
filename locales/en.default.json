@@ -22,6 +22,8 @@
     "next": "Next image",
     "open_image": "Open image",
     "show_image": "Show image",
+    "product_media_slides": "Product media slides",
+    "go_to_slide": "Go to slide {{ number }}",
     "error": "Error:",
     "link_messages": {
       "new_window": "(Opens in a new window)"
@@ -186,7 +188,9 @@
   },
   "product": {
     "add_to_cart": "Add to cart",
+    "choose_options": "Choose options",
     "sale": "Sale",
+    "save_percent": "Save {{ percent }}%",
     "sold_out": "Sold out",
     "from_price": "From {{ price }}",
     "include_taxes": "Tax included.",
@@ -207,6 +211,7 @@
     "in_cart_of": "{{ selected }} of {{ total }} in cart",
     "total_in_cart": "{{ total }} total in cart",
     "rating": "{{ rating }} out of {{ scale }} stars",
+    "review_count": "{{ count }} reviews",
     "quantity_decrease": "Decrease quantity",
     "quantity_increase": "Increase quantity"
   },

@@ -59,6 +59,12 @@
     assign show_arrows = false
   endif
 
+  assign mobile_indicator = settings.gallery_mobile_indicator | default: 'counter'
+  if section.settings.mobile_indicator != 'default'
+    assign mobile_indicator = section.settings.mobile_indicator
+  endif
+  assign desktop_gallery_layout = section.settings.desktop_gallery_layout | default: 'single'
+
   assign use_inline_size_guide = false
   for candidate_block in section.blocks
     if candidate_block.type == 'variant_picker' and candidate_block.settings.size_option_style == 'minimal'
@@ -92,6 +98,8 @@
         enable_lightbox: enable_lightbox,
         show_thumbnails: show_thumbnails,
         show_arrows: show_arrows,
+        mobile_indicator: mobile_indicator,
+        desktop_layout: desktop_gallery_layout,
         media_fit: media_fit,
         priority: true
       -%}
@@ -186,6 +194,8 @@
               block: block,
               section_id: section.id,
               class_prefix: 'valor-mp',
+              swatch_shape: block.settings.swatch_shape,
+              swatch_size: block.settings.swatch_size,
               size_guide_block: inline_size_guide_block
             -%}
 
@@ -250,6 +260,73 @@
       {%- endfor -%}
     </product-info>
   </div>
+
+  {%- if section.settings.enable_sticky_add_to_cart -%}
+    {%- liquid
+      assign sticky_media = current_variant.featured_media | default: product.featured_media
+      assign sticky_variant_title = current_variant.title
+      if product.has_only_default_variant
+        assign sticky_variant_title = blank
+      endif
+    -%}
+    <div
+      class="valor-mp__sticky-atc"
+      data-sticky-atc
+      data-section-id="{{ section.id }}"
+      hidden
+    >
+      <div class="valor-mp__sticky-atc-inner">
+        <div class="valor-mp__sticky-atc-product">
+          {%- if sticky_media != blank -%}
+            <span class="valor-mp__sticky-atc-media">
+              {{
+                sticky_media
+                | image_url: width: 160
+                | image_tag:
+                  loading: 'lazy',
+                  widths: '80, 120, 160',
+                  sizes: '4rem',
+                  class: 'valor-mp__sticky-atc-image',
+                  alt: sticky_media.alt
+              }}
+            </span>
+          {%- endif -%}
+          <span class="valor-mp__sticky-atc-copy">
+            <span class="valor-mp__sticky-atc-title">{{ product.title | escape }}</span>
+            <span class="valor-mp__sticky-atc-variant" data-sticky-variant-title>
+              {{- sticky_variant_title -}}
+            </span>
+          </span>
+        </div>
+
+        <div class="valor-mp__sticky-atc-actions">
+          <div class="valor-mp__sticky-atc-price" data-sticky-price>
+            <span class="valor-mp__sticky-atc-price-current">{{ current_variant.price | money }}</span>
+            {%- if current_variant.compare_at_price > current_variant.price -%}
+              <s class="valor-mp__sticky-atc-price-compare">{{ current_variant.compare_at_price | money }}</s>
+            {%- endif -%}
+          </div>
+          <button
+            type="submit"
+            form="{{ product_form_id }}"
+            class="valor-button valor-button--primary valor-mp__sticky-atc-button"
+            {% unless current_variant.available %}
+              disabled
+            {% endunless %}
+            data-sticky-add-button
+          >
+            <span data-sticky-add-button-text>
+              {%- if current_variant.available -%}
+                {{ 'product.add_to_cart' | t }}
+              {%- else -%}
+                {{ 'product.sold_out' | t }}
+              {%- endif -%}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
 </section>
 
 {% stylesheet %}
@@ -342,6 +419,12 @@
       margin-left: calc(50% - 50vw);
       margin-right: calc(50% - 50vw);
     }
+    .valor-mp--image-full-mobile .valor-product-media__progress {
+      width: 100vw;
+      max-width: 100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+    }
   }
 
   /* === Info column ===
@@ -379,6 +462,119 @@
      assets/product-info.css so they can be shared across product
      sections. Layout-only rules — section wrapper, grid, media column,
      image-full-mobile, info column flex + sticky — stay in this file. */
+  .valor-mp__sticky-atc {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 110;
+    padding: 0.75rem clamp(1rem, 4vw, 3rem) calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    border-top: 1px solid color-mix(in srgb, var(--color-foreground) 12%, transparent);
+    box-shadow: 0 -0.75rem 2rem color-mix(in srgb, var(--color-foreground) 9%, transparent);
+    transform: translateY(110%);
+    transition: transform 0.22s ease;
+  }
+  .valor-mp__sticky-atc.is-visible {
+    transform: translateY(0);
+  }
+  .valor-mp__sticky-atc-inner {
+    width: min(100%, 75rem);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .valor-mp__sticky-atc-product {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .valor-mp__sticky-atc-media {
+    flex: 0 0 3.75rem;
+    width: 3.75rem;
+    height: 3.75rem;
+    background-color: color-mix(in srgb, var(--color-foreground) 4%, transparent);
+  }
+  .valor-mp__sticky-atc-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .valor-mp__sticky-atc-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .valor-mp__sticky-atc-title,
+  .valor-mp__sticky-atc-variant {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .valor-mp__sticky-atc-title {
+    font-weight: var(--font-body--weight-bold);
+  }
+  .valor-mp__sticky-atc-variant {
+    font-size: 0.875rem;
+    color: color-mix(in srgb, var(--color-foreground) 68%, transparent);
+  }
+  .valor-mp__sticky-atc-variant:empty {
+    display: none;
+  }
+  .valor-mp__sticky-atc-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .valor-mp__sticky-atc-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+  .valor-mp__sticky-atc-price-current {
+    font-weight: var(--font-body--weight-bold);
+  }
+  .valor-mp__sticky-atc-price-compare {
+    color: color-mix(in srgb, var(--color-foreground) 55%, transparent);
+  }
+  .valor-mp__sticky-atc-button {
+    min-width: 10rem;
+  }
+  @media (max-width: 749px) {
+    .valor-mp__sticky-atc {
+      padding-inline: 0.75rem;
+    }
+    .valor-mp__sticky-atc-inner {
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    .valor-mp__sticky-atc-media,
+    .valor-mp__sticky-atc-price {
+      display: none;
+    }
+    .valor-mp__sticky-atc-product {
+      flex: 1 1 auto;
+    }
+    .valor-mp__sticky-atc-actions {
+      flex: 0 0 auto;
+    }
+    .valor-mp__sticky-atc-button {
+      min-width: 8.5rem;
+      height: 100%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .valor-mp__sticky-atc {
+      transition: none;
+    }
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -453,7 +649,23 @@
         }
       ]
     },
-    { "type": "price", "name": "Price", "limit": 1, "settings": [] },
+    {
+      "type": "price",
+      "name": "Price",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "range",
+          "id": "price_font_size",
+          "min": 12,
+          "max": 64,
+          "step": 1,
+          "unit": "px",
+          "default": 24,
+          "label": "t:sections.main_product.blocks.price.settings.price_font_size.label"
+        }
+      ]
+    },
     {
       "type": "payment_terms",
       "name": "t:sections.main_product.blocks.payment_terms.name",
@@ -528,6 +740,28 @@
           "default": "default",
           "label": "Size option style",
           "info": "Minimal text applies only to options named Size, Koko, Storlek, Taille, Taglia, Talla and similar size labels."
+        },
+        {
+          "type": "select",
+          "id": "swatch_shape",
+          "label": "Swatch shape",
+          "options": [
+            { "value": "circle", "label": "Circle" },
+            { "value": "square", "label": "Square" }
+          ],
+          "default": "circle",
+          "info": "Applies when Picker style is set to Swatches."
+        },
+        {
+          "type": "range",
+          "id": "swatch_size",
+          "label": "Swatch size",
+          "min": 20,
+          "max": 64,
+          "step": 2,
+          "unit": "px",
+          "default": 36,
+          "info": "Applies to both circle and square swatches."
         }
       ]
     },
@@ -587,6 +821,22 @@
           "max": 4,
           "step": 1,
           "default": 3
+        },
+        {
+          "type": "select",
+          "id": "mobile_layout",
+          "label": "t:sections.main_product.blocks.complementary.settings.mobile_layout.label",
+          "options": [
+            {
+              "value": "list",
+              "label": "t:sections.main_product.blocks.complementary.settings.mobile_layout.options.list"
+            },
+            {
+              "value": "two-up-swipe",
+              "label": "t:sections.main_product.blocks.complementary.settings.mobile_layout.options.two_up_swipe"
+            }
+          ],
+          "default": "list"
         }
       ]
     },
@@ -707,6 +957,13 @@
       "label": "Enable sticky content on desktop"
     },
     {
+      "type": "checkbox",
+      "id": "enable_sticky_add_to_cart",
+      "default": false,
+      "label": "Enable sticky add to cart",
+      "info": "Shows a compact add-to-cart bar after the main buy button has been scrolled past."
+    },
+    {
       "type": "header",
       "content": "Media"
     },
@@ -803,7 +1060,29 @@
       ],
       "default": "default",
       "label": "Show navigation arrows",
-      "info": "Arrow size is set globally in Theme settings → Products."
+      "info": "t:sections.main_product.settings.show_arrows.info"
+    },
+    {
+      "type": "select",
+      "id": "desktop_gallery_layout",
+      "options": [
+        { "value": "single", "label": "t:sections.main_product.settings.desktop_gallery_layout.options.single" },
+        { "value": "stacked", "label": "t:sections.main_product.settings.desktop_gallery_layout.options.stacked" }
+      ],
+      "default": "single",
+      "label": "t:sections.main_product.settings.desktop_gallery_layout.label",
+      "info": "t:sections.main_product.settings.desktop_gallery_layout.info"
+    },
+    {
+      "type": "select",
+      "id": "mobile_indicator",
+      "options": [
+        { "value": "default", "label": "Use theme default" },
+        { "value": "counter", "label": "Counter" },
+        { "value": "progress", "label": "t:sections.main_product.settings.mobile_indicator.options.progress" }
+      ],
+      "default": "default",
+      "label": "t:sections.main_product.settings.mobile_indicator.label"
     },
     {
       "type": "header",

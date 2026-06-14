@@ -1,0 +1,119 @@
+{%- comment -%}
+  Renders optional promo content for a header mega menu block.
+
+  Accepts:
+    block              {Block} required
+    class              {String} optional extra class
+    include_attributes {Boolean} optional, emits block.shopify_attributes
+{%- endcomment -%}
+
+{%- liquid
+  assign block_settings = block.settings
+  assign promo_product = block_settings.promo_product
+  assign promo_collection = block_settings.promo_collection
+  assign has_feature = false
+  assign has_product = false
+  assign has_collection = false
+
+  if block_settings.promo_image != blank or block_settings.promo_heading != blank or block_settings.promo_text != blank or block_settings.promo_badge != blank
+    assign has_feature = true
+  endif
+  if promo_product != blank
+    assign has_product = true
+  endif
+  if promo_collection != blank
+    assign has_collection = true
+  endif
+-%}
+
+{%- if has_feature or has_product or has_collection -%}
+  <div
+    class="valor-header-promo {{ class }}"
+    {% if include_attributes %}
+      {{ block.shopify_attributes }}
+    {% endif %}
+  >
+    {%- if has_feature -%}
+      {%- if block_settings.promo_link != blank -%}
+        <a href="{{ block_settings.promo_link }}" class="valor-header-promo__feature">
+      {%- else -%}
+        <div class="valor-header-promo__feature">
+      {%- endif -%}
+      {%- if block_settings.promo_image != blank -%}
+        {{
+          block_settings.promo_image
+          | image_url: width: 700
+          | image_tag:
+            loading: 'lazy',
+            widths: '240, 360, 520, 700',
+            sizes: '(min-width: 990px) 22rem, 80vw',
+            class: 'valor-header-promo__image',
+            alt: block_settings.promo_image.alt
+        }}
+      {%- endif -%}
+      <div class="valor-header-promo__copy">
+        {%- if block_settings.promo_badge != blank -%}
+          <span class="valor-header-promo__badge">{{ block_settings.promo_badge | escape }}</span>
+        {%- endif -%}
+        {%- if block_settings.promo_heading != blank -%}
+          <span class="valor-header-promo__heading">{{ block_settings.promo_heading | escape }}</span>
+        {%- endif -%}
+        {%- if block_settings.promo_text != blank -%}
+          <div class="valor-header-promo__text rte">{{ block_settings.promo_text }}</div>
+        {%- endif -%}
+        {%- if block_settings.promo_link_label != blank and block_settings.promo_link != blank -%}
+          <span class="valor-header-promo__link-label">{{ block_settings.promo_link_label | escape }}</span>
+        {%- endif -%}
+      </div>
+      {%- if block_settings.promo_link != blank -%}
+        </a>
+      {%- else -%}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+
+    {%- if has_product -%}
+      <a href="{{ promo_product.url }}" class="valor-header-promo__resource">
+        {%- if promo_product.featured_media != blank -%}
+          {{
+            promo_product.featured_media
+            | image_url: width: 320
+            | image_tag:
+              loading: 'lazy',
+              widths: '120, 180, 240, 320',
+              sizes: '(min-width: 990px) 7rem, 6rem',
+              class: 'valor-header-promo__resource-image',
+              alt: promo_product.featured_media.alt
+          }}
+        {%- endif -%}
+        <span class="valor-header-promo__resource-copy">
+          <span class="valor-header-promo__resource-kicker">Featured product</span>
+          <span class="valor-header-promo__resource-title">{{ promo_product.title | escape }}</span>
+          <span class="valor-header-promo__resource-price">{{ promo_product.price | money }}</span>
+        </span>
+      </a>
+    {%- endif -%}
+
+    {%- if has_collection -%}
+      <a href="{{ promo_collection.url }}" class="valor-header-promo__resource">
+        {%- assign collection_image = promo_collection.image | default: promo_collection.featured_image -%}
+        {%- if collection_image != blank -%}
+          {{
+            collection_image
+            | image_url: width: 320
+            | image_tag:
+              loading: 'lazy',
+              widths: '120, 180, 240, 320',
+              sizes: '(min-width: 990px) 7rem, 6rem',
+              class: 'valor-header-promo__resource-image',
+              alt: collection_image.alt
+          }}
+        {%- endif -%}
+        <span class="valor-header-promo__resource-copy">
+          <span class="valor-header-promo__resource-kicker">Featured collection</span>
+          <span class="valor-header-promo__resource-title">{{ promo_collection.title | escape }}</span>
+        </span>
+      </a>
+    {%- endif -%}
+  </div>
+{%- endif -%}

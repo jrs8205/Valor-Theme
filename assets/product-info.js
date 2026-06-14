@@ -90,6 +90,13 @@ class ValorProductInfo extends HTMLElement {
       this.querySelectorAll("[data-payment-terms-variant-id-input]"),
     );
     this.pickupAvailabilityEls = Array.prototype.slice.call(this.querySelectorAll("valor-pickup-availability"));
+    this.sectionRoot = this.closest(".valor-mp");
+    this.stickyAtc = this.sectionRoot ? this.sectionRoot.querySelector("[data-sticky-atc]") : null;
+    this.stickyAddBtn = this.stickyAtc ? this.stickyAtc.querySelector("[data-sticky-add-button]") : null;
+    this.stickyAddBtnText = this.stickyAtc ? this.stickyAtc.querySelector("[data-sticky-add-button-text]") : null;
+    this.stickyPriceEl = this.stickyAtc ? this.stickyAtc.querySelector("[data-sticky-price]") : null;
+    this.stickyVariantTitleEl = this.stickyAtc ? this.stickyAtc.querySelector("[data-sticky-variant-title]") : null;
+    this.stickyImageEl = this.stickyAtc ? this.stickyAtc.querySelector(".valor-mp__sticky-atc-image") : null;
 
     this.currentVariant = null;
 
@@ -98,12 +105,18 @@ class ValorProductInfo extends HTMLElement {
     this._bindCartEvents();
     this._bindShare();
     this._bindPopups();
+    this._bindStickyAddToCart();
 
     // Initial state
     if (this.optionInputs.length || this.optionSelects.length) {
       this.currentVariant = this.findVariant(this.getCurrentOptions());
       this.updateSoldOutPills(this.getCurrentOptions());
     }
+    if (!this.currentVariant && this.variantIdInput && this.variants.length) {
+      const initialVariantId = parseInt(this.variantIdInput.value, 10);
+      this.currentVariant = this.variants.find((variant) => variant.id === initialVariantId) || null;
+    }
+    this.updateStickyAddToCart(this.currentVariant);
   }
 
   disconnectedCallback() {
@@ -118,6 +131,9 @@ class ValorProductInfo extends HTMLElement {
     }
 
     document.removeEventListener("valor:cart:updated", this._handleCartEvent);
+    if (this._stickyBuyObserver) this._stickyBuyObserver.disconnect();
+    if (this._stickyFooterObserver) this._stickyFooterObserver.disconnect();
+    if (this._stickyHideTimer) clearTimeout(this._stickyHideTimer);
     this._unbindPopups();
     this._initialized = false;
     // Other listeners are on elements within the custom element itself
@@ -167,6 +183,67 @@ class ValorProductInfo extends HTMLElement {
      with updated once it has the fresh cart state. */
   _bindCartEvents() {
     document.addEventListener("valor:cart:updated", this._handleCartEvent);
+  }
+
+  _bindStickyAddToCart() {
+    if (!this.stickyAtc || !this.addBtn || typeof IntersectionObserver === "undefined") return;
+
+    const observedTarget = this.addBtn.closest(".valor-mp__buy") || this.addBtn;
+    this._stickyPastBuyButton = false;
+    this._stickyFooterVisible = false;
+
+    this._stickyBuyObserver = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const rect = entry.target.getBoundingClientRect();
+      this._stickyPastBuyButton = !entry.isIntersecting && rect.bottom <= 0;
+      this._syncStickyAddToCartVisibility();
+    });
+    this._stickyBuyObserver.observe(observedTarget);
+
+    const footer = document.querySelector("footer") || document.querySelector('[class*="footer"]');
+    if (footer) {
+      this._stickyFooterObserver = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (!entry) return;
+          this._stickyFooterVisible = entry.isIntersecting;
+          this._syncStickyAddToCartVisibility();
+        },
+        { rootMargin: "200px 0px 0px 0px" },
+      );
+      this._stickyFooterObserver.observe(footer);
+    }
+  }
+
+  _syncStickyAddToCartVisibility() {
+    if (!this.stickyAtc) return;
+    const shouldShow = this._stickyPastBuyButton && !this._stickyFooterVisible;
+    if (shouldShow) {
+      this._showStickyAddToCart();
+    } else {
+      this._hideStickyAddToCart();
+    }
+  }
+
+  _showStickyAddToCart() {
+    if (!this.stickyAtc) return;
+    if (this._stickyHideTimer) clearTimeout(this._stickyHideTimer);
+    this.stickyAtc.hidden = false;
+    window.requestAnimationFrame(() => {
+      if (this.stickyAtc) this.stickyAtc.classList.add("is-visible");
+    });
+  }
+
+  _hideStickyAddToCart() {
+    if (!this.stickyAtc) return;
+    this.stickyAtc.classList.remove("is-visible");
+    if (this._stickyHideTimer) clearTimeout(this._stickyHideTimer);
+    this._stickyHideTimer = setTimeout(() => {
+      if (this.stickyAtc && !this.stickyAtc.classList.contains("is-visible")) {
+        this.stickyAtc.hidden = true;
+      }
+    }, 260);
   }
 
   /* --- Variant resolution ---
@@ -351,6 +428,40 @@ class ValorProductInfo extends HTMLElement {
     if (this.variantIdInput) {
       this.variantIdInput.value = variant ? variant.id : "";
       this.variantIdInput.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    this.updateStickyAddToCart(variant);
+  }
+
+  updateStickyAddToCart(variant) {
+    if (!this.stickyAtc) return;
+
+    const available = variant && variant.available;
+    if (this.stickyAddBtn) {
+      this.stickyAddBtn.disabled = !available;
+    }
+    if (this.stickyAddBtnText) {
+      this.stickyAddBtnText.textContent = available
+        ? this.i18n.addToCart || "Add to cart"
+        : this.i18n.soldOut || "Sold out";
+    }
+    if (this.stickyVariantTitleEl) {
+      const title = variant && variant.title && variant.title !== "Default Title" ? variant.title : "";
+      this.stickyVariantTitleEl.textContent = title;
+    }
+    if (this.stickyPriceEl && variant) {
+      const onSale = variant.compare_at_price && variant.compare_at_price > variant.price;
+      this.stickyPriceEl.innerHTML =
+        '<span class="valor-mp__sticky-atc-price-current">' +
+        this.formatMoney(variant.price) +
+        "</span>" +
+        (onSale
+          ? '<s class="valor-mp__sticky-atc-price-compare">' + this.formatMoney(variant.compare_at_price) + "</s>"
+          : "");
+    }
+    if (this.stickyImageEl && variant && variant.featured_media && variant.featured_media.preview_image) {
+      this.stickyImageEl.src = variant.featured_media.preview_image.src;
+      this.stickyImageEl.removeAttribute("srcset");
+      this.stickyImageEl.alt = variant.featured_media.alt || "";
     }
   }
 

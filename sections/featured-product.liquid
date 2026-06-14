@@ -28,6 +28,11 @@
     assign show_arrows = false
   endif
 
+  assign mobile_indicator = settings.gallery_mobile_indicator | default: 'counter'
+  if section.settings.mobile_indicator != 'default'
+    assign mobile_indicator = section.settings.mobile_indicator
+  endif
+
   assign gallery_priority = false
   if section.index == 1 and section.location == 'template'
     assign gallery_priority = true
@@ -48,6 +53,7 @@
           enable_lightbox: enable_lightbox,
           show_thumbnails: show_thumbnails,
           show_arrows: show_arrows,
+          mobile_indicator: mobile_indicator,
           priority: gallery_priority
         -%}
       </div>
@@ -318,6 +324,13 @@
     }
 
     .valor-fp--image-full-mobile .valor-product-media__main {
+      width: 100vw;
+      max-width: 100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+    }
+
+    .valor-fp--image-full-mobile .valor-product-media__progress {
       width: 100vw;
       max-width: 100vw;
       margin-left: calc(50% - 50vw);
@@ -1121,6 +1134,17 @@
         { "value": "default", "label": "Use theme default" },
         { "value": "on", "label": "On" },
         { "value": "off", "label": "Off" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "select",
+      "id": "mobile_indicator",
+      "label": "Mobile gallery indicator",
+      "options": [
+        { "value": "default", "label": "Use theme default" },
+        { "value": "counter", "label": "Counter" },
+        { "value": "progress", "label": "Progress line" }
       ],
       "default": "default"
     },

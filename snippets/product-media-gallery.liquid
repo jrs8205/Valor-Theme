@@ -10,6 +10,8 @@
     enable_lightbox   {Boolean}  optional (default: settings.gallery_enable_lightbox)
     show_thumbnails   {Boolean}  optional (default: settings.gallery_show_thumbnails)
     show_arrows       {Boolean}  optional (default: settings.gallery_show_arrows)
+    mobile_indicator  {String}   optional 'counter' | 'progress' (default: settings.gallery_mobile_indicator)
+    desktop_layout    {String}   optional 'single' | 'stacked' (default 'single')
     media_fit         {String}   optional 'cover' | 'contain' (default 'cover')
     priority          {Boolean}  optional eager-load and prioritize the active main image
 
@@ -33,29 +35,36 @@
   if show_arrows == null
     assign show_arrows = settings.gallery_show_arrows
   endif
+  assign mobile_indicator = mobile_indicator | default: settings.gallery_mobile_indicator | default: 'counter'
+  assign desktop_layout = desktop_layout | default: 'single'
   if priority == null
     assign priority = false
   endif
 
   assign arrow_size = settings.gallery_arrow_size | default: 40
+  assign active_media_index = 0
 -%}
 
 <div
   is="valor-product-media"
-  class="valor-product-media valor-product-media--{{ aspect }} valor-product-media--fit-{{ media_fit }}{% unless enable_lightbox %} valor-product-media--no-lightbox{% endunless %}"
+  class="valor-product-media valor-product-media--{{ aspect }} valor-product-media--fit-{{ media_fit }} valor-product-media--desktop-layout-{{ desktop_layout }} valor-product-media--mobile-indicator-{{ mobile_indicator }}{% unless enable_lightbox %} valor-product-media--no-lightbox{% endunless %}"
   data-section-id="{{ section_id }}"
   data-lightbox-enabled="{{ enable_lightbox }}"
+  data-desktop-layout="{{ desktop_layout }}"
+  data-mobile-indicator="{{ mobile_indicator }}"
   style="--gallery-nav-size: {{ arrow_size }}px;"
 >
   {%- if product.media.size > 0 -%}
-    <div class="valor-product-media__main">
+    <div id="ProductMediaMain-{{ section_id }}" class="valor-product-media__main">
       {%- for media in product.media -%}
         {%- assign img = media.preview_image -%}
         {%- assign is_active = false -%}
         {%- if featured_media and media.id == featured_media.id -%}
           {%- assign is_active = true -%}
+          {%- assign active_media_index = forloop.index0 -%}
         {%- elsif featured_media == null and forloop.first -%}
           {%- assign is_active = true -%}
+          {%- assign active_media_index = forloop.index0 -%}
         {%- endif -%}
         <button
           type="button"
@@ -145,6 +154,94 @@
         <div class="valor-product-media__counter" data-gallery-counter aria-live="polite"></div>
       {%- endif -%}
     </div>
+
+    {%- if desktop_layout == 'stacked' -%}
+      <div
+        class="valor-product-media__desktop-grid"
+        aria-label="{{ 'accessibility.product_media_slides' | t | default: 'Product media slides' }}"
+      >
+        {%- for media in product.media -%}
+          {%- liquid
+            assign img = media.preview_image
+            assign is_wide = false
+            assign grid_modulo = forloop.index0 | modulo: 3
+            if grid_modulo == 0
+              assign is_wide = true
+            endif
+          -%}
+          <button
+            type="button"
+            class="valor-product-media__desktop-grid-item{% if is_wide %} valor-product-media__desktop-grid-item--wide{% endif %}"
+            data-gallery-grid-item
+            data-media-id="{{ media.id }}"
+            data-media-index="{{ forloop.index0 }}"
+            aria-label="{{ 'accessibility.open_image' | t | default: 'Open image' }} {{ forloop.index }}"
+          >
+            <img
+              src="{{ img | image_url: width: 900 }}"
+              srcset="{{ img | image_url: width: 500 }} 500w, {{ img | image_url: width: 900 }} 900w, {{ img | image_url: width: 1300 }} 1300w, {{ img | image_url: width: 1800 }} 1800w"
+              sizes="(min-width: 1200px) 42vw, (min-width: 990px) 50vw, 100vw"
+              alt="{{ img.alt | escape }}"
+              width="{{ img.width }}"
+              height="{{ img.height }}"
+              loading="{% if priority and forloop.first %}eager{% else %}lazy{% endif %}"
+              {%- if priority and forloop.first %}
+                fetchpriority="high"
+              {% endif -%}
+            >
+            <span class="valor-product-media__zoom-hint" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                focusable="false"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <line x1="11" y1="8" x2="11" y2="14"></line>
+                <line x1="8" y1="11" x2="14" y2="11"></line>
+              </svg>
+            </span>
+          </button>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    {%- if product.media.size > 1 -%}
+      {%- liquid
+        assign progress_width = 100.0 | divided_by: product.media.size
+        assign progress_left = active_media_index | times: progress_width
+      -%}
+      <fieldset
+        class="valor-product-media__progress"
+        data-gallery-progress
+        aria-controls="ProductMediaMain-{{ section_id }}"
+        style="--gallery-progress-width: {{ progress_width }}%; --gallery-progress-left: {{ progress_left }}%;"
+      >
+        <legend class="visually-hidden">
+          {{- 'accessibility.product_media_slides' | t | default: 'Product media slides' -}}
+        </legend>
+        <span class="valor-product-media__progress-indicator" aria-hidden="true"></span>
+        {%- for media in product.media -%}
+          {%- assign is_active = false -%}
+          {%- if forloop.index0 == active_media_index -%}
+            {%- assign is_active = true -%}
+          {%- endif -%}
+          <button
+            type="button"
+            class="valor-product-media__progress-button"
+            data-gallery-progress-button
+            data-media-id="{{ media.id }}"
+            data-media-index="{{ forloop.index0 }}"
+            aria-current="{% if is_active %}true{% else %}false{% endif %}"
+            aria-label="{{ 'accessibility.go_to_slide' | t: number: forloop.index | default: 'Go to slide' }}"
+          ></button>
+        {%- endfor -%}
+      </fieldset>
+    {%- endif -%}
 
     {%- if product.media.size > 1 and show_thumbnails -%}
       <div class="valor-product-media__thumbs-wrap">

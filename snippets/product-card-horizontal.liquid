@@ -26,9 +26,11 @@
         srcset="
           {{ product.featured_media | image_url: width: 80 }}  80w,
           {{ product.featured_media | image_url: width: 160 }} 160w,
-          {{ product.featured_media | image_url: width: 240 }} 240w
+          {{ product.featured_media | image_url: width: 240 }} 240w,
+          {{ product.featured_media | image_url: width: 320 }} 320w,
+          {{ product.featured_media | image_url: width: 480 }} 480w
         "
-        sizes="80px"
+        sizes="(max-width: 749px) 45vw, 80px"
         alt="{{ product.featured_media.alt | default: product.title | escape }}"
         loading="lazy"
         width="80"
