@@ -1,18 +1,23 @@
 {%- comment -%}
   Renders the SKU of the currently selected variant.
 
-  Accepts:
-    variant   {Variant}  required
-    block     {Block}    required — for settings.text_style and shopify_attributes
+  The <p> always renders (carrying a stable, section-scoped id and `hidden`
+  when there's no SKU) so the variant Section-Rendering swap always has a
+  destination element to update.
 
-  Hidden when the variant has no SKU.
+  Accepts:
+    variant       {Variant}  required
+    block         {Block}    required — for settings.text_style and shopify_attributes
+    section_id    {String}   optional — for the section-scoped fragment id
+    class_prefix  {String}   optional — 'valor-mp' (default) or 'valor-fp'
 {%- endcomment -%}
 
-{%- if variant.sku != blank -%}
-  <p
-    class="valor-mp__sku valor-mp__sku--{{ block.settings.text_style }}"
-    {{ block.shopify_attributes }}
-  >
-    {{ 'product.sku' | t }}: {{ variant.sku }}
-  </p>
-{%- endif -%}
+{%- assign prefix = class_prefix | default: 'valor-mp' -%}
+<p
+  id="ProductSku-{{ section_id }}"
+  class="{{ prefix }}__sku {{ prefix }}__sku--{{ block.settings.text_style }}"
+  {% if variant.sku == blank %}hidden{% endif %}
+  {{ block.shopify_attributes }}
+>
+  {%- if variant.sku != blank -%}{{ 'product.sku' | t }}: {{ variant.sku }}{%- endif -%}
+</p>

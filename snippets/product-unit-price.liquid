@@ -5,6 +5,7 @@
     variant    {Variant}  optional
     line_item  {LineItem} optional
     class_name {String}   optional
+    wrapper_id {String}   optional — section-scoped id for the variant render swap
 {%- endcomment -%}
 
 {%- liquid
@@ -21,6 +22,7 @@
 -%}
 
 <p
+  {% if wrapper_id != blank %}id="{{ wrapper_id }}"{% endif %}
   class="{{ unit_price_class }}"
   data-unit-price-wrapper
   {% unless has_unit_price %}

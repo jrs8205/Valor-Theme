@@ -1,43 +1,58 @@
 {%- comment -%}
   Renders product price (current + compare-at + sale badge + unit price + tax note).
 
+  The price div carries a stable, section-scoped id so the variant
+  Section-Rendering swap (product-info.js) can replace its innerHTML on
+  variant change — Liquid stays the single source of truth for money
+  formatting (no client-side formatMoney).
+
   Accepts:
-    variant   {Variant}  required — the currently selected variant
-    block     {Block}    optional — used for shopify_attributes
+    variant       {Variant}  required — the currently selected variant
+    block         {Block}    optional — used for shopify_attributes
+    section_id    {String}   optional — for the section-scoped fragment id
+    class_prefix  {String}   optional — 'valor-mp' (default) or 'valor-fp'
 
   Used by:
     sections/main-product.liquid
-    (future) sections/featured-product.liquid
+    sections/featured-product.liquid
 {%- endcomment -%}
 
-{%- assign attrs = '' -%}
-{%- assign price_font_size = 24 -%}
-{%- if block -%}
-  {%- assign attrs = block.shopify_attributes -%}
-  {%- assign price_font_size = block.settings.price_font_size | default: 24 -%}
-{%- endif -%}
-{%- assign compare_price_font_size = price_font_size | times: 0.75 | round -%}
+{%- liquid
+  assign prefix = class_prefix | default: 'valor-mp'
+  assign attrs = ''
+  assign price_font_size = 24
+  if block
+    assign attrs = block.shopify_attributes
+    assign price_font_size = block.settings.price_font_size | default: 24
+  endif
+  assign compare_price_font_size = price_font_size | times: 0.75 | round
+-%}
 
 <div
-  class="valor-mp__price"
+  id="ProductPrice-{{ section_id }}"
+  class="{{ prefix }}__price"
   style="--valor-product-price-size: {{ price_font_size }}px; --valor-product-compare-price-size: {{ compare_price_font_size }}px;"
   {{ attrs }}
 >
   {%- if variant.compare_at_price > variant.price -%}
-    <span class="valor-mp__price-current valor-mp__price-current--sale">
+    <span class="{{ prefix }}__price-current {{ prefix }}__price-current--sale">
       {{- variant.price | money -}}
     </span>
-    <s class="valor-mp__price-compare">
+    <s class="{{ prefix }}__price-compare">
       {{- variant.compare_at_price | money -}}
     </s>
-    <span class="valor-mp__price-badge">{{ 'product.sale' | t }}</span>
+    <span class="{{ prefix }}__price-badge">{{ 'product.sale' | t }}</span>
   {%- else -%}
-    <span class="valor-mp__price-current">
+    <span class="{{ prefix }}__price-current">
       {{- variant.price | money -}}
     </span>
   {%- endif -%}
 </div>
-{%- render 'product-unit-price', variant: variant, class_name: 'valor-mp__unit-price' -%}
+{%- render 'product-unit-price',
+  variant: variant,
+  class_name: prefix | append: '__unit-price',
+  wrapper_id: 'ProductUnitPrice-' | append: section_id
+-%}
 {%- if cart.taxes_included -%}
-  <p class="valor-mp__tax">{{ 'product.include_taxes' | t }}</p>
+  <p class="{{ prefix }}__tax">{{ 'product.include_taxes' | t }}</p>
 {%- endif -%}

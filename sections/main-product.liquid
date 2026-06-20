@@ -170,7 +170,7 @@
             </h1>
 
           {%- when 'price' -%}
-            {%- render 'product-price', variant: current_variant, block: block -%}
+            {%- render 'product-price', variant: current_variant, block: block, section_id: section.id -%}
 
           {%- when 'payment_terms' -%}
             {%- assign payment_terms_form_id = 'payment-terms-'
@@ -186,10 +186,10 @@
             -%}
 
           {%- when 'sku' -%}
-            {%- render 'product-sku', variant: current_variant, block: block -%}
+            {%- render 'product-sku', variant: current_variant, block: block, section_id: section.id -%}
 
           {%- when 'inventory' -%}
-            {%- render 'product-inventory', variant: current_variant, block: block -%}
+            {%- render 'product-inventory', variant: current_variant, block: block, section_id: section.id -%}
 
           {%- when 'variant_picker' -%}
             {%- render 'product-variant-picker',
@@ -303,7 +303,7 @@
         </div>
 
         <div class="valor-mp__sticky-atc-actions">
-          <div class="valor-mp__sticky-atc-price" data-sticky-price>
+          <div class="valor-mp__sticky-atc-price" id="StickyPrice-{{ section.id }}" data-sticky-price>
             <span class="valor-mp__sticky-atc-price-current">{{ current_variant.price | money }}</span>
             {%- if current_variant.compare_at_price > current_variant.price -%}
               <s class="valor-mp__sticky-atc-price-compare">{{ current_variant.compare_at_price | money }}</s>
