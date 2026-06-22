@@ -234,8 +234,8 @@
   position: relative;
 }
 .valor-card__swatch.is-active {
-  outline: 1.5px solid var(--color-foreground);
-  outline-offset: 2px;
+  border-color: var(--color-background);
+  box-shadow: 0 0 0 2px var(--color-foreground);
 }
 .valor-card__swatch.is-unavailable {
   opacity: 0.48;

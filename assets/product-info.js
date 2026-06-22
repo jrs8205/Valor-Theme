@@ -269,32 +269,32 @@ class ValorProductInfo extends HTMLElement {
      find the matching variant by comparing each option position with
      variant.options array. */
   getCurrentOptions() {
-    const opts = [];
-    if (this.optionInputs.length) {
-      const checked = {};
-      this.optionInputs.forEach(function (i) {
-        if (i.checked) {
-          const pos = parseInt(i.dataset.optionPosition, 10);
-          checked[pos] = i.value;
-        }
+    // Collect every option's selected value keyed by its 1-based option
+    // position, from BOTH radio inputs (pills / swatches / size styles) and
+    // <select> dropdowns, then return them ordered by position. Keying by
+    // position is essential when a product MIXES render styles across its
+    // options — e.g. picker_style "dropdown" combined with a minimal/boxed
+    // size, which renders the colour as a <select> (position 1) and the size
+    // as radios (position 2). Concatenating inputs-then-selects would yield
+    // [size, colour] and make findVariant() fail (no match → every option
+    // marked sold out, gallery image stuck, add-to-cart disabled).
+    const byPosition = {};
+    this.optionInputs.forEach(function (i) {
+      if (i.checked) {
+        byPosition[parseInt(i.dataset.optionPosition, 10)] = i.value;
+      }
+    });
+    this.optionSelects.forEach(function (s) {
+      byPosition[parseInt(s.dataset.optionPosition, 10)] = s.value;
+    });
+    return Object.keys(byPosition)
+      .map(Number)
+      .sort(function (a, b) {
+        return a - b;
+      })
+      .map(function (pos) {
+        return byPosition[pos];
       });
-      Object.keys(checked)
-        .sort()
-        .forEach(function (pos) {
-          opts.push(checked[pos]);
-        });
-    }
-    if (this.optionSelects.length) {
-      this.optionSelects
-        .slice()
-        .sort(function (a, b) {
-          return parseInt(a.dataset.optionPosition, 10) - parseInt(b.dataset.optionPosition, 10);
-        })
-        .forEach(function (s) {
-          opts.push(s.value);
-        });
-    }
-    return opts;
   }
 
   findVariant(opts) {
