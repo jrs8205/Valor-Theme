@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "1.6.1",
+    "theme_version": "1.6.2",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -370,7 +370,7 @@
           { "value": "square", "label": "Square" }
         ],
         "default": "circle",
-        "visible_if": "{{ settings.product_picker_style == 'swatches' }}"
+        "info": "Used when Picker style is set to Swatches (here or per section)."
       },
       {
         "type": "range",
@@ -381,7 +381,18 @@
         "step": 2,
         "unit": "px",
         "default": 36,
-        "visible_if": "{{ settings.product_picker_style == 'swatches' }}"
+        "info": "Size of the variant-picker swatches on the product page and Featured product section. A section whose Swatch size is set to 0 inherits this value."
+      },
+      {
+        "type": "range",
+        "id": "product_card_swatch_size",
+        "label": "Card swatch size",
+        "min": 12,
+        "max": 32,
+        "step": 2,
+        "unit": "px",
+        "default": 18,
+        "info": "Size of the small colour swatches shown on product cards (collection, search, and the Featured collection section). The Swatch shape above applies here too."
       },
       {
         "type": "select",

@@ -1,0 +1,77 @@
+{%- comment -%}
+  Renders the product description in one of two styles, chosen by the block's
+  Display style setting:
+    - text (default): the description shown directly, optionally truncated to a
+      word limit, with an optional "View full details" link.
+    - collapsible: a <details> row (open or closed by default) using the shared
+      .valor-mp__collapsible component, so it matches the Collapsible row block.
+
+  The collapsible style relies on the .valor-mp__collapsible styles in
+  assets/product-info.css, which both main-product and featured-product load.
+
+  Accepts:
+    product       {Product} required
+    block         {Block}   required — settings: display_style, collapsible_heading,
+                            open_by_default, truncate, truncate_words,
+                            show_view_more_link; plus shopify_attributes
+    class_prefix  {String}  optional — 'valor-mp' (default) or 'valor-fp'
+{%- endcomment -%}
+
+{%- if product.description != blank -%}
+  {%- assign prefix = class_prefix | default: 'valor-mp' -%}
+  {%- if block.settings.display_style == 'collapsible' -%}
+    <details
+      class="valor-mp__collapsible"
+      {% if block.settings.open_by_default %}open{% endif %}
+      {{ block.shopify_attributes }}
+    >
+      <summary class="valor-mp__collapsible-summary">
+        <span class="valor-mp__collapsible-heading">
+          {{- block.settings.collapsible_heading | default: 'Description' | escape -}}
+        </span>
+        <svg
+          class="valor-mp__collapsible-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </summary>
+      <div class="valor-mp__collapsible-content rte">
+        {{ product.description }}
+      </div>
+    </details>
+    {%- comment -%}
+      "View full details" link below the collapsible. Only the Featured product
+      block exposes show_view_more_link (the product page omits it — the link
+      would point back to the same page), so the product page never renders it.
+    {%- endcomment -%}
+    {%- if block.settings.show_view_more_link -%}
+      <a href="{{ product.url }}" class="{{ prefix }}__description-link">
+        {{ 'product.view_full_details' | t | default: 'View full details' }} →
+      </a>
+    {%- endif -%}
+  {%- else -%}
+    <div
+      class="{{ prefix }}__description{% if block.settings.truncate %} {{ prefix }}__description--truncate{% endif %}"
+      {{ block.shopify_attributes }}
+    >
+      <div class="rte">
+        {%- if block.settings.truncate -%}
+          {{ product.description | strip_html | truncatewords: block.settings.truncate_words }}
+        {%- else -%}
+          {{ product.description }}
+        {%- endif -%}
+      </div>
+      {%- if block.settings.show_view_more_link -%}
+        <a href="{{ product.url }}" class="{{ prefix }}__description-link">
+          {{ 'product.view_full_details' | t | default: 'View full details' }} →
+        </a>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+{%- endif -%}

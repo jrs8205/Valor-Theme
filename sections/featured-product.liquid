@@ -1,3 +1,14 @@
+{%- comment -%}
+  Shared component styles (price, sku, vendor, inventory, quantity, rating,
+  share, collapsible rows, size-guide popup) live in assets/product-info.css
+  with .valor-mp__* classes. featured-product reuses those component styles for
+  the blocks it shares with the main product page; its own {% stylesheet %}
+  below only adds the featured-specific layout and the .valor-fp__* picker /
+  price overrides. product-info.css carries no layout rules, so loading it here
+  never disturbs the featured-product grid.
+{%- endcomment -%}
+{{ 'product-info.css' | asset_url | stylesheet_tag }}
+
 {%- liquid
   assign product = section.settings.product
   assign media_position = section.settings.media_position
@@ -34,6 +45,28 @@
     assign mobile_indicator = 'counter'
   endif
 
+  assign media_aspect = section.settings.media_aspect_ratio | default: 'square'
+  assign media_fit = section.settings.media_fit | default: 'cover'
+  assign desktop_gallery_layout = section.settings.desktop_gallery_layout | default: 'single'
+
+  # Inline size guide: when the resolved size option style is minimal or
+  # boxed, a popup block set to "Inline with size option" renders next to the
+  # Size label instead of as a separate block (mirrors main-product.liquid).
+  assign resolved_size_style = section.settings.size_option_style | default: settings.product_size_option_style | default: 'default'
+  assign use_inline_size_guide = false
+  if resolved_size_style == 'minimal' or resolved_size_style == 'boxed'
+    assign use_inline_size_guide = true
+  endif
+  assign inline_size_guide_block = null
+  if use_inline_size_guide
+    for candidate_block in section.blocks
+      if candidate_block.type == 'popup' and candidate_block.settings.display_style == 'inline_size'
+        assign inline_size_guide_block = candidate_block
+        break
+      endif
+    endfor
+  endif
+
   assign gallery_priority = false
   if section.index == 1 and section.location == 'template'
     assign gallery_priority = true
@@ -60,11 +93,14 @@
         {%- render 'product-media-gallery',
           product: product,
           section_id: section.id,
-          aspect: 'square',
+          aspect: media_aspect,
           enable_lightbox: enable_lightbox,
           show_thumbnails: show_thumbnails,
           show_arrows: show_arrows,
           mobile_indicator: mobile_indicator,
+          desktop_layout: desktop_gallery_layout,
+          media_fit: media_fit,
+          color_grouping: section.settings.enable_color_media_grouping,
           priority: gallery_priority
         -%}
       </div>
@@ -110,8 +146,34 @@
 
               {%- when 'vendor' -%}
                 {%- if product.vendor != blank -%}
-                  <div class="valor-fp__vendor" {{ block.shopify_attributes }}>{{ product.vendor | escape }}</div>
+                  <p
+                    class="valor-fp__vendor valor-fp__vendor--{{ block.settings.text_style }}"
+                    {{ block.shopify_attributes }}
+                  >
+                    {%- if block.settings.show_as_link -%}
+                      <a href="{{ product.vendor | url_for_vendor }}">{{ product.vendor }}</a>
+                    {%- else -%}
+                      {{ product.vendor }}
+                    {%- endif -%}
+                  </p>
                 {%- endif -%}
+
+              {%- when 'text' -%}
+                {%- if block.settings.text != blank -%}
+                  <p
+                    class="valor-mp__text valor-mp__text--{{ block.settings.text_style }}"
+                    {{ block.shopify_attributes }}
+                  >
+                    {{- block.settings.text -}}
+                  </p>
+                {%- endif -%}
+
+              {%- when 'inventory' -%}
+                {%- render 'product-inventory',
+                  variant: current_variant,
+                  block: block,
+                  section_id: section.id
+                -%}
 
               {%- when 'sku' -%}
                 {%- render 'product-sku',
@@ -138,25 +200,7 @@
                 -%}
 
               {%- when 'description' -%}
-                {%- if product.description != blank -%}
-                  <div
-                    class="valor-fp__description{% if block.settings.truncate %} valor-fp__description--truncate{% endif %}"
-                    {{ block.shopify_attributes }}
-                  >
-                    <div class="rte">
-                      {%- if block.settings.truncate -%}
-                        {{ product.description | strip_html | truncatewords: block.settings.truncate_words }}
-                      {%- else -%}
-                        {{ product.description }}
-                      {%- endif -%}
-                    </div>
-                    {%- if block.settings.show_view_more_link -%}
-                      <a href="{{ product.url }}" class="valor-fp__description-link">
-                        {{ 'product.view_full_details' | t | default: 'View full details' }} →
-                      </a>
-                    {%- endif -%}
-                  </div>
-                {%- endif -%}
+                {%- render 'product-description', product: product, block: block, class_prefix: 'valor-fp' -%}
 
               {%- when 'custom_text' -%}
                 {%- if block.settings.text != blank -%}
@@ -181,54 +225,18 @@
                   picker_style: variant_style,
                   swatch_shape: section.settings.swatch_shape,
                   swatch_size: section.settings.swatch_size,
-                  size_option_style: section.settings.size_option_style
+                  size_option_style: section.settings.size_option_style,
+                  size_guide_block: inline_size_guide_block
                 -%}
 
               {%- when 'quantity' -%}
-                {%- if product.available -%}
-                  {%- assign cart_qty = cart | item_count_for_variant: current_variant.id -%}
-                  <div class="valor-fp__quantity" {{ block.shopify_attributes }}>
-                    <label class="valor-fp__quantity-label" for="qty-{{ section.id }}">
-                      {{- 'product.quantity_label' | t | default: 'Quantity' -}}
-                      {%- if cart_qty > 0 -%}
-                        <span class="valor-fp__quantity-in-cart" data-fp-cart-qty>
-                          ({{ cart_qty }}
-                          {{ 'product.in_cart' | t | default: 'in cart' }})
-                        </span>
-                      {%- else -%}
-                        <span class="valor-fp__quantity-in-cart" data-fp-cart-qty hidden></span>
-                      {%- endif -%}
-                    </label>
-                    <div class="valor-fp__quantity-input">
-                      <button
-                        type="button"
-                        class="valor-fp__quantity-btn"
-                        data-qty-action="decrease"
-                        data-section-id="{{ section.id }}"
-                        aria-label="{{ 'product.quantity_decrease' | t }}"
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        id="qty-{{ section.id }}"
-                        name="quantity"
-                        value="1"
-                        min="1"
-                        class="valor-fp__quantity-number"
-                      >
-                      <button
-                        type="button"
-                        class="valor-fp__quantity-btn"
-                        data-qty-action="increase"
-                        data-section-id="{{ section.id }}"
-                        aria-label="{{ 'product.quantity_increase' | t }}"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                {%- endif -%}
+                {%- render 'product-quantity',
+                  product: product,
+                  variant: current_variant,
+                  block: block,
+                  section_id: section.id,
+                  form_id: product_form_id
+                -%}
 
               {%- when 'buy_buttons' -%}
                 {%- liquid
@@ -270,6 +278,26 @@
 
               {%- when 'pickup_availability' -%}
                 {%- render 'product-pickup-availability', variant: current_variant, block: block, section: section -%}
+
+              {%- when 'rating' -%}
+                {%- render 'product-rating', product: product, block: block -%}
+
+              {%- when 'share' -%}
+                {%- render 'product-share', block: block -%}
+
+              {%- when 'collapsible_tab' -%}
+                {%- render 'product-collapsible-tab', block: block -%}
+
+              {%- when 'popup' -%}
+                {%- liquid
+                  assign render_popup_block = true
+                  if inline_size_guide_block != blank and block.settings.display_style == 'inline_size'
+                    assign render_popup_block = false
+                  endif
+                -%}
+                {%- if render_popup_block -%}
+                  {%- render 'product-popup', block: block, section_id: section.id -%}
+                {%- endif -%}
             {%- endcase -%}
           {%- endfor -%}
           {%- comment -%}
@@ -377,14 +405,32 @@
     text-decoration: none;
   }
 
-  /* Vendor */
+  /* Vendor — base stays neutral; the text_style modifier (default uppercase)
+     controls the visual treatment so it matches the main product page's Vendor
+     block. The negative margin keeps the vendor tight to the title. */
   .valor-fp__vendor {
+    font-size: 0.9375rem;
+    color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
+    margin-bottom: -0.875rem;
+  }
+  .valor-fp__vendor a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .valor-fp__vendor a:hover {
+    text-decoration: underline;
+  }
+  .valor-fp__vendor--uppercase {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 500;
     color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
-    margin-bottom: -0.875rem;
+  }
+  .valor-fp__vendor--subtitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-foreground);
   }
 
   /* SKU */
@@ -398,6 +444,15 @@
   .valor-fp__sku-label {
     font-weight: 500;
   }
+  .valor-fp__sku--uppercase {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .valor-fp__sku--subtitle {
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
 
   /* Price */
   .valor-fp__price {
@@ -405,7 +460,10 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.625rem;
-    font-size: 1.125rem;
+    /* Honors the Price block's "Price font size" setting (set by
+       product-price.liquid via --valor-product-price-size); falls back to the
+       featured default when no block setting is present. */
+    font-size: var(--valor-product-price-size, 1.125rem);
     font-weight: 500;
   }
   .valor-fp__price-current--sale {
@@ -413,7 +471,7 @@
   }
   .valor-fp__price-compare {
     color: color-mix(in srgb, var(--color-foreground) 60%, transparent);
-    font-size: 1rem;
+    font-size: var(--valor-product-compare-price-size, 1rem);
   }
   .valor-fp__price-badge {
     background-color: var(--color-foreground);
@@ -600,6 +658,55 @@
     cursor: not-allowed;
   }
 
+  /* Boxed (segmented) size selector — mirrors the main product page
+     (.valor-mp__option-*--size-boxed in product-info.css). A full-width row of
+     equal cells; the 1px dividers are the grid gap revealing the container
+     background, so they survive wrapping. Selection, focus and sold-out reuse
+     the shared .valor-fp__option-input states. */
+  .valor-fp__option-label--size-boxed {
+    width: 100%;
+  }
+  .valor-fp__option-values--size-boxed {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(3rem, 1fr));
+    gap: 1px;
+    background-color: var(--valor-border-default);
+    border: 1px solid var(--valor-border-strong);
+    border-radius: var(--style-border-radius-inputs, 4px);
+    overflow: hidden;
+  }
+  .valor-fp__option-size-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 0.5rem;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .valor-fp__option-input:checked + .valor-fp__option-size-box {
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+  }
+  .valor-fp__option-input:focus-visible + .valor-fp__option-size-box {
+    /* Inset so the ring isn't clipped by the container's overflow:hidden */
+    outline: 2px solid var(--color-foreground);
+    outline-offset: -3px;
+  }
+  .valor-fp__option-size-box[data-disabled='true'] {
+    color: color-mix(in srgb, var(--color-foreground) 35%, transparent);
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+
   /* Swatches */
   .valor-fp__option-values--swatches {
     display: flex;
@@ -696,62 +803,10 @@
     border-color: var(--color-foreground);
   }
 
-  /* Quantity */
-  .valor-fp__quantity-label {
-    display: block;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.02em;
-  }
-  .valor-fp__quantity-in-cart {
-    margin-left: 0.375rem;
-    font-weight: var(--font-body--weight);
-    color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
-  }
-  .valor-fp__quantity-input {
-    display: inline-flex;
-    align-items: stretch;
-    border: 1.5px solid var(--valor-border-strong);
-    border-radius: var(--style-border-radius-inputs, 4px);
-    overflow: hidden;
-    width: fit-content;
-  }
-  .valor-fp__quantity-btn {
-    width: 44px;
-    height: 44px;
-    border: none;
-    background: transparent;
-    color: var(--color-foreground);
-    font-size: 1.125rem;
-    font-weight: 500;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .valor-fp__quantity-btn:active {
-    background-color: color-mix(in srgb, var(--color-foreground) 8%, transparent);
-  }
-  .valor-fp__quantity-number {
-    width: 56px;
-    border: none;
-    border-left: 1px solid var(--valor-border-strong);
-    border-right: 1px solid var(--valor-border-strong);
-    background: transparent;
-    color: var(--color-foreground);
-    font: inherit;
-    font-size: 0.9375rem;
-    text-align: center;
-    -moz-appearance: textfield;
-  }
-  .valor-fp__quantity-number::-webkit-outer-spin-button,
-  .valor-fp__quantity-number::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  .valor-fp__quantity-number:focus {
-    outline: none;
-  }
+  /* Quantity — rendered by snippets/product-quantity.liquid using the shared
+     .valor-mp__quantity* component styles in product-info.css (so the Quantity
+     selector style setting works identically to the main product page). No
+     featured-specific quantity CSS is needed here. */
 
   /* Buy buttons — Add to cart and dynamic checkout (Shop Pay/PayPal/GPay) */
   .valor-fp__add {
@@ -828,6 +883,7 @@
   @media (prefers-reduced-motion: reduce) {
     .valor-fp__option-pill,
     .valor-fp__option-size-text,
+    .valor-fp__option-size-box,
     .valor-fp__option-swatch {
       transition: none;
     }
@@ -869,6 +925,29 @@
         { "value": "large", "label": "Large (2/3)" }
       ],
       "default": "medium"
+    },
+    {
+      "type": "select",
+      "id": "media_aspect_ratio",
+      "label": "Media aspect ratio",
+      "options": [
+        { "value": "square", "label": "Square (1:1)" },
+        { "value": "portrait", "label": "Portrait (4:5)" },
+        { "value": "adapt", "label": "Adapt to image" }
+      ],
+      "default": "square",
+      "info": "Square and Portrait crop or letterbox the image to fit. Adapt uses each image's natural aspect ratio."
+    },
+    {
+      "type": "select",
+      "id": "media_fit",
+      "label": "Media fit",
+      "options": [
+        { "value": "cover", "label": "Cover (fill, may crop)" },
+        { "value": "contain", "label": "Contain (show full image)" }
+      ],
+      "default": "cover",
+      "info": "Cover fills the frame and crops if needed. Contain shows the whole image with letterboxing. Has no visible effect with Adapt aspect ratio."
     },
     {
       "type": "select",
@@ -921,13 +1000,32 @@
     },
     {
       "type": "select",
+      "id": "desktop_gallery_layout",
+      "label": "Desktop gallery layout",
+      "options": [
+        { "value": "single", "label": "Single (main image + thumbnails)" },
+        { "value": "stacked", "label": "Stacked grid" },
+        { "value": "column", "label": "Single column (full width)" }
+      ],
+      "default": "single"
+    },
+    {
+      "type": "select",
       "id": "mobile_indicator",
       "label": "Mobile gallery indicator",
       "options": [
         { "value": "counter", "label": "Counter" },
         { "value": "progress", "label": "Progress line" }
       ],
-      "default": "counter"
+      "default": "counter",
+      "info": "Shown on mobile only. On desktop the gallery uses thumbnails and navigation arrows instead."
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_color_media_grouping",
+      "default": false,
+      "label": "Filter gallery images by color",
+      "info": "Show only the selected color's images. Name each image's ALT text to begin with the color option value (e.g. \"Pink\", \"Pink front\"). The first color shows by default. Images whose ALT text does not begin with a color show for every color. Requires a product option detected as Color."
     },
     {
       "type": "header",
@@ -1030,17 +1128,61 @@
     {
       "type": "vendor",
       "name": "Vendor",
-      "limit": 1
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "text_style",
+          "options": [
+            { "value": "body", "label": "Body" },
+            { "value": "subtitle", "label": "Subtitle" },
+            { "value": "uppercase", "label": "Uppercase" }
+          ],
+          "default": "uppercase",
+          "label": "Text style"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_as_link",
+          "default": false,
+          "label": "Link to vendor collection"
+        }
+      ]
     },
     {
       "type": "sku",
       "name": "SKU",
-      "limit": 1
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "text_style",
+          "options": [
+            { "value": "body", "label": "Body" },
+            { "value": "subtitle", "label": "Subtitle" },
+            { "value": "uppercase", "label": "Uppercase" }
+          ],
+          "default": "body",
+          "label": "Text style"
+        }
+      ]
     },
     {
       "type": "price",
       "name": "Price",
-      "limit": 1
+      "limit": 1,
+      "settings": [
+        {
+          "type": "range",
+          "id": "price_font_size",
+          "min": 12,
+          "max": 64,
+          "step": 1,
+          "unit": "px",
+          "default": 18,
+          "label": "Price font size"
+        }
+      ]
     },
     {
       "type": "payment_terms",
@@ -1084,15 +1226,182 @@
       "limit": 1
     },
     {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "default": "Text block",
+          "label": "Text"
+        },
+        {
+          "type": "select",
+          "id": "text_style",
+          "options": [
+            { "value": "body", "label": "Body" },
+            { "value": "subtitle", "label": "Subtitle" },
+            { "value": "uppercase", "label": "Uppercase" }
+          ],
+          "default": "body",
+          "label": "Text style"
+        }
+      ]
+    },
+    {
+      "type": "inventory",
+      "name": "Inventory status",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "range",
+          "id": "inventory_threshold",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "default": 10,
+          "label": "Low-stock threshold",
+          "info": "Show \"Low stock\" when inventory is at or below this number."
+        },
+        {
+          "type": "checkbox",
+          "id": "show_inventory_quantity",
+          "default": true,
+          "label": "Show exact quantity when low"
+        }
+      ]
+    },
+    {
+      "type": "rating",
+      "name": "Rating",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Reads from product.metafields.reviews.rating — works with Judge.me, Loox, Shopify Product Reviews, and other apps that follow the standard reviews metafield. The block stays hidden until reviews are available."
+        }
+      ]
+    },
+    {
+      "type": "share",
+      "name": "Share",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "share_label",
+          "default": "Share",
+          "label": "Share label"
+        }
+      ]
+    },
+    {
+      "type": "collapsible_tab",
+      "name": "Collapsible row",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Collapsible row",
+          "label": "Heading",
+          "info": "Falls back to the selected page's title if left blank."
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Row content"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "Page",
+          "info": "Use the contents of a page as a fallback for Row content. Pages are managed in Online Store → Pages."
+        }
+      ]
+    },
+    {
+      "type": "popup",
+      "name": "Pop-up",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "default": "Size guide",
+          "label": "Link text"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            { "value": "none", "label": "None" },
+            { "value": "ruler", "label": "Ruler" },
+            { "value": "info", "label": "Info" },
+            { "value": "question", "label": "Question mark" },
+            { "value": "shirt", "label": "Shirt" }
+          ],
+          "default": "ruler",
+          "label": "Icon"
+        },
+        {
+          "type": "select",
+          "id": "display_style",
+          "label": "Display style",
+          "options": [
+            { "value": "block", "label": "Separate block" },
+            { "value": "inline_size", "label": "Inline with size option" }
+          ],
+          "default": "block",
+          "info": "Inline style shows this pop-up link next to the Size option when the variant picker uses Minimal text or Boxed for size options."
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Modal content"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "Page",
+          "info": "Use the contents of a page as a fallback for Modal content."
+        }
+      ]
+    },
+    {
       "type": "description",
       "name": "Description",
       "limit": 1,
       "settings": [
         {
+          "type": "select",
+          "id": "display_style",
+          "label": "Display style",
+          "options": [
+            { "value": "text", "label": "Always visible" },
+            { "value": "collapsible", "label": "Collapsible row" }
+          ],
+          "default": "text"
+        },
+        {
+          "type": "text",
+          "id": "collapsible_heading",
+          "label": "Collapsible heading",
+          "default": "Description",
+          "visible_if": "{{ block.settings.display_style == 'collapsible' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "label": "Open by default",
+          "default": false,
+          "visible_if": "{{ block.settings.display_style == 'collapsible' }}"
+        },
+        {
           "type": "checkbox",
           "id": "truncate",
           "label": "Truncate description",
-          "default": true
+          "default": true,
+          "info": "Shortens long descriptions to the word limit below. Has no visible effect when the description already fits within the limit.",
+          "visible_if": "{{ block.settings.display_style == 'text' }}"
         },
         {
           "type": "range",
@@ -1101,13 +1410,15 @@
           "min": 10,
           "max": 100,
           "step": 5,
-          "default": 30
+          "default": 30,
+          "visible_if": "{{ block.settings.display_style == 'text' }}"
         },
         {
           "type": "checkbox",
           "id": "show_view_more_link",
           "label": "Show \"View full details\" link",
-          "default": true
+          "default": true,
+          "info": "Links to the full product page. Available in both display styles."
         }
       ]
     },

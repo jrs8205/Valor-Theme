@@ -18,6 +18,8 @@
 
   assign show_quick_add = settings.show_quick_add
   assign show_card_swatches = settings.show_color_swatches
+  assign card_swatch_size = settings.product_card_swatch_size | default: 18
+  assign card_swatch_shape = settings.product_swatch_shape | default: 'circle'
   assign show_card_rating = settings.show_product_card_rating
   assign show_card_subtitle = settings.show_product_card_subtitle
   assign show_sale_percentage = settings.show_sale_percentage
@@ -211,7 +213,11 @@
     {%- endif -%}
 
     {%- if render_card_swatches -%}
-      <div class="valor-card__swatches" aria-label="{{ color_option.name | escape }}">
+      <div
+        class="valor-card__swatches valor-card__swatches--{{ card_swatch_shape }}"
+        aria-label="{{ color_option.name | escape }}"
+        style="--valor-card-swatch-size: {{ card_swatch_size }}px;"
+      >
         {%- assign selected_color = card_variant.options[color_option_index] -%}
         {%- for value in color_option.values -%}
           {%- liquid

@@ -227,11 +227,7 @@
             {%- render 'complementary-products', block: block, product: product, section_id: section.id -%}
 
           {%- when 'description' -%}
-            {%- if product.description != blank -%}
-              <div class="valor-mp__description rte" {{ block.shopify_attributes }}>
-                {{ product.description }}
-              </div>
-            {%- endif -%}
+            {%- render 'product-description', product: product, block: block -%}
 
           {%- when 'share' -%}
             {%- render 'product-share', block: block -%}
@@ -873,7 +869,37 @@
         }
       ]
     },
-    { "type": "description", "name": "Description", "limit": 1, "settings": [] },
+    {
+      "type": "description",
+      "name": "Description",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "display_style",
+          "label": "Display style",
+          "options": [
+            { "value": "text", "label": "Always visible" },
+            { "value": "collapsible", "label": "Collapsible row" }
+          ],
+          "default": "text"
+        },
+        {
+          "type": "text",
+          "id": "collapsible_heading",
+          "label": "Collapsible heading",
+          "default": "Description",
+          "visible_if": "{{ block.settings.display_style == 'collapsible' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "label": "Open by default",
+          "default": false,
+          "visible_if": "{{ block.settings.display_style == 'collapsible' }}"
+        }
+      ]
+    },
     {
       "type": "share",
       "name": "Share",

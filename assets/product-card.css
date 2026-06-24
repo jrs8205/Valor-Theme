@@ -222,8 +222,11 @@
   margin-top: 0.625rem;
 }
 .valor-card__swatch {
-  width: 1.125rem;
-  height: 1.125rem;
+  /* Size comes from the global "Card swatch size" setting (Theme settings >
+     Products), set as --valor-card-swatch-size on the .valor-card__swatches
+     wrapper; falls back to the historic 1.125rem when the setting is absent. */
+  width: var(--valor-card-swatch-size, 1.125rem);
+  height: var(--valor-card-swatch-size, 1.125rem);
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--color-foreground) 28%, transparent);
   background-color: var(--valor-card-swatch-color, transparent);
@@ -232,6 +235,11 @@
   background-position: center;
   box-shadow: inset 0 0 0 2px var(--color-background);
   position: relative;
+}
+/* Square swatches follow the global "Swatch shape" setting; circle is the
+   default (border-radius above). */
+.valor-card__swatches--square .valor-card__swatch {
+  border-radius: var(--style-border-radius-inputs, 4px);
 }
 .valor-card__swatch.is-active {
   border-color: var(--color-background);

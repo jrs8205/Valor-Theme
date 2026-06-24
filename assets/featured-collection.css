@@ -31,6 +31,15 @@
 .valor-featured-collection__inner--full-width {
   max-width: none;
 }
+/* Full width: escape the theme's centered content column so the section
+   spans the full grid. The theme shell pins every section child to the
+   center column (.shopify-section > * { grid-column: 2 }), so removing the
+   inner max-width alone can't widen past that column — the section itself
+   must opt into the full-width grid track. The inner keeps its horizontal
+   padding, so content still has comfortable gutters at the viewport edges. */
+.shopify-section > .valor-featured-collection--full-width {
+  grid-column: 1 / -1;
+}
 
 /* Header row */
 .valor-featured-collection__header {
@@ -81,7 +90,12 @@
 /* Grid */
 .valor-featured-collection__grid {
   display: grid;
-  gap: var(--valor-grid-gap, 16px);
+  /* Columns use the merchant-set "Gap between cards" value (which may be 0
+     for an edge-to-edge look). Rows are decoupled and get a comfortable
+     minimum so the card's bottom content (e.g. colour swatches) never sits
+     flush against the row below. */
+  column-gap: var(--valor-grid-gap, 16px);
+  row-gap: max(var(--valor-grid-gap, 16px), 1.75rem);
 }
 .valor-featured-collection__grid--cols-2 {
   grid-template-columns: repeat(2, 1fr);
@@ -114,7 +128,8 @@
   /* On mobile, the gap can be tighter than desktop. Falls back to the
      desktop value, then to 16px, if the mobile setting is unset. */
   .valor-featured-collection__grid {
-    gap: var(--valor-grid-gap-mobile, var(--valor-grid-gap, 16px));
+    column-gap: var(--valor-grid-gap-mobile, var(--valor-grid-gap, 16px));
+    row-gap: max(var(--valor-grid-gap-mobile, var(--valor-grid-gap, 16px)), 1.5rem);
   }
   .valor-featured-collection__grid--mobile-1 {
     grid-template-columns: 1fr;
