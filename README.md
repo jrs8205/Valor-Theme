@@ -6,12 +6,13 @@ accessories, and other visual product brands.
 - Official website: [valortheme.com](https://valortheme.com)
 - Live demo: [valor-theme.myshopify.com](https://valor-theme.myshopify.com)
 - Documentation: [valortheme.com/docs.html](https://valortheme.com/docs.html)
+- Wiki: [github.com/jrs8205/Valor-Theme/wiki](https://github.com/jrs8205/Valor-Theme/wiki)
 - Changelog: [valortheme.com/changelog.html](https://valortheme.com/changelog.html)
 - License: [Valor Free License](https://valortheme.com/license.html)
 
 ## Current Version
 
-The current release is `1.7.0`.
+The current release is `1.7.1`.
 
 Downloadable release ZIPs are published from the official website. This
 repository contains the theme source so issues, fixes, and improvements can be
@@ -44,14 +45,19 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Predictive search.
 - Product cards with in-place colour swatch swap: click a swatch to update the
   card image and price without leaving the page.
+- Colour swatches in the product page variant picker and collection filters,
+  with theme-wide picker and swatch defaults plus per-section overrides.
 - Product media gallery with lightbox support.
-- Product page blocks for title, price, variant picker, quantity, buy buttons,
-  description, share, rating, complementary products, custom Liquid, pickup
-  availability, payment terms, unit price, and gift card recipient fields.
-- Homepage sections including image banner, featured collection, collection
-  list, image with text, icon columns, rich text, newsletter, collapsible
-  content, marquee, testimonials, logo list, custom Liquid, slideshow, promo
-  grid, and shop the look.
+- Product page blocks for title, vendor, SKU, price, unit price, variant
+  picker, quantity, buy buttons with gift card recipient fields, inventory
+  status, description, collapsible rows, popups, text, share, rating,
+  complementary products, custom Liquid, pickup availability, payment terms,
+  and app blocks.
+- Homepage sections including image banner, slideshow, featured collection,
+  featured product, collection list, image with text, icon columns, rich text,
+  newsletter, collapsible content, marquee, testimonials, logo list, countdown
+  timer, video, promo grid, shop the look, contact form, recently viewed
+  products, and custom Liquid.
 - Theme Editor controls for typography, colors, buttons, sections, and custom
   CSS.
 
