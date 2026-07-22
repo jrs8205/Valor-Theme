@@ -9,6 +9,8 @@
  * ============================================================================ */
 
 .valor-contact-form {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
   padding-top: var(--valor-section-padding-top, 36px);
   padding-bottom: var(--valor-section-padding-bottom, 36px);
 }

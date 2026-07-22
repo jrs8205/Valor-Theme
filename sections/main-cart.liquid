@@ -95,7 +95,7 @@
 -%}
 
 <valor-cart-page
-  class="valor-cart valor-section valor-cart--heading-align-{{ section.settings.heading_alignment }} valor-cart--summary-align-{{ section.settings.summary_text_alignment }}{% if cart_is_empty %} valor-cart--empty{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-cart valor-section valor-cart--heading-align-{{ section.settings.heading_alignment }} valor-cart--summary-align-{{ section.settings.summary_text_alignment }}{% if cart_is_empty %} valor-cart--empty{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
   data-section-id="{{ section.id }}"
   data-section-type="main-cart"
@@ -557,6 +557,12 @@
   "tag": "section",
   "class": "valor-section-wrapper valor-section-wrapper--cart",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "text",
       "id": "heading",

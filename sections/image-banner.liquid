@@ -25,7 +25,7 @@
   endif
 -%}
 <section
-  class="valor-hero valor-hero--{{ image_height }}{% if section.settings.show_text_below %} valor-hero--text-below-mobile{% endif %}{% if section.settings.full_width_desktop or use_transparent_header_trigger %} valor-hero--full-desktop{% endif %}{% if section.settings.full_width_mobile or use_transparent_header_trigger %} valor-hero--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-hero valor-hero--{{ image_height }}{% if section.settings.show_text_below %} valor-hero--text-below-mobile{% endif %}{% if section.settings.full_width_desktop or use_transparent_header_trigger %} valor-hero--full-desktop{% endif %}{% if section.settings.full_width_mobile or use_transparent_header_trigger %} valor-hero--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}"
   style="--valor-hero-overlay: {{ section.settings.image_overlay_opacity | times: 0.01 }};"
   {% if use_transparent_header_trigger %}
     data-transparent-header-behavior="{{ section.settings.transparent_header_behavior | default: 'always' }}"
@@ -145,6 +145,7 @@
 {% stylesheet %}
   .valor-hero {
     position: relative;
+    background-color: var(--color-background);
     width: 100%;
     overflow: hidden;
     isolation: isolate;
@@ -437,6 +438,12 @@
   "tag": "section",
   "class": "valor-section-image-banner",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "image_picker",
       "id": "image_desktop",

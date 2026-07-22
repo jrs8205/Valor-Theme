@@ -16,7 +16,7 @@
 {{ 'page-layout.css' | asset_url | stylesheet_tag }}
 
 <article
-  class="valor-article"
+  class="color-{{ section.settings.color_scheme }} valor-article"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   {%- for block in section.blocks -%}
@@ -508,6 +508,12 @@
     "blocks": [{ "type": "featured_image" }, { "type": "title" }, { "type": "content" }, { "type": "share" }]
   },
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "header",
       "content": "Section padding"

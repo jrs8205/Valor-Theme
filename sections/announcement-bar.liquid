@@ -7,7 +7,7 @@
   -%}
 
   <section
-    class="valor-announcement-bar valor-full-width{% if section.settings.show_separator %} valor-announcement-bar--separator{% endif %}"
+    class="color-{{ section.settings.color_scheme }} valor-announcement-bar valor-full-width{% if section.settings.show_separator %} valor-announcement-bar--separator{% endif %}"
     role="region"
     aria-label="{{ 'sections.announcement_bar.aria_label' | t }}"
     style="
@@ -88,7 +88,7 @@
 
 {% stylesheet %}
   .valor-announcement-bar {
-    background-color: var(--announcement-bg, transparent);
+    background-color: var(--announcement-bg, var(--color-background));
     color: var(--announcement-fg, inherit);
   }
   .valor-announcement-bar--separator {
@@ -351,6 +351,12 @@
   "name": "Announcement bar",
   "max_blocks": 3,
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "color",
       "id": "background_color",

@@ -12,7 +12,7 @@ accessories, and other visual product brands.
 
 ## Current Version
 
-The current release is `1.7.1`.
+The current release is `2.0.0`.
 
 Downloadable release ZIPs are published from the official website. This
 repository contains the theme source so issues, fixes, and improvements can be
@@ -38,6 +38,9 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 ## Features
 
 - Complete Shopify Online Store 2.0 theme structure.
+- Color schemes: reusable background/text schemes defined in Theme settings and
+  applied per section. Four ship out of the box (light, subtle, dark, accent);
+  borders and button fallbacks derive from the chosen scheme automatically.
 - Product, collection, search, cart, blog, article, policy, password, and gift
   card templates.
 - Cart drawer with discounts and order notes.
@@ -58,8 +61,11 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
   newsletter, collapsible content, marquee, testimonials, logo list, countdown
   timer, video, promo grid, shop the look, contact form, recently viewed
   products, and custom Liquid.
-- Theme Editor controls for typography, colors, buttons, sections, and custom
-  CSS.
+- Video section with hero-style overlay content: heading, subheading, and
+  buttons over the video, with position, text box, and darkening controls plus
+  a one-click "Video hero" preset.
+- Theme Editor controls for typography, color schemes, buttons, sections, and
+  custom CSS.
 
 ## Development
 

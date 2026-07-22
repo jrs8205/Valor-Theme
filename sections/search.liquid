@@ -117,7 +117,7 @@
 -%}
 
 <valor-collection
-  class="valor-search valor-section"
+  class="color-{{ section.settings.color_scheme }} valor-search valor-section"
   data-collection-section-id="{{ section.id }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
@@ -535,6 +535,12 @@
   "tag": "section",
   "class": "valor-section-wrapper valor-section-wrapper--search",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "header",
       "content": "Header"

@@ -3,7 +3,7 @@
 -%}
 
 <section
-  class="valor-newsletter valor-newsletter--align-{{ content_alignment }}{% if section.settings.full_width %} valor-newsletter--full-width{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-newsletter valor-newsletter--align-{{ content_alignment }}{% if section.settings.full_width %} valor-newsletter--full-width{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-newsletter__inner">
@@ -208,6 +208,12 @@
   "tag": "section",
   "class": "valor-section-newsletter",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "paragraph",
       "content": "Each subscriber automatically becomes a customer profile."

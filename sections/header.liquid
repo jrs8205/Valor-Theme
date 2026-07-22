@@ -1,6 +1,6 @@
 <valor-sticky-header data-sticky-type="{{ section.settings.sticky_header_type | default: 'always' }}">
   <header
-    class="valor-header valor-header--logo-{{ section.settings.logo_position }}{% if settings.transparent_logo != blank %} valor-header--has-transparent-logo{% endif %}"
+    class="color-{{ section.settings.color_scheme }} valor-header valor-header--logo-{{ section.settings.logo_position }}{% if settings.transparent_logo != blank %} valor-header--has-transparent-logo{% endif %}"
     style="--header-logo-height: {{ settings.logo_height }}px; --header-logo-height-mobile: {{ settings.logo_height_mobile | default: 32 }}px;"
   >
     <button
@@ -2249,6 +2249,12 @@
   "name": "t:general.header",
   "class": "valor-section-header",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "select",
       "id": "logo_position",

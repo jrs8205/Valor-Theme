@@ -16,6 +16,8 @@
 */
 
 .valor-collection {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
   /* Padding driven by section settings (--valor-section-padding-top/bottom),
      set inline on the collection section wrapper element. The
      fallbacks (20/48) match the schema defaults so that the section

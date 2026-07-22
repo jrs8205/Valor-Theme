@@ -4,7 +4,7 @@
 -%}
 
 <section
-  class="valor-testimonials valor-testimonials--align-{{ content_alignment }}{% if section.settings.swipe_on_mobile %} valor-testimonials--mobile-full-bleed{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-testimonials valor-testimonials--align-{{ content_alignment }}{% if section.settings.swipe_on_mobile %} valor-testimonials--mobile-full-bleed{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-testimonials__inner">
@@ -238,6 +238,12 @@
   "tag": "section",
   "class": "valor-section-testimonials",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "text",
       "id": "caption",

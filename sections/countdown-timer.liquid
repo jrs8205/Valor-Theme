@@ -1,7 +1,7 @@
 <script src="{{ 'countdown-timer.js' | asset_url }}" defer></script>
 
 <valor-countdown-timer
-  class="valor-countdown valor-countdown--align-{{ section.settings.alignment }}"
+  class="color-{{ section.settings.color_scheme }} valor-countdown valor-countdown--align-{{ section.settings.alignment }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
   data-end-date="{{ section.settings.end_date | escape }}"
   data-end-time="{{ section.settings.end_time | escape }}"
@@ -188,6 +188,12 @@
   "tag": "section",
   "class": "valor-section-countdown-timer",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "text",
       "id": "badge",

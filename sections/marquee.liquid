@@ -5,7 +5,7 @@
 -%}
 
 <section
-  class="valor-marquee valor-marquee--size-{{ font_size }}"
+  class="color-{{ section.settings.color_scheme }} valor-marquee valor-marquee--size-{{ font_size }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-marquee-duration: {{ speed }}s;"
 >
   <div class="valor-marquee__viewport" aria-label="{{ 'sections.marquee.aria_label' | t | default: 'Announcement' }}">
@@ -150,6 +150,12 @@
   "tag": "section",
   "class": "valor-section-marquee",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "select",
       "id": "font_size",

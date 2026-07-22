@@ -13,7 +13,7 @@
   endif
 -%}
 <section
-  class="valor-iwt valor-iwt--image-{{ image_width }} valor-iwt--{{ layout }} valor-iwt--height-{{ section.settings.height }}"
+  class="color-{{ section.settings.color_scheme }} valor-iwt valor-iwt--image-{{ image_width }} valor-iwt--{{ layout }} valor-iwt--height-{{ section.settings.height }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-iwt__inner">
@@ -245,6 +245,12 @@
   "tag": "section",
   "class": "valor-section-image-with-text",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "image_picker",
       "id": "image",

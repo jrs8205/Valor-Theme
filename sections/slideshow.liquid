@@ -43,7 +43,7 @@
 {%- endif -%}
 
 <valor-slideshow
-  class="valor-slideshow valor-slideshow--height-{{ section.settings.height_desktop }} valor-slideshow--mobile-height-{{ section.settings.height_mobile }}{% if section.settings.full_width or use_transparent_header_trigger %} valor-slideshow--full{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-slideshow valor-slideshow--height-{{ section.settings.height_desktop }} valor-slideshow--mobile-height-{{ section.settings.height_mobile }}{% if section.settings.full_width or use_transparent_header_trigger %} valor-slideshow--full{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-slideshow-content-gap-desktop: {{ content_gap_desktop }}px; --valor-slideshow-content-gap-mobile: {{ content_gap_mobile }}px; --valor-slideshow-aspect-ratio-desktop: {{ desktop_aspect_ratio }}; --valor-slideshow-aspect-ratio-mobile: {{ mobile_aspect_ratio }};"
   data-autoplay="{{ section.settings.autoplay }}"
   data-interval="{{ section.settings.autoplay_interval | times: 1000 }}"
@@ -580,6 +580,12 @@
   "tag": "section",
   "class": "valor-section-slideshow",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "checkbox",
       "id": "full_width",

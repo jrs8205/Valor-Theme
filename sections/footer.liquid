@@ -18,7 +18,7 @@
 -%}
 
 <footer
-  class="valor-footer"
+  class="color-{{ section.settings.color_scheme }} valor-footer"
   style="--valor-footer-padding-top: {{ section.settings.padding_top }}px; --valor-footer-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-footer-margin-top: {{ section.settings.margin_top }}px; --valor-footer-social-size: {{ social_icon_scale }};"
 >
   {%- if section.blocks.size > 0
@@ -885,6 +885,12 @@
     }
   ],
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "header",
       "content": "Email signup"

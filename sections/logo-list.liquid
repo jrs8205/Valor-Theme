@@ -4,7 +4,7 @@
 -%}
 
 <section
-  class="valor-logo-list valor-logo-list--align-{{ content_alignment }}"
+  class="color-{{ section.settings.color_scheme }} valor-logo-list valor-logo-list--align-{{ content_alignment }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-logo-list__inner">
@@ -213,6 +213,12 @@
   "tag": "section",
   "class": "valor-section-logo-list",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "text",
       "id": "caption",

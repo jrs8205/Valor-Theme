@@ -12,7 +12,7 @@
 -%}
 
 <section
-  class="valor-promo-grid valor-promo-grid--columns-{{ section.settings.columns_desktop }}{% if section.settings.full_width %} valor-promo-grid--full{% endif %} valor-promo-grid--gap-{{ section.settings.gap }}"
+  class="color-{{ section.settings.color_scheme }} valor-promo-grid valor-promo-grid--columns-{{ section.settings.columns_desktop }}{% if section.settings.full_width %} valor-promo-grid--full{% endif %} valor-promo-grid--gap-{{ section.settings.gap }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   {%- if section.settings.heading != blank or section.settings.text != blank -%}
@@ -321,6 +321,12 @@
   "tag": "section",
   "class": "valor-section-promo-grid",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "checkbox",
       "id": "full_width",

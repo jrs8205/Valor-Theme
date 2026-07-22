@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "1.7.1",
+    "theme_version": "2.0.0",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -541,16 +541,34 @@
     "name": "t:general.colors",
     "settings": [
       {
-        "type": "color",
-        "id": "background_color",
-        "default": "#FFFFFF",
-        "label": "t:labels.background"
-      },
-      {
-        "type": "color",
-        "id": "foreground_color",
-        "default": "#333333",
-        "label": "t:labels.foreground"
+        "type": "color_scheme_group",
+        "id": "color_schemes",
+        "definition": [
+          {
+            "type": "color",
+            "id": "background",
+            "label": "t:labels.background",
+            "default": "#FFFFFF"
+          },
+          {
+            "type": "color",
+            "id": "text",
+            "label": "t:labels.text",
+            "default": "#333333"
+          }
+        ],
+        "role": {
+          "text": "text",
+          "background": "background",
+          "links": "text",
+          "icons": "text",
+          "primary_button": "text",
+          "on_primary_button": "background",
+          "primary_button_border": "text",
+          "secondary_button": "background",
+          "on_secondary_button": "text",
+          "secondary_button_border": "text"
+        }
       },
       {
         "type": "range",

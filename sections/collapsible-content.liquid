@@ -14,7 +14,7 @@
 -%}
 
 <section
-  class="valor-collapsible{% if has_image %} valor-collapsible--has-image valor-collapsible--{{ image_layout }}{% endif %} valor-collapsible--align-{{ heading_alignment }}"
+  class="color-{{ section.settings.color_scheme }} valor-collapsible{% if has_image %} valor-collapsible--has-image valor-collapsible--{{ image_layout }}{% endif %} valor-collapsible--align-{{ heading_alignment }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-collapsible__inner">
@@ -275,6 +275,12 @@
   "tag": "section",
   "class": "valor-section-collapsible",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "text",
       "id": "caption",

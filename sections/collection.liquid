@@ -82,7 +82,7 @@
 -%}
 
 <valor-collection
-  class="valor-collection"
+  class="color-{{ section.settings.color_scheme }} valor-collection"
   data-collection-section-id="{{ section.id }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
@@ -265,6 +265,12 @@
   "name": "t:general.collection",
   "tag": "section",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "header",
       "content": "Banner"

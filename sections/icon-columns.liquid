@@ -5,7 +5,7 @@
 -%}
 
 <section
-  class="valor-icon-columns"
+  class="color-{{ section.settings.color_scheme }} valor-icon-columns"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-icon-columns__inner">
@@ -247,6 +247,12 @@
   "tag": "section",
   "class": "valor-section-icon-columns",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "inline_richtext",
       "id": "title",

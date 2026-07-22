@@ -1,6 +1,6 @@
 {%- if section.settings.custom_liquid != blank -%}
   <section
-    class="valor-custom-liquid valor-custom-liquid--{{ section.settings.container_width }}"
+    class="color-{{ section.settings.color_scheme }} valor-custom-liquid valor-custom-liquid--{{ section.settings.container_width }}"
     style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
   >
     <div class="valor-custom-liquid__inner">
@@ -43,6 +43,12 @@
   "tag": "section",
   "class": "valor-section-custom-liquid",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "liquid",
       "id": "custom_liquid",

@@ -47,7 +47,7 @@
 
 <valor-cart-drawer
   id="ValorCartDrawer"
-  class="valor-cart-drawer{% if cart == empty %} valor-cart-drawer--empty{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-cart-drawer{% if cart == empty %} valor-cart-drawer--empty{% endif %}"
   role="dialog"
   aria-modal="true"
   aria-labelledby="ValorCartDrawerTitle"
@@ -636,6 +636,12 @@
 {
   "name": "t:labels.cart_drawer",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "paragraph",
       "content": "Cart drawer options are configured in Theme settings → Cart."

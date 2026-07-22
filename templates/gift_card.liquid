@@ -20,7 +20,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="{{ settings.background_color | default: '#ffffff' }}">
+    {%- liquid
+      # theme-color follows the first color scheme's background (the page default)
+      assign default_scheme = settings.color_schemes | first
+    -%}
+    <meta name="theme-color" content="{{ default_scheme.settings.background | default: '#ffffff' }}">
     <link rel="canonical" href="{{ canonical_url }}">
 
     {%- if settings.favicon != blank -%}

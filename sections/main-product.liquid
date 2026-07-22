@@ -87,7 +87,7 @@
 -%}
 
 <section
-  class="valor-mp valor-mp--media-{{ media_width }} valor-mp--media-{{ media_position }}{% if sticky %} valor-mp--sticky{% endif %}{% if section.settings.image_size_mobile == 'full' %} valor-mp--image-full-mobile{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-mp valor-mp--media-{{ media_width }} valor-mp--media-{{ media_position }}{% if sticky %} valor-mp--sticky{% endif %}{% if section.settings.image_size_mobile == 'full' %} valor-mp--image-full-mobile{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
   data-section-id="{{ section.id }}"
 >
@@ -1009,6 +1009,12 @@
     }
   ],
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "checkbox",
       "id": "enable_sticky_info",

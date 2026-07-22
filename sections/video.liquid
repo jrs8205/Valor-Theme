@@ -149,7 +149,7 @@
 -%}
 
 <div
-  class="valor-video valor-video--{{ width }}{% if use_full_width_desktop %} valor-video--full{% endif %}{% if use_full_width_mobile %} valor-video--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}{% if has_mobile_video %} valor-video--has-mobile{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-video valor-video--{{ width }}{% if use_full_width_desktop %} valor-video--full{% endif %}{% if use_full_width_mobile %} valor-video--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}{% if has_mobile_video %} valor-video--has-mobile{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-video-dim: {{ section.settings.overlay_opacity | times: 0.01 }};"
   {% if use_transparent_header_trigger %}
     data-transparent-header-behavior="{{ section.settings.transparent_header_behavior | default: 'always' }}"
@@ -909,6 +909,12 @@
   "tag": "section",
   "class": "valor-section-video",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "text",
       "id": "heading",

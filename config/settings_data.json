@@ -8,5 +8,32 @@
  * ------------------------------------------------------------
  */
 {
-  "current": {}
+  "current": {
+    "color_schemes": {
+      "scheme-1": {
+        "settings": {
+          "background": "#FFFFFF",
+          "text": "#333333"
+        }
+      },
+      "scheme-2": {
+        "settings": {
+          "background": "#F5F4F2",
+          "text": "#333333"
+        }
+      },
+      "scheme-3": {
+        "settings": {
+          "background": "#141414",
+          "text": "#F5F4F2"
+        }
+      },
+      "scheme-4": {
+        "settings": {
+          "background": "#EBE3D7",
+          "text": "#332F28"
+        }
+      }
+    }
+  }
 }

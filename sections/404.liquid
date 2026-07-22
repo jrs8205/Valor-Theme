@@ -19,7 +19,7 @@
 -%}
 
 <div
-  class="valor-page valor-page--{{ container }} valor-404"
+  class="color-{{ section.settings.color_scheme }} valor-page valor-page--{{ container }} valor-404"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-page__inner">
@@ -58,6 +58,12 @@
   "tag": "section",
   "class": "valor-section-404",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "select",
       "id": "container_width",

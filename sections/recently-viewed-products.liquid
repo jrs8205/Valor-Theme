@@ -19,7 +19,7 @@
 -%}
 
 <section
-  class="valor-featured-collection valor-related-products valor-recently-viewed-products{% if section.settings.swipe_on_mobile %} valor-featured-collection--mobile-full-bleed{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-featured-collection valor-related-products valor-recently-viewed-products{% if section.settings.swipe_on_mobile %} valor-featured-collection--mobile-full-bleed{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-grid-gap: {{ section.settings.column_gap }}px; --valor-grid-gap-mobile: {{ section.settings.column_gap_mobile }}px; --valor-mobile-card-width: {{ section.settings.mobile_card_width }}%;"
   data-recently-viewed-section
   {%- unless request.design_mode %}
@@ -88,6 +88,12 @@
   "tag": "section",
   "class": "valor-section-recently-viewed-products",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "inline_richtext",
       "id": "title",

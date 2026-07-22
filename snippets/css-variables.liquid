@@ -133,27 +133,23 @@
     --page-width: {{ settings.max_page_width }};
     --page-margin: {{ settings.min_page_margin }}px;
 
-    /* Colors */
-    --color-background: {{ settings.background_color }};
-    --color-foreground: {{ settings.foreground_color }};
+    /* Colors — static fallbacks only. The real values come from the
+       color-scheme blocks emitted after this rule (the first scheme also
+       targets :root, making it the page default). Kept so the theme never
+       renders unstyled if the scheme list were ever empty. */
+    --color-background: #FFFFFF;
+    --color-foreground: #333333;
 
-    /* Buttons — global button tokens used by every CTA-style button.
-       Explicit button color settings always win. Blank or transparent
-       background settings stay transparent; text and border fall back only
-       to keep buttons readable when their own color setting is empty.
-       Outline buttons get their own text tokens so their label color can
-       differ from their border color. */
+    /* Buttons — the scheme-INDEPENDENT button tokens. Explicit button
+       color settings always win; blank or transparent background settings
+       stay transparent. The tokens whose fallback chain ends in the
+       scheme's background/text colors live in the per-scheme blocks
+       below — custom properties resolve var() at the element that
+       declares them, so a :root-level var(--color-foreground) fallback
+       would bake the first scheme's colors into every scheme. */
     --color-button-bg:                     {%- if button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}transparent{%- endif -%};
-    --color-button-text:                   {%- if button_text_is_set -%}{{ settings.button_text_color }}{%- elsif button_bg_is_set -%}{{ settings.background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
-    --color-button-border:                 {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
     --color-button-hover-bg:               {%- if button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}transparent{%- endif -%};
-    --color-button-hover-text:             {%- if button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_text_is_set -%}{{ settings.button_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ settings.background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
-    --color-button-hover-border:           {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
-    --color-button-outline-text:           {%- if button_outline_text_is_set -%}{{ settings.button_outline_text_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
-    --color-button-outline-border:         {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
     --color-button-outline-hover-bg:       {%- if button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}transparent{%- endif -%};
-    --color-button-outline-hover-text:     {%- if button_outline_hover_text_is_set -%}{{ settings.button_outline_hover_text_color }}{%- elsif button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ settings.background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
-    --color-button-outline-hover-border:   {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ settings.foreground_color }}{%- endif -%};
     {%- if button_hover_bg_is_set or button_hover_text_is_set or button_hover_border_is_set or button_outline_hover_text_is_set %}
     --button-hover-opacity: 1;
     {%- else %}
@@ -194,6 +190,39 @@
     /* Inputs */
     --style-border-radius-inputs: {{ settings.input_corner_radius }}px;
   }
+
+  /* Color schemes — one block per scheme defined in Theme settings >
+     Colors. The first scheme also targets :root, making it the page-level
+     default; sections opt into other schemes via their "Color scheme"
+     setting, which puts a .color-<scheme-id> class on the section root.
+     All component CSS reads var(--color-background)/var(--color-foreground),
+     so it needs no scheme awareness.
+
+     Derived tokens (borders) and the scheme-dependent button fallbacks are
+     re-declared per scheme with literal Liquid values: a custom property
+     resolves var() references at the element that declares it, so a single
+     :root declaration could not follow the enclosing scheme class. */
+  {% for scheme in settings.color_schemes -%}
+  {% if forloop.first %}:root,
+  {% endif -%}
+  .color-{{ scheme.id }} {
+    --color-background: {{ scheme.settings.background }};
+    --color-foreground: {{ scheme.settings.text }};
+
+    --valor-border-subtle:  color-mix(in srgb, {{ scheme.settings.text }} 16%, transparent);
+    --valor-border-default: color-mix(in srgb, {{ scheme.settings.text }} 24%, transparent);
+    --valor-border-strong:  {{ scheme.settings.text }};
+
+    --color-button-text:                   {%- if button_text_is_set -%}{{ settings.button_text_color }}{%- elsif button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-border:                 {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-hover-text:             {%- if button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_text_is_set -%}{{ settings.button_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-hover-border:           {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-outline-text:           {%- if button_outline_text_is_set -%}{{ settings.button_outline_text_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-outline-border:         {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-outline-hover-text:     {%- if button_outline_hover_text_is_set -%}{{ settings.button_outline_hover_text_color }}{%- elsif button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+    --color-button-outline-hover-border:   {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+  }
+  {% endfor %}
 
   /* Mobile page margin override. Desktop uses --page-margin above; on small
      viewports the merchant can set a separate, usually tighter, side margin.

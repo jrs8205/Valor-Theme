@@ -84,7 +84,7 @@
 <script src="{{ 'product-info.js' | asset_url }}" defer></script>
 
 <section
-  class="valor-fp valor-fp--media-{{ media_position }} valor-fp--media-{{ media_width }}{% if section.settings.image_size_mobile == 'full' %} valor-fp--image-full-mobile{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-fp valor-fp--media-{{ media_position }} valor-fp--media-{{ media_width }}{% if section.settings.image_size_mobile == 'full' %} valor-fp--image-full-mobile{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-fp__inner">
@@ -896,6 +896,12 @@
   "tag": "section",
   "class": "valor-section-featured-product",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "product",
       "id": "product",

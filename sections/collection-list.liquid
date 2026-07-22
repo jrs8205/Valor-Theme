@@ -3,7 +3,7 @@
   assign columns_mobile = section.settings.columns_mobile
 -%}
 <section
-  class="valor-collection-list{% if section.settings.swipe_on_mobile %} valor-collection-list--mobile-full-bleed{% endif %}"
+  class="color-{{ section.settings.color_scheme }} valor-collection-list{% if section.settings.swipe_on_mobile %} valor-collection-list--mobile-full-bleed{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-grid-gap: {{ section.settings.column_gap }}px; --valor-grid-gap-mobile: {{ section.settings.column_gap_mobile }}px; --valor-mobile-card-width: {{ section.settings.mobile_card_width }}%;"
 >
   <div class="valor-collection-list__inner">
@@ -341,6 +341,12 @@
   "tag": "section",
   "class": "valor-section-collection-list",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "inline_richtext",
       "id": "title",

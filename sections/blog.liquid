@@ -29,7 +29,7 @@
 -%}
 
 <div
-  class="valor-blog valor-blog--{{ layout }}"
+  class="color-{{ section.settings.color_scheme }} valor-blog valor-blog--{{ layout }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <div class="valor-blog__inner">
@@ -323,6 +323,12 @@
   "tag": "section",
   "class": "valor-section-blog",
   "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
     {
       "type": "select",
       "id": "heading_size",
