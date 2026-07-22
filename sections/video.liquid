@@ -11,6 +11,8 @@
     - Optional cover image shown until first play (only when play button on)
     - Width: Small / Medium / Large / Full width
     - Mobile can override to full width independently
+    - Optional hero-style overlay content on top of the video
+      (Heading / Subheading / Buttons blocks + position, dim, text box)
 {%- endcomment -%}
 
 {%- liquid
@@ -148,7 +150,7 @@
 
 <div
   class="valor-video valor-video--{{ width }}{% if use_full_width_desktop %} valor-video--full{% endif %}{% if use_full_width_mobile %} valor-video--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}{% if has_mobile_video %} valor-video--has-mobile{% endif %}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-video-dim: {{ section.settings.overlay_opacity | times: 0.01 }};"
   {% if use_transparent_header_trigger %}
     data-transparent-header-behavior="{{ section.settings.transparent_header_behavior | default: 'always' }}"
   {% endif %}
@@ -163,172 +165,24 @@
       </h2>
     {%- endif -%}
 
-    <valor-video
-      class="valor-video__frame valor-video__frame--desktop"
-      data-show-play-button="{{ section.settings.show_play_button }}"
-      data-loop="{{ section.settings.loop }}"
-      data-mute="{{ section.settings.mute_audio }}"
-      data-provider="{{ provider }}"
-    >
-      {%- if use_cover -%}
-        <div class="valor-video__cover" data-video-cover>
-          {{
-            section.settings.cover_image
-            | image_url: width: 1500
-            | image_tag:
-              widths: '400, 600, 800, 1100, 1500, 2000',
-              sizes: '100vw',
-              class: 'valor-video__cover-img',
-              alt: cover_alt,
-              loading: 'lazy'
-          }}
-          <button
-            type="button"
-            class="valor-video__play"
-            data-video-play
-            aria-label="{{ 'video.play' | t | default: 'Play video' }}"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </button>
-        </div>
-      {%- endif -%}
-
-      <div
-        class="valor-video__media"
-        data-video-media
-        {% if use_cover %}
-          hidden
-        {% endif %}
-      >
-        {%- if shopify_video != blank -%}
-          {{
-            shopify_video
-            | video_tag:
-              class: 'valor-video__el',
-              controls: false,
-              muted: video_muted,
-              autoplay: autoplay_video,
-              loop: section.settings.loop,
-              playsinline: true,
-              preload: 'metadata',
-              image_size: '1500x'
-          }}
-        {%- elsif provider == 'youtube' and yt_id != blank -%}
-          {%- liquid
-            assign yt_params = 'rel=0&modestbranding=1&playsinline=1&enablejsapi=1'
-            if section.settings.show_play_button == false
-              assign yt_params = yt_params | append: '&autoplay=1&mute=1&controls=0'
-              if section.settings.loop
-                assign yt_params = yt_params | append: '&loop=1&playlist=' | append: yt_id
-              endif
-            endif
-          -%}
-          <iframe
-            class="valor-video__el valor-video__el--iframe"
-            src="https://www.youtube.com/embed/{{ yt_id }}?{{ yt_params }}"
-            title="{{ section.settings.video_alt | default: section.settings.heading | escape }}"
-            frameborder="0"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowfullscreen
-            loading="lazy"
-            data-yt-iframe
-          ></iframe>
-        {%- elsif provider == 'vimeo' and vimeo_id != blank -%}
-          {%- liquid
-            assign vimeo_params = 'dnt=1&playsinline=1'
-            if section.settings.show_play_button == false
-              assign vimeo_params = vimeo_params | append: '&autoplay=1&muted=1&background=1'
-              if section.settings.loop
-                assign vimeo_params = vimeo_params | append: '&loop=1'
-              endif
-            endif
-          -%}
-          <iframe
-            class="valor-video__el valor-video__el--iframe"
-            src="https://player.vimeo.com/video/{{ vimeo_id }}?{{ vimeo_params }}"
-            title="{{ section.settings.video_alt | default: section.settings.heading | escape }}"
-            frameborder="0"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowfullscreen
-            loading="lazy"
-          ></iframe>
-        {%- elsif provider == 'direct' -%}
-          <video
-            class="valor-video__el"
-            src="{{ external_url }}"
-            {% unless section.settings.show_play_button %}
-              autoplay muted
-            {% endunless %}
-            {% if section.settings.loop %}
-              loop
-            {% endif %}
-            playsinline
-            preload="metadata"
-            {% if section.settings.show_play_button %}
-              controls
-            {% endif %}
-          ></video>
-        {%- else -%}
-          <div class="valor-video__placeholder">
-            {{ 'lifestyle-1' | placeholder_svg_tag: 'valor-video__placeholder-svg' }}
-          </div>
-        {%- endif -%}
-      </div>
-
-      {%- if section.settings.show_play_button and use_cover == false and shopify_video != blank -%}
-        {%- comment -%}
-          Shopify-hosted video without a cover image: still allow toggling
-          play/pause via an overlay button (no autoplay). Hidden once the
-          video starts and reappears on pause.
-        {%- endcomment -%}
-        <button
-          type="button"
-          class="valor-video__play valor-video__play--overlay"
-          data-video-toggle
-          aria-label="{{ 'video.play' | t | default: 'Play video' }}"
-        >
-          <svg
-            class="valor-video__play-icon valor-video__play-icon--play"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          <svg
-            class="valor-video__play-icon valor-video__play-icon--pause"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
-          </svg>
-        </button>
-      {%- endif -%}
-    </valor-video>
-
-    {%- if has_mobile_video -%}
+    <div class="valor-video__stage">
       <valor-video
-        class="valor-video__frame valor-video__frame--mobile valor-video__frame--aspect-{{ section.settings.mobile_aspect }}"
+        class="valor-video__frame valor-video__frame--desktop"
         data-show-play-button="{{ section.settings.show_play_button }}"
         data-loop="{{ section.settings.loop }}"
         data-mute="{{ section.settings.mute_audio }}"
-        data-provider="{{ mobile_provider }}"
+        data-provider="{{ provider }}"
       >
-        {%- if use_mobile_cover -%}
+        {%- if use_cover -%}
           <div class="valor-video__cover" data-video-cover>
             {{
-              section.settings.mobile_cover_image
-              | image_url: width: 1100
+              section.settings.cover_image
+              | image_url: width: 1500
               | image_tag:
-                widths: '400, 600, 800, 1100, 1500',
+                widths: '400, 600, 800, 1100, 1500, 2000',
                 sizes: '100vw',
                 class: 'valor-video__cover-img',
-                alt: mobile_cover_alt,
+                alt: cover_alt,
                 loading: 'lazy'
             }}
             <button
@@ -347,13 +201,13 @@
         <div
           class="valor-video__media"
           data-video-media
-          {% if use_mobile_cover %}
+          {% if use_cover %}
             hidden
           {% endif %}
         >
-          {%- if mobile_shopify_video != blank -%}
+          {%- if shopify_video != blank -%}
             {{
-              mobile_shopify_video
+              shopify_video
               | video_tag:
                 class: 'valor-video__el',
                 controls: false,
@@ -362,50 +216,51 @@
                 loop: section.settings.loop,
                 playsinline: true,
                 preload: 'metadata',
-                image_size: '1100x'
+                image_size: '1500x'
             }}
-          {%- elsif mobile_provider == 'youtube' and mobile_yt_id != blank -%}
+          {%- elsif provider == 'youtube' and yt_id != blank -%}
             {%- liquid
-              assign m_yt_params = 'rel=0&modestbranding=1&playsinline=1&enablejsapi=1'
+              assign yt_params = 'rel=0&modestbranding=1&playsinline=1&enablejsapi=1'
               if section.settings.show_play_button == false
-                assign m_yt_params = m_yt_params | append: '&autoplay=1&mute=1&controls=0'
+                assign yt_params = yt_params | append: '&autoplay=1&mute=1&controls=0'
                 if section.settings.loop
-                  assign m_yt_params = m_yt_params | append: '&loop=1&playlist=' | append: mobile_yt_id
+                  assign yt_params = yt_params | append: '&loop=1&playlist=' | append: yt_id
                 endif
               endif
             -%}
             <iframe
               class="valor-video__el valor-video__el--iframe"
-              src="https://www.youtube.com/embed/{{ mobile_yt_id }}?{{ m_yt_params }}"
-              title="{{ cover_alt }}"
+              src="https://www.youtube.com/embed/{{ yt_id }}?{{ yt_params }}"
+              title="{{ section.settings.video_alt | default: section.settings.heading | escape }}"
               frameborder="0"
               allow="autoplay; encrypted-media; picture-in-picture"
               allowfullscreen
               loading="lazy"
+              data-yt-iframe
             ></iframe>
-          {%- elsif mobile_provider == 'vimeo' and mobile_vimeo_id != blank -%}
+          {%- elsif provider == 'vimeo' and vimeo_id != blank -%}
             {%- liquid
-              assign m_vimeo_params = 'dnt=1&playsinline=1'
+              assign vimeo_params = 'dnt=1&playsinline=1'
               if section.settings.show_play_button == false
-                assign m_vimeo_params = m_vimeo_params | append: '&autoplay=1&muted=1&background=1'
+                assign vimeo_params = vimeo_params | append: '&autoplay=1&muted=1&background=1'
                 if section.settings.loop
-                  assign m_vimeo_params = m_vimeo_params | append: '&loop=1'
+                  assign vimeo_params = vimeo_params | append: '&loop=1'
                 endif
               endif
             -%}
             <iframe
               class="valor-video__el valor-video__el--iframe"
-              src="https://player.vimeo.com/video/{{ mobile_vimeo_id }}?{{ m_vimeo_params }}"
-              title="{{ cover_alt }}"
+              src="https://player.vimeo.com/video/{{ vimeo_id }}?{{ vimeo_params }}"
+              title="{{ section.settings.video_alt | default: section.settings.heading | escape }}"
               frameborder="0"
               allow="autoplay; fullscreen; picture-in-picture"
               allowfullscreen
               loading="lazy"
             ></iframe>
-          {%- elsif mobile_provider == 'direct' -%}
+          {%- elsif provider == 'direct' -%}
             <video
               class="valor-video__el"
-              src="{{ mobile_external_url }}"
+              src="{{ external_url }}"
               {% unless section.settings.show_play_button %}
                 autoplay muted
               {% endunless %}
@@ -418,10 +273,19 @@
                 controls
               {% endif %}
             ></video>
+          {%- else -%}
+            <div class="valor-video__placeholder">
+              {{ 'lifestyle-1' | placeholder_svg_tag: 'valor-video__placeholder-svg' }}
+            </div>
           {%- endif -%}
         </div>
 
-        {%- if section.settings.show_play_button and use_mobile_cover == false and mobile_shopify_video != blank -%}
+        {%- if section.settings.show_play_button and use_cover == false and shopify_video != blank -%}
+          {%- comment -%}
+            Shopify-hosted video without a cover image: still allow toggling
+            play/pause via an overlay button (no autoplay). Hidden once the
+            video starts and reappears on pause.
+          {%- endcomment -%}
           <button
             type="button"
             class="valor-video__play valor-video__play--overlay"
@@ -449,7 +313,201 @@
           </button>
         {%- endif -%}
       </valor-video>
-    {%- endif -%}
+
+      {%- if has_mobile_video -%}
+        <valor-video
+          class="valor-video__frame valor-video__frame--mobile valor-video__frame--aspect-{{ section.settings.mobile_aspect }}"
+          data-show-play-button="{{ section.settings.show_play_button }}"
+          data-loop="{{ section.settings.loop }}"
+          data-mute="{{ section.settings.mute_audio }}"
+          data-provider="{{ mobile_provider }}"
+        >
+          {%- if use_mobile_cover -%}
+            <div class="valor-video__cover" data-video-cover>
+              {{
+                section.settings.mobile_cover_image
+                | image_url: width: 1100
+                | image_tag:
+                  widths: '400, 600, 800, 1100, 1500',
+                  sizes: '100vw',
+                  class: 'valor-video__cover-img',
+                  alt: mobile_cover_alt,
+                  loading: 'lazy'
+              }}
+              <button
+                type="button"
+                class="valor-video__play"
+                data-video-play
+                aria-label="{{ 'video.play' | t | default: 'Play video' }}"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
+            </div>
+          {%- endif -%}
+
+          <div
+            class="valor-video__media"
+            data-video-media
+            {% if use_mobile_cover %}
+              hidden
+            {% endif %}
+          >
+            {%- if mobile_shopify_video != blank -%}
+              {{
+                mobile_shopify_video
+                | video_tag:
+                  class: 'valor-video__el',
+                  controls: false,
+                  muted: video_muted,
+                  autoplay: autoplay_video,
+                  loop: section.settings.loop,
+                  playsinline: true,
+                  preload: 'metadata',
+                  image_size: '1100x'
+              }}
+            {%- elsif mobile_provider == 'youtube' and mobile_yt_id != blank -%}
+              {%- liquid
+                assign m_yt_params = 'rel=0&modestbranding=1&playsinline=1&enablejsapi=1'
+                if section.settings.show_play_button == false
+                  assign m_yt_params = m_yt_params | append: '&autoplay=1&mute=1&controls=0'
+                  if section.settings.loop
+                    assign m_yt_params = m_yt_params | append: '&loop=1&playlist=' | append: mobile_yt_id
+                  endif
+                endif
+              -%}
+              <iframe
+                class="valor-video__el valor-video__el--iframe"
+                src="https://www.youtube.com/embed/{{ mobile_yt_id }}?{{ m_yt_params }}"
+                title="{{ cover_alt }}"
+                frameborder="0"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen
+                loading="lazy"
+              ></iframe>
+            {%- elsif mobile_provider == 'vimeo' and mobile_vimeo_id != blank -%}
+              {%- liquid
+                assign m_vimeo_params = 'dnt=1&playsinline=1'
+                if section.settings.show_play_button == false
+                  assign m_vimeo_params = m_vimeo_params | append: '&autoplay=1&muted=1&background=1'
+                  if section.settings.loop
+                    assign m_vimeo_params = m_vimeo_params | append: '&loop=1'
+                  endif
+                endif
+              -%}
+              <iframe
+                class="valor-video__el valor-video__el--iframe"
+                src="https://player.vimeo.com/video/{{ mobile_vimeo_id }}?{{ m_vimeo_params }}"
+                title="{{ cover_alt }}"
+                frameborder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowfullscreen
+                loading="lazy"
+              ></iframe>
+            {%- elsif mobile_provider == 'direct' -%}
+              <video
+                class="valor-video__el"
+                src="{{ mobile_external_url }}"
+                {% unless section.settings.show_play_button %}
+                  autoplay muted
+                {% endunless %}
+                {% if section.settings.loop %}
+                  loop
+                {% endif %}
+                playsinline
+                preload="metadata"
+                {% if section.settings.show_play_button %}
+                  controls
+                {% endif %}
+              ></video>
+            {%- endif -%}
+          </div>
+
+          {%- if section.settings.show_play_button and use_mobile_cover == false and mobile_shopify_video != blank -%}
+            <button
+              type="button"
+              class="valor-video__play valor-video__play--overlay"
+              data-video-toggle
+              aria-label="{{ 'video.play' | t | default: 'Play video' }}"
+            >
+              <svg
+                class="valor-video__play-icon valor-video__play-icon--play"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg
+                class="valor-video__play-icon valor-video__play-icon--pause"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+              </svg>
+            </button>
+          {%- endif -%}
+        </valor-video>
+      {%- endif -%}
+
+      {%- if section.settings.overlay_opacity > 0 -%}
+        <div class="valor-video__dim" aria-hidden="true"></div>
+      {%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        <div class="valor-video__content-wrapper valor-video__content-wrapper--pos-{{ section.settings.desktop_content_position }} valor-video__content-wrapper--align-{{ section.settings.desktop_content_alignment }} valor-video__content-wrapper--mobile-{{ section.settings.mobile_content_alignment }}">
+          <div class="valor-video__content{% if section.settings.show_text_box %} valor-video__content--box{% endif %}">
+            {%- for block in section.blocks -%}
+              {%- case block.type -%}
+                {%- when 'heading' -%}
+                  <h2
+                    class="valor-video__content-heading valor-video__content-heading--{{ block.settings.heading_size }}"
+                    {% if block.settings.heading_color != blank %}
+                      style="--valor-video-heading-color: {{ block.settings.heading_color }};"
+                    {% endif %}
+                    {{ block.shopify_attributes }}
+                  >
+                    {{ block.settings.heading }}
+                  </h2>
+                {%- when 'subheading' -%}
+                  <div
+                    class="valor-video__content-subheading rte"
+                    {% if block.settings.subheading_color != blank %}
+                      style="--valor-video-subheading-color: {{ block.settings.subheading_color }};"
+                    {% endif %}
+                    {{ block.shopify_attributes }}
+                  >
+                    {{ block.settings.subheading }}
+                  </div>
+                {%- when 'buttons' -%}
+                  <div class="valor-video__buttons" {{ block.shopify_attributes }}>
+                    {%- if block.settings.button_label_1 != blank and block.settings.button_link_1 != blank -%}
+                      <a
+                        href="{{ block.settings.button_link_1 }}"
+                        class="valor-button valor-button--{{ block.settings.button_style_1 }}"
+                      >
+                        {{ block.settings.button_label_1 | escape }}
+                      </a>
+                    {%- endif -%}
+                    {%- if block.settings.button_label_2 != blank and block.settings.button_link_2 != blank -%}
+                      <a
+                        href="{{ block.settings.button_link_2 }}"
+                        class="valor-button valor-button--{{ block.settings.button_style_2 }}"
+                      >
+                        {{ block.settings.button_label_2 | escape }}
+                      </a>
+                    {%- endif -%}
+                  </div>
+              {%- endcase -%}
+            {%- endfor -%}
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
   </div>
 </div>
 
@@ -658,6 +716,158 @@
     opacity: 1;
   }
 
+  /* Stage — positioning context for the overlay layers. Only one of the
+     two frames is visible at a time, so a single dim + content overlay
+     sits over whichever frame is currently shown. */
+  .valor-video__stage {
+    position: relative;
+  }
+
+  /* Darkening layer for overlay-content legibility. z-index 1 keeps it
+     above the frames but below the play button and the content (both 2). */
+  .valor-video__dim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-color: #000;
+    opacity: var(--valor-video-dim, 0);
+    pointer-events: none;
+  }
+
+  /* Content overlay — mirrors the hero banner. pointer-events: none lets
+     clicks fall through to the play button and the video's own controls;
+     the buttons and the text box restore pointer-events on themselves.
+     Trade-off: overlay text is not mouse-selectable outside the box. */
+  .valor-video__content-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    padding: clamp(2rem, 5vw, 5rem) clamp(1rem, 4vw, 3rem);
+    pointer-events: none;
+  }
+
+  /* Content position (vertical alignment within the stage) */
+  .valor-video__content-wrapper--pos-top-left,
+  .valor-video__content-wrapper--pos-top-center,
+  .valor-video__content-wrapper--pos-top-right {
+    align-items: flex-start;
+  }
+  .valor-video__content-wrapper--pos-middle-left,
+  .valor-video__content-wrapper--pos-middle-center,
+  .valor-video__content-wrapper--pos-middle-right {
+    align-items: center;
+  }
+  .valor-video__content-wrapper--pos-bottom-left,
+  .valor-video__content-wrapper--pos-bottom-center,
+  .valor-video__content-wrapper--pos-bottom-right {
+    align-items: flex-end;
+  }
+
+  /* Content position (horizontal) */
+  .valor-video__content-wrapper--pos-top-left,
+  .valor-video__content-wrapper--pos-middle-left,
+  .valor-video__content-wrapper--pos-bottom-left {
+    justify-content: flex-start;
+  }
+  .valor-video__content-wrapper--pos-top-center,
+  .valor-video__content-wrapper--pos-middle-center,
+  .valor-video__content-wrapper--pos-bottom-center {
+    justify-content: center;
+  }
+  .valor-video__content-wrapper--pos-top-right,
+  .valor-video__content-wrapper--pos-middle-right,
+  .valor-video__content-wrapper--pos-bottom-right {
+    justify-content: flex-end;
+  }
+
+  /* Content block */
+  .valor-video__content {
+    max-width: 38rem;
+    color: var(--color-background);
+    /* Like the hero: foreground/background flip — light text on dark video */
+  }
+  .valor-video__content-wrapper--align-left {
+    text-align: left;
+  }
+  .valor-video__content-wrapper--align-center {
+    text-align: center;
+  }
+  .valor-video__content-wrapper--align-right {
+    text-align: right;
+  }
+
+  .valor-video__content--box {
+    background-color: color-mix(in srgb, var(--color-background) 92%, transparent);
+    color: var(--color-foreground);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border-radius: 0.25rem;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: auto;
+  }
+
+  /* Overlay heading sizes — same scale as the hero banner */
+  .valor-video__content-heading {
+    margin: 0 0 1rem;
+    color: var(--valor-video-heading-color, currentColor);
+    font-family: var(--font-heading--family);
+    font-style: var(--font-heading--style);
+    font-weight: var(--font-heading--weight);
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+  .valor-video__content-heading--h0 {
+    font-size: calc(var(--font-heading-scale, 1) * clamp(2.5rem, 6vw, 5rem));
+  }
+  .valor-video__content-heading--h1 {
+    font-size: calc(var(--font-heading-scale, 1) * clamp(2rem, 5vw, 3.75rem));
+  }
+  .valor-video__content-heading--h2 {
+    font-size: calc(var(--font-heading-scale, 1) * clamp(1.625rem, 4vw, 2.75rem));
+  }
+
+  .valor-video__content-subheading {
+    color: var(--valor-video-subheading-color, currentColor);
+    font-size: clamp(1rem, 1.5vw, 1.125rem);
+    line-height: 1.5;
+    margin: 0 0 1.75rem;
+    opacity: 0.95;
+  }
+
+  /* Buttons row — global .valor-button styles handle the buttons themselves */
+  .valor-video__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .valor-video__buttons .valor-button {
+    pointer-events: auto;
+  }
+  .valor-video__content-wrapper--align-center .valor-video__buttons {
+    justify-content: center;
+  }
+  .valor-video__content-wrapper--align-right .valor-video__buttons {
+    justify-content: flex-end;
+  }
+
+  /* Mobile content alignment override */
+  @media (max-width: 749px) {
+    .valor-video__content-wrapper--mobile-left {
+      text-align: left;
+    }
+    .valor-video__content-wrapper--mobile-left .valor-video__buttons {
+      justify-content: flex-start;
+    }
+    .valor-video__content-wrapper--mobile-center {
+      text-align: center;
+    }
+    .valor-video__content-wrapper--mobile-center .valor-video__buttons {
+      justify-content: center;
+    }
+  }
+
   /* Mobile full-width override — escape the theme-shell grid */
   @media (max-width: 749px) {
     .shopify-section > .valor-video--full-mobile {
@@ -815,6 +1025,67 @@
     },
     {
       "type": "header",
+      "content": "Overlay content",
+      "info": "Add Heading, Subheading, or Buttons blocks to show content on top of the video."
+    },
+    {
+      "type": "select",
+      "id": "desktop_content_position",
+      "label": "Position",
+      "options": [
+        { "value": "top-left", "label": "Top left" },
+        { "value": "top-center", "label": "Top center" },
+        { "value": "top-right", "label": "Top right" },
+        { "value": "middle-left", "label": "Middle left" },
+        { "value": "middle-center", "label": "Middle center" },
+        { "value": "middle-right", "label": "Middle right" },
+        { "value": "bottom-left", "label": "Bottom left" },
+        { "value": "bottom-center", "label": "Bottom center" },
+        { "value": "bottom-right", "label": "Bottom right" }
+      ],
+      "default": "middle-center"
+    },
+    {
+      "type": "select",
+      "id": "desktop_content_alignment",
+      "label": "Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "mobile_content_alignment",
+      "label": "Mobile alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_text_box",
+      "label": "Show content in a box",
+      "default": false,
+      "info": "Adds a translucent backdrop behind the heading and buttons."
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "Video overlay opacity",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 0,
+      "info": "Darkens the video to keep overlay content readable."
+    },
+    {
+      "type": "header",
       "content": "Layout"
     },
     {
@@ -889,9 +1160,132 @@
       "default": 56
     }
   ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Video hero"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "Heading size",
+          "options": [
+            { "value": "h2", "label": "Medium" },
+            { "value": "h1", "label": "Large" },
+            { "value": "h0", "label": "Extra large" }
+          ],
+          "default": "h1"
+        },
+        {
+          "type": "color",
+          "id": "heading_color",
+          "label": "Heading color"
+        }
+      ]
+    },
+    {
+      "type": "subheading",
+      "name": "Subheading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "subheading",
+          "label": "Subheading",
+          "default": "<p>Tell your brand's story through video.</p>"
+        },
+        {
+          "type": "color",
+          "id": "subheading_color",
+          "label": "Subheading color"
+        }
+      ]
+    },
+    {
+      "type": "buttons",
+      "name": "Buttons",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "button_label_1",
+          "label": "Button 1 label"
+        },
+        {
+          "type": "url",
+          "id": "button_link_1",
+          "label": "Button 1 link"
+        },
+        {
+          "type": "select",
+          "id": "button_style_1",
+          "label": "Button 1 style",
+          "options": [
+            { "value": "primary", "label": "Solid" },
+            { "value": "secondary", "label": "Outline" },
+            { "value": "link", "label": "Text link" }
+          ],
+          "default": "primary"
+        },
+        {
+          "type": "text",
+          "id": "button_label_2",
+          "label": "Button 2 label"
+        },
+        {
+          "type": "url",
+          "id": "button_link_2",
+          "label": "Button 2 link"
+        },
+        {
+          "type": "select",
+          "id": "button_style_2",
+          "label": "Button 2 style",
+          "options": [
+            { "value": "primary", "label": "Solid" },
+            { "value": "secondary", "label": "Outline" },
+            { "value": "link", "label": "Text link" }
+          ],
+          "default": "secondary"
+        }
+      ]
+    }
+  ],
   "presets": [
     {
       "name": "Video"
+    },
+    {
+      "name": "Video hero",
+      "settings": {
+        "heading": "",
+        "width": "full",
+        "full_width_mobile": true,
+        "show_play_button": false,
+        "overlay_opacity": 30
+      },
+      "blocks": [
+        {
+          "type": "heading"
+        },
+        {
+          "type": "subheading"
+        },
+        {
+          "type": "buttons",
+          "settings": {
+            "button_label_1": "Shop now",
+            "button_link_1": "shopify://collections/all"
+          }
+        }
+      ]
     }
   ]
 }
