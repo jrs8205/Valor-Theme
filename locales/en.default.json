@@ -151,6 +151,33 @@
         "other": "{{ count }} results available"
       },
       "from_price_html": "From {{ price }}"
+    },
+    "legal_guarantee": {
+      "default_label": "Your legal guarantee rights",
+      "open_full_size": "Open the notice in full size",
+      "open_garan_label": "Open the commercial guarantee of durability label",
+      "garan_label_title": "Commercial guarantee of durability",
+      "editor_heading": "EU legal guarantee",
+      "editor_text": "Upload the official notice in Theme settings > EU legal guarantee, or connect a durability guarantee label (GARAN) to this block.",
+      "info_link": "More about your legal guarantee rights (Your Europe)",
+      "text_version": "Read the notice as text",
+      "garan_info_link": "About the EU durability guarantee label (Your Europe)",
+      "notice": {
+        "title": "Legal guarantee",
+        "intro": "Minimum two-year legal guarantee protection for goods sold in the European Union.",
+        "claim": "Consumers can claim their rights under the legal guarantee of conformity, for example if goods:",
+        "claim_description": "do not match the description;",
+        "claim_function": "do not function as intended.",
+        "liability": "Sellers are liable for any lack of conformity which existed when the goods were delivered, and which becomes apparent within the legal guarantee period. Sellers in such a situation are required to offer:",
+        "remedy_repair": "free repair or free replacement;",
+        "remedy_price": "in some cases, a price reduction or full reimbursement.",
+        "steps_title": "What to do if you receive non-conforming goods:",
+        "step_contact": "Contact the seller as soon as possible to report the issue;",
+        "step_proof": "Provide proof of purchase, such as a receipt, invoice, or bank statement.",
+        "countries": "Some countries have a longer legal guarantee period. For second-hand goods, a shorter period may apply, but not less than one year.",
+        "more_information": "For more information on your rights in a specific country, scan the QR code below or ask the seller.",
+        "commercial": "Sellers and producers may also offer commercial guarantees, which apply independently from the legal guarantee. For example, you may see this GARAN label representing a commercial guarantee of durability offered by the producer at no additional cost and covering the entire good."
+      }
     }
   },
   "gift_card": {
@@ -213,7 +240,13 @@
     "rating": "{{ rating }} out of {{ scale }} stars",
     "review_count": "{{ count }} reviews",
     "quantity_decrease": "Decrease quantity",
-    "quantity_increase": "Increase quantity"
+    "quantity_increase": "Increase quantity",
+    "disclosures": {
+      "label": "Product disclosures",
+      "editor_heading": "Product disclosures",
+      "editor_text": "Nothing to show for this product. Disclosures added to the product in Shopify admin appear here when they are set to show on the product page.",
+      "cart_label": "Safety information"
+    }
   },
   "recipient": {
     "form": {

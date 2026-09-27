@@ -119,6 +119,8 @@
       </dl>
     {%- endif -%}
 
+    {%- render 'product-disclosures', product: item.product, surface: 'cart' -%}
+
     {%- if item.line_level_discount_allocations.size > 0 -%}
       <ul
         class="valor-cart-item__discounts"

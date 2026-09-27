@@ -7,10 +7,14 @@
   - show_secondary_image: {Boolean} swap image on hover (default: false)
   - show_vendor: {Boolean} show vendor name (default: false)
   - show_price: {Boolean} show price (default: true)
+  - view_context: {String} where the card is shown, for the Shopify
+    shopify:product:view event: 'collection' (default), 'search' or
+    'recommendation'
 {%- endcomment -%}
 
 {%- liquid
   assign image_ratio = image_ratio | default: 'adapt'
+  assign view_context = view_context | default: 'collection'
   assign card_variant = product.selected_or_first_available_variant
   if show_price == null
     assign show_price = true
@@ -112,6 +116,16 @@
 
 {%- if render_card_swatches -%}<valor-product-card>{%- endif -%}
 <article class="valor-card valor-card--ratio-{{ image_ratio }}{% if show_secondary_image and product.media.size > 1 %} valor-card--swap-image{% endif %}">
+  {%- comment -%}
+    shopify:product:view fires once, when half of the card is on screen.
+    An empty overlay sentinel (see product-card.css) rather than a wrapper,
+    because the <article> itself must stay the grid child.
+  {%- endcomment -%}
+  <valor-view-event
+    class="valor-card__view-event"
+    view-event-trigger="intersect"
+    view-event-payload="{{ product | standard_event_data: 'view', context: view_context | escape }}"
+  ></valor-view-event>
   <a href="{{ product.url }}" class="valor-card__media-link" aria-label="{{ product.title | escape }}">
     <div class="valor-card__media">
       {%- if product.featured_media != blank -%}

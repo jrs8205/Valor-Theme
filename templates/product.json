@@ -67,6 +67,21 @@
             "show_gift_card_recipient": true
           }
         },
+        "disclosures": {
+          "type": "disclosures",
+          "settings": {
+            "heading": "",
+            "open_by_default": false
+          }
+        },
+        "legal_guarantee": {
+          "type": "legal_guarantee",
+          "settings": {
+            "show_notice": true,
+            "text": "",
+            "garan_label_width": 200
+          }
+        },
         "complementary": {
           "type": "complementary",
           "settings": {
@@ -102,6 +117,8 @@
         "size_guide",
         "quantity_selector",
         "buy_buttons",
+        "disclosures",
+        "legal_guarantee",
         "complementary",
         "description",
         "shipping_returns",

@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "2.0.0",
+    "theme_version": "2.1.0",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -579,6 +579,39 @@
         "unit": "px",
         "label": "t:labels.input_corner_radius",
         "default": 4
+      }
+    ]
+  },
+  {
+    "name": "EU legal guarantee",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "From 27 September 2026, stores selling goods to consumers in the EU must show the EU harmonised notice on the legal guarantee of conformity prominently, in colour, before purchase. Download the official notice in your store's language from the European Commission and upload it here without changes. Valor shows it whole in a pop-up opened from the footer and from the product page \"EU legal guarantee\" block, together with a link to the page its QR code points to and a text version of the notice. The text version is in English; translate it under Online Store > Themes > Edit default theme content to match your notice."
+      },
+      {
+        "type": "image_picker",
+        "id": "legal_guarantee_notice",
+        "label": "Legal guarantee notice",
+        "info": "Use the official colour version (RGB) of the notice, unmodified. [Get the official files](https://commission.europa.eu/publications/practical-guidelines-and-high-resolution-vector-files-eu-notice-and-label-product-guarantees_en)"
+      },
+      {
+        "type": "text",
+        "id": "legal_guarantee_label",
+        "label": "Link text",
+        "default": "Your legal guarantee rights"
+      },
+      {
+        "type": "text",
+        "id": "legal_guarantee_info_url",
+        "label": "Information link",
+        "info": "Where the notice's QR code points to. Leave blank to link to the Your Europe page on legal guarantees in the shopper's language."
+      },
+      {
+        "type": "checkbox",
+        "id": "legal_guarantee_show_in_footer",
+        "label": "Show link in footer",
+        "default": true
       }
     ]
   },

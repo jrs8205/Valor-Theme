@@ -119,6 +119,9 @@
 <valor-collection
   class="color-{{ section.settings.color_scheme }} valor-search valor-section"
   data-collection-section-id="{{ section.id }}"
+  data-template="search"
+  data-search-query="{{ search.terms | escape }}"
+  data-results-count="{{ search.results_count }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   <header class="valor-search__header valor-search__header--{{ heading_align }}">
@@ -402,6 +405,7 @@
                   {%- when 'product' -%}
                     {%- render 'product-card',
                       product: item,
+                      view_context: 'search',
                       image_ratio: image_ratio,
                       show_secondary_image: show_secondary,
                       show_vendor: show_vendor,
@@ -482,6 +486,7 @@
               <li class="valor-search__grid-item">
                 {%- render 'product-card',
                   product: product,
+                  view_context: 'recommendation',
                   image_ratio: image_ratio,
                   show_secondary_image: show_secondary,
                   show_vendor: show_vendor,
@@ -512,6 +517,7 @@
                 <li class="valor-search__grid-item">
                   {%- render 'product-card',
                     product: product,
+                    view_context: 'recommendation',
                     image_ratio: image_ratio,
                     show_secondary_image: show_secondary,
                     show_vendor: show_vendor,

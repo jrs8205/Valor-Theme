@@ -184,6 +184,7 @@
             id="{{ prefix }}-select-{{ section_id }}-{{ option_index }}"
             class="{{ prefix }}__option-select"
             data-option-position="{{ option.position }}"
+            data-option-name="{{ option.name | escape }}"
             {% if is_color_option %}
               data-option-color="true"
             {% endif %}
@@ -277,6 +278,7 @@
                   checked
                 {% endif %}
                 data-option-position="{{ option.position }}"
+                data-option-name="{{ option.name | escape }}"
                 data-option-display="option-{{ section_id }}-{{ option_index }}"
                 {% if is_color_option %}
                   data-option-color="true"

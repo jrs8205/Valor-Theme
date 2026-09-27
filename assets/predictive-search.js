@@ -209,12 +209,30 @@
       if (selectedOption) selectedOption.click();
     }
 
+    /* shopify:search:update (Shopify standard storefront event) for a
+       predictive query, resolved with the number of suggestions shown. */
+    startSearchEvent(searchTerm) {
+      const ev = window.ValorEvents;
+      if (!ev || typeof ev.searchUpdate !== "function") return null;
+      return ev.searchUpdate(this, { query: searchTerm });
+    }
+
+    getTotalResultCount() {
+      const results = this.predictiveSearchResults
+        ? this.predictiveSearchResults.querySelector("[data-total-results]")
+        : null;
+      return results ? parseInt(results.getAttribute("data-total-results"), 10) || 0 : 0;
+    }
+
     getSearchResults(searchTerm) {
       const queryKey = searchTerm.replace(" ", "-").toLowerCase();
       this.setLiveRegionLoadingState();
 
+      const searchEvent = this.startSearchEvent(searchTerm);
+
       if (this.cachedResults[queryKey]) {
         this.renderSearchResults(this.cachedResults[queryKey]);
+        if (searchEvent) searchEvent.resolve(this.getTotalResultCount());
         return;
       }
 
@@ -236,6 +254,7 @@
           if (!response.ok) {
             const error = new Error(response.status);
             this.close();
+            if (searchEvent) searchEvent.fail(error);
             throw error;
           }
           return response.text();
@@ -252,9 +271,11 @@
                 instance.cachedResults[queryKey] = resultsMarkup;
               });
               this.renderSearchResults(resultsMarkup);
+              if (searchEvent) searchEvent.resolve(this.getTotalResultCount());
               return;
             }
             this.close();
+            if (searchEvent) searchEvent.fail(new Error("Predictive search markup missing"));
             return;
           }
           const resultsMarkup = sectionEl.innerHTML;
@@ -263,8 +284,13 @@
             instance.cachedResults[queryKey] = resultsMarkup;
           });
           this.renderSearchResults(resultsMarkup);
+          if (searchEvent) searchEvent.resolve(this.getTotalResultCount());
         })
         .catch((error) => {
+          // An aborted request rejects its search event too (the contract
+          // is "rejects if the request fails or is aborted"). fail() is a
+          // no-op when the event was already settled above.
+          if (searchEvent) searchEvent.fail(error);
           if (error && (error.code === 20 || error.name === "AbortError")) return;
           this.close();
           console.error("[Valor predictive search]", error);

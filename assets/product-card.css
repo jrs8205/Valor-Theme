@@ -63,6 +63,17 @@
   /* uses image's intrinsic ratio */
 }
 
+/* Invisible sentinel that dispatches the Shopify shopify:product:view
+   event when the card scrolls into view. It needs a real box for the
+   IntersectionObserver, so it covers the card without taking part in
+   layout or receiving clicks. */
+.valor-card__view-event {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
 /* Wrapper custom element for in-place colour swatch swap. display:contents
    keeps it out of the layout so the card article stays the grid child. */
 valor-product-card {

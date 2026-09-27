@@ -87,6 +87,19 @@
   class="color-{{ section.settings.color_scheme }} valor-fp valor-fp--media-{{ media_position }} valor-fp--media-{{ media_width }}{% if section.settings.image_size_mobile == 'full' %} valor-fp--image-full-mobile{% endif %}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
+  {%- if product != blank -%}
+    {%- comment -%}
+      shopify:product:view, once the top of the section scrolls into view.
+      A zero-height block sentinel: it sits outside the .valor-fp__inner grid
+      so it never becomes a grid item, and a zero-area target still reports
+      an intersection ratio of 1 while it is on screen.
+    {%- endcomment -%}
+    <valor-view-event
+      class="valor-fp__view-event"
+      view-event-trigger="intersect"
+      view-event-payload="{{ product | standard_event_data: 'view' | escape }}"
+    ></valor-view-event>
+  {%- endif -%}
   <div class="valor-fp__inner">
     {%- if product != blank -%}
       <div class="valor-fp__media" data-fp-gallery="{{ section.id }}">
@@ -111,6 +124,8 @@
         data-section-id="{{ section.id }}"
         data-product-id="{{ product.id }}"
         data-product-url="{{ product.url }}"
+        data-product-title="{{ product.title | escape }}"
+        data-product-handle="{{ product.handle | escape }}"
       >
         <script type="application/json" data-product-info-i18n>
           {
@@ -338,6 +353,11 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     overflow-x: hidden;
+  }
+  .valor-fp__view-event {
+    display: block;
+    height: 0;
+    pointer-events: none;
   }
   .valor-fp__inner {
     width: 100%;

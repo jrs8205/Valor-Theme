@@ -258,6 +258,9 @@
           {%- endfor -%}
         </ul>
       {%- endif -%}
+      {%- if settings.legal_guarantee_show_in_footer -%}
+        {%- render 'legal-guarantee-notice', mode: 'trigger', class: 'valor-footer__legal-guarantee' -%}
+      {%- endif -%}
     </div>
   </div>
 </footer>
@@ -717,6 +720,13 @@
   .valor-footer__copyright a:hover {
     color: var(--color-foreground);
     text-decoration: underline;
+  }
+  .valor-footer__legal-guarantee {
+    font-size: inherit;
+    color: inherit;
+  }
+  .valor-footer__legal-guarantee:hover {
+    color: var(--color-foreground);
   }
   .valor-footer__policies {
     list-style: none;

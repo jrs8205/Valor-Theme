@@ -1,6 +1,7 @@
 <!doctype html>
 <html
   lang="{{ request.locale.iso_code }}"
+  dir="{{ request.locale.direction | default: 'ltr' }}"
   class="{% if request.page_type == 'index' %}valor-page-index{% endif %}"
   data-valor-theme="valor"
 >
@@ -34,6 +35,52 @@
     {% # Social, title, etc. %}
     {% render 'meta-tags' %}
 
+    {%- comment -%}
+      Shopify standard storefront events and actions. The module exposes the
+      Shopify-hosted events library as window.StandardEvents.
+      storefront-events.js then wires the theme's own dispatches, configures
+      Shopify.actions and, once shopify:page:view has been dispatched on
+      DOMContentLoaded, registers <valor-view-event> (the element that
+      dispatches product / collection / cart view events from payloads
+      rendered by the standard_event_data filter). Registering it no earlier
+      guarantees that every deferred script, including slow app scripts, has
+      run and subscribed before the first view event fires. Module and deferred scripts execute in
+      document order, so every body script below can rely on
+      window.ValorEvents.
+
+      The inline ValorBoot script is synchronous on purpose: it registers the
+      theme's DOMContentLoaded listener while <head> is still being parsed,
+      before any script in content_for_header can register one. Work that
+      storefront-events.js queues on it (configuring Shopify.actions, the
+      shopify:page:view dispatch) runs in that first listener, so the theme's
+      action configuration always wins (only the first configure() counts).
+    {%- endcomment -%}
+    <script type="module">
+      import * as StandardEvents from 'https://cdn.shopify.com/storefront/standard-events.js';
+
+      window.StandardEvents = StandardEvents;
+    </script>
+    <script src="{{ 'storefront-events.js' | asset_url }}" defer></script>
+    <script>
+      window.ValorBoot = window.ValorBoot || { ready: false, queue: [] };
+      document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+          var boot = window.ValorBoot;
+          boot.ready = true;
+          var queue = boot.queue.splice(0);
+          for (var i = 0; i < queue.length; i++) {
+            try {
+              queue[i]();
+            } catch (error) {
+              console.error('[Valor] ready callback failed', error);
+            }
+          }
+        },
+        { once: true }
+      );
+    </script>
+
     {{ content_for_header }}
   </head>
 
@@ -44,7 +91,7 @@
 
     {% sections 'header-group' %}
 
-    <main id="MainContent" role="main" tabindex="-1">
+    <main id="MainContent" role="main" tabindex="-1" data-template="{{ template.name }}">
       {{ content_for_layout }}
     </main>
 
@@ -89,6 +136,8 @@
         })();
       </script>
     {%- endif -%}
+
+    {%- render 'legal-guarantee-notice', mode: 'dialog' -%}
 
     {%- render 'lightbox' -%}
     <script src="{{ 'lightbox.js' | asset_url }}" defer></script>

@@ -1,8 +1,9 @@
 {
   "name": "valor-theme",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
+    "test": "node --test tests/*.test.cjs",
     "check": "shopify theme check",
     "check:json": "shopify theme check --output json",
     "format": "prettier . --write",
@@ -11,6 +12,7 @@
   },
   "devDependencies": {
     "@shopify/prettier-plugin-liquid": "^1.10.3",
+    "playwright": "1.60.0",
     "prettier": "^3.8.4"
   }
 }

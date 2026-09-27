@@ -1,6 +1,8 @@
 .git/**
 node_modules/**
 dist/**
+tests/**
+docs/**
 *.zip
 package.json
 package-lock.json

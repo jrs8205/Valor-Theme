@@ -48,6 +48,20 @@
  * All cart endpoints are constructed with Shopify.routes.root via
  * cartUrl() so the theme works correctly across multilingual /
  * multi-market setups.
+ *
+ * Shopify standard storefront events (see storefront-events.js): quantity
+ * changes and removals dispatch shopify:cart:lines-update (context
+ * "cart"), note edits shopify:cart:note-update and discount apply/remove
+ * shopify:cart:discount-update, all from <valor-cart-page>. The cart page
+ * view event (shopify:cart:view, context "page") is dispatched from Liquid
+ * by a <valor-view-event> rendered just before this element.
+ *
+ * Freshness (shared with cart-drawer.js): renders of this section are
+ * tagged with the cart generation they belong to and never move the page
+ * back to an older one; the header bubble and valor:cart:updated go
+ * through cart-drawer.js's generation-guarded helpers. This element
+ * recognises its own notifications by event.valorSource instead of a
+ * "skip the next event" flag, so no state can leak into a later event.
  */
 
 (function () {
@@ -66,6 +80,108 @@
     return root + path.replace(/^\//, "");
   }
 
+  /* Standard-events helper (assets/storefront-events.js); null only if that
+     script failed to load. */
+  function events() {
+    return window.ValorEvents || null;
+  }
+
+  /* Record that a cart mutation completed (new cart generation), so shared
+     /cart.js reads never hand out a snapshot from before it. */
+  function cartMutated() {
+    var ev = events();
+    if (ev && typeof ev.cartMutated === "function") return ev.cartMutated();
+    return 0;
+  }
+
+  function cartGeneration() {
+    var ev = events();
+    return ev && typeof ev.cartGeneration === "function" ? ev.cartGeneration() : 0;
+  }
+
+  /* cart-drawer.js (always loaded by the layout) owns the serial cart
+     request queue, the generation-guarded bubble and the single
+     valor:cart:updated publisher. These wrappers fall back to local,
+     unqueued versions if it isn't available. */
+  function sharedCartApi() {
+    return window.ValorCartDrawer || null;
+  }
+
+  // An error response is not a cart. Preserve its event classification while
+  // sending the UI through its error/recovery path instead of publishing it.
+  function settleCartResponse(operation, response) {
+    if (operation) operation.settle(response.status, response.body);
+    if (!response.ok) {
+      var body = response.body;
+      var error = new Error(
+        (body && (body.description || body.message)) || "Cart request failed (" + response.status + ")",
+      );
+      error.cartResponseHandled = true;
+      throw error;
+    }
+    return response.body;
+  }
+
+  // Match the drawer's pending intent handling when its script is unavailable.
+  var pendingDiscountChanges = 0;
+  var intendedDiscountCodes = [];
+  function beginDiscountChange(existing, code, remove) {
+    var api = sharedCartApi();
+    if (api && typeof api.beginDiscountChange === "function") return api.beginDiscountChange(existing, code, remove);
+    if (!pendingDiscountChanges) intendedDiscountCodes = existing.slice();
+    var needle = String(code).toLowerCase();
+    var seen = Object.create(null);
+    intendedDiscountCodes = intendedDiscountCodes.filter(function (value) {
+      var key = String(value).toLowerCase();
+      if (key === needle || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+    if (!remove) intendedDiscountCodes.push(code);
+    pendingDiscountChanges += 1;
+    var finished = false;
+    return {
+      codes: intendedDiscountCodes.slice(),
+      finish: function () {
+        if (finished) return;
+        finished = true;
+        pendingDiscountChanges -= 1;
+        if (!pendingDiscountChanges) intendedDiscountCodes = [];
+      },
+    };
+  }
+
+  /* JSON cart request through the shared serial queue; resolves with
+     { ok, status, body, generation } (see cart-drawer.js cartRequest). */
+  function cartRequest(url, init, options) {
+    var api = sharedCartApi();
+    if (api && typeof api.cartRequest === "function") return api.cartRequest(url, init, options);
+    var mutation = !!(options && options.mutation);
+    var startGeneration = cartGeneration();
+    return fetch(url, init).then(function (r) {
+      return r.json().then(function (body) {
+        var ev = events();
+        var declined = ev && ev.isDeclineStatus ? ev.isDeclineStatus(r.status) : false;
+        var changed = mutation && (r.ok || declined);
+        return { ok: r.ok, status: r.status, body: body, generation: changed ? cartMutated() : startGeneration };
+      });
+    });
+  }
+
+  /* Section request through the shared serial queue; resolves with
+     { ok, status, html, generation }. */
+  function cartSectionRequest(url, onStart) {
+    var api = sharedCartApi();
+    if (api && typeof api.cartSectionRequest === "function") return api.cartSectionRequest(url, onStart);
+    var startGeneration = cartGeneration();
+    if (typeof onStart === "function") onStart(startGeneration);
+    return fetch(url).then(function (r) {
+      return r.text().then(function (html) {
+        return { ok: r.ok, status: r.status, html: html, generation: startGeneration };
+      });
+    });
+  }
+
   /* Update the header cart icon bubble manually. The cart-icon-bubble
      isn't its own Shopify section in Valor, so we mutate the DOM
      directly instead of pulling a section render. Mirrors the same
@@ -76,7 +192,12 @@
        - .valor-cart-count: visible bubble (created/removed as count changes)
        - [data-cart-count-text]: screen-reader text, always present, count
          interpolated into a data-template string. */
-  function updateCartIconBubble(cart) {
+  function updateCartIconBubble(cart, generation) {
+    var api = sharedCartApi();
+    if (api && typeof api.updateCartBubble === "function") {
+      api.updateCartBubble(cart, generation);
+      return;
+    }
     var cartLink = document.querySelector(CART_ICON_BUBBLE_SELECTOR);
     if (!cartLink) return;
     var bubble = cartLink.querySelector(CART_COUNT_SELECTOR);
@@ -107,8 +228,17 @@
     }
   }
 
-  function broadcastCartState(cart) {
-    document.dispatchEvent(new CustomEvent("valor:cart:updated", { detail: cart }));
+  /* Publish cart state as coming from `source` (this element), so its own
+     listener can recognise and skip it via event.valorSource. */
+  function broadcastCartState(cart, generation, source) {
+    var api = sharedCartApi();
+    if (api && typeof api.publishCartState === "function") {
+      api.publishCartState(cart, generation, source);
+      return;
+    }
+    var event = new CustomEvent("valor:cart:updated", { detail: cart });
+    if (source) event.valorSource = source;
+    document.dispatchEvent(event);
   }
 
   /* Collect customer-applied discount code titles for the active-codes
@@ -159,9 +289,11 @@
       });
     }
 
+    // Shopify keeps a code the cart rejected in cart.discount_codes with
+    // applicable: false. Only accepted codes count as applied.
     if (Array.isArray(cart.discount_codes)) {
       cart.discount_codes.forEach(function (entry) {
-        if (entry && entry.code) add(entry.code);
+        if (entry && entry.code && entry.applicable !== false) add(entry.code);
       });
     }
 
@@ -203,7 +335,8 @@
     var shippingCodes = [];
     var seen = Object.create(null);
     cart.discount_codes.forEach(function (entry) {
-      if (!entry || !entry.code) return;
+      // Rejected codes (applicable: false) are not shipping discounts.
+      if (!entry || !entry.code || entry.applicable === false) return;
       var code = String(entry.code).trim();
       if (!code) return;
       var key = code.toLowerCase();
@@ -348,12 +481,11 @@
           if (!this._shippingSynced) {
             this._shippingSynced = true;
             var self = this;
-            fetch(cartUrl("cart.js"), { credentials: "same-origin" })
-              .then(function (r) {
-                return r.json();
-              })
-              .then(function (cart) {
-                syncShippingPills(self, cart);
+            // Through the serial cart queue, so this snapshot can't land
+            // after (and undo) a newer cart render.
+            cartRequest(cartUrl("cart.js"), { credentials: "same-origin" })
+              .then(function (res) {
+                if (res.ok) syncShippingPills(self, res.body);
               })
               .catch(function () {});
           }
@@ -369,11 +501,13 @@
         /* External cart mutations (e.g. drawer remove) trigger a section
            refresh so our markup re-syncs. We skip the event we dispatched
            ourselves to avoid an infinite loop. */
-        _onExternalCartUpdate() {
-          if (this._suppressNextBroadcast) {
-            this._suppressNextBroadcast = false;
-            return;
-          }
+        /* Another surface changed the cart: re-render this section. Our
+           own notifications carry event.valorSource === this and are
+           skipped (the section was already rendered from the response).
+           refreshSection() coalesces with a refresh already in flight for
+           the same generation and never applies older markup. */
+        _onExternalCartUpdate(event) {
+          if (event && event.valorSource === this) return;
           this.refreshSection();
         }
 
@@ -450,31 +584,49 @@
           var self = this;
           if (!this.sectionId) return;
 
+          var row = this.querySelector('[data-cart-item][data-line="' + line + '"]');
+          var lineKey = row && row.getAttribute("data-key");
+          if (!lineKey) return this.refreshSection();
+
           this.setBusy(true);
           this.setLineBusy(line, true);
           this.clearLineError(line);
 
+          // shopify:cart:lines-update. The row carries the AJAX line key.
+          var ev = events();
+          var linesOp = ev
+            ? ev.cartLinesUpdate(this, {
+                action: quantity === 0 ? "remove" : "update",
+                context: "cart",
+                lines: [{ id: lineKey, quantity: quantity }],
+              })
+            : null;
+
           var body = {
-            line: line,
+            id: lineKey,
             quantity: quantity,
             sections: this.getSectionsToRender(),
             sections_url: window.location.pathname,
           };
 
-          fetch(cartUrl("cart/change.js"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+          return cartRequest(
+            cartUrl("cart/change.js"),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(body),
             },
-            body: JSON.stringify(body),
-          })
-            .then(function (response) {
-              return response.json().then(function (data) {
-                return { ok: response.ok, status: response.status, data: data };
-              });
+            { mutation: true },
+          )
+            .then(function (res) {
+              return { ok: res.ok, status: res.status, data: res.body, generation: res.generation };
             })
             .then(function (result) {
+              var gen = result.generation;
+              if (linesOp) linesOp.settle(result.status, result.data);
               if (!result.ok) {
                 self.handleLineError(line, result.data, sourceInput);
                 self.setLineBusy(line, false);
@@ -483,7 +635,7 @@
               }
 
               var cart = result.data;
-              if (self.applyCartResponse(cart)) {
+              if (self.applyCartResponse(cart, gen)) {
                 self.announce(self.formatUpdateMessage(cart, line, quantity));
                 return;
               }
@@ -491,6 +643,7 @@
             })
             .catch(function (err) {
               console.error("[Valor cart] change failed:", err);
+              if (linesOp) linesOp.fail(err);
               self.handleLineError(line, null, sourceInput);
               self.setLineBusy(line, false);
               self.setBusy(false);
@@ -538,33 +691,35 @@
           if (applyBtn) applyBtn.disabled = true;
           this.setBusy(true);
 
-          var existing = this.getExistingDiscountsFromDom();
-          // De-duplicate against the new code (case-insensitive) so we
-          // don't end up with "SAVE15,SAVE15" if the user re-enters a
-          // code that's already applied.
-          var lc = String(code).toLowerCase();
-          var combined = existing.filter(function (c) {
-            return String(c).toLowerCase() !== lc;
-          });
-          combined.push(code);
+          var intent = beginDiscountChange(this.getExistingDiscountsFromDom(), code, false);
+          var combined = intent.codes;
 
-          fetch(cartUrl("cart/update.js"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+          var ev = events();
+          var discountOp = ev ? ev.cartDiscountUpdate(this, { codes: combined }) : null;
+          var gen = cartGeneration();
+
+          return cartRequest(
+            cartUrl("cart/update.js"),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                discount: combined.join(","),
+                sections: this.getSectionsToRender(),
+                sections_url: window.location.pathname,
+              }),
             },
-            body: JSON.stringify({
-              discount: combined.join(","),
-              sections: this.getSectionsToRender(),
-              sections_url: window.location.pathname,
-            }),
-          })
-            .then(function (r) {
-              return r.json();
+            { mutation: true },
+          )
+            .then(function (res) {
+              gen = res.generation;
+              return settleCartResponse(discountOp, res);
             })
             .then(function (cart) {
-              var applied = self._cartHasCode(cart, code);
+              var applied = self._cartHasCode(cart, code) && !self._cartRejectedCode(cart, code);
 
               if (applied) {
                 // applyCartResponse() replaces the section's innerHTML
@@ -572,7 +727,7 @@
                 // before the fetch is now detached. Re-query AFTER the
                 // render to write the success message into the fresh
                 // DOM. announce() also fires for screen readers.
-                var rendered = self.applyCartResponse(cart);
+                var rendered = self.applyCartResponse(cart, gen);
                 if (!rendered) self.refreshSection();
 
                 // For shipping codes the pill + the "Shipping discount
@@ -611,11 +766,13 @@
             })
             .catch(function (err) {
               console.error("[Valor cart] discount apply failed:", err);
+              if (discountOp && !err.cartResponseHandled) discountOp.fail(err);
               var errMsg = self._getString("error_generic") || "Something went wrong. Please try again.";
               self.setDiscountMessage(messageEl, errMsg, "error");
               self.setBusy(false);
               if (applyBtn) applyBtn.disabled = false;
-            });
+            })
+            .then(intent.finish, intent.finish);
         }
 
         /* Remove a single applied discount code. Shopify's discount
@@ -627,40 +784,48 @@
           var self = this;
           if (!this.sectionId || !codeToRemove) return;
 
-          var existing = this.getExistingDiscountsFromDom();
-          var lc = String(codeToRemove).toLowerCase();
-          var remaining = existing.filter(function (c) {
-            return String(c).toLowerCase() !== lc;
-          });
+          var intent = beginDiscountChange(this.getExistingDiscountsFromDom(), codeToRemove, true);
+          var remaining = intent.codes;
 
           this.setBusy(true);
 
-          fetch(cartUrl("cart/update.js"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+          var ev = events();
+          var discountOp = ev ? ev.cartDiscountUpdate(this, { codes: remaining }) : null;
+          var gen = cartGeneration();
+
+          return cartRequest(
+            cartUrl("cart/update.js"),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                discount: remaining.join(","),
+                sections: this.getSectionsToRender(),
+                sections_url: window.location.pathname,
+              }),
             },
-            body: JSON.stringify({
-              discount: remaining.join(","),
-              sections: this.getSectionsToRender(),
-              sections_url: window.location.pathname,
-            }),
-          })
-            .then(function (r) {
-              return r.json();
+            { mutation: true },
+          )
+            .then(function (res) {
+              gen = res.generation;
+              return settleCartResponse(discountOp, res);
             })
             .then(function (cart) {
-              if (self.applyCartResponse(cart)) {
+              if (self.applyCartResponse(cart, gen)) {
                 self.announce(self._getString("discount_removed"));
               } else {
-                self.refreshSection();
+                return self.refreshSection();
               }
             })
             .catch(function (err) {
               console.error("[Valor cart] discount remove failed:", err);
-              self.refreshSection();
-            });
+              if (discountOp && !err.cartResponseHandled) discountOp.fail(err);
+              return self.refreshSection();
+            })
+            .then(intent.finish, intent.finish);
         }
 
         /* Update the cart note. Triggered on textarea change (which fires
@@ -670,32 +835,39 @@
         updateNote(note) {
           var self = this;
 
-          fetch(cartUrl("cart/update.js"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+          var ev = events();
+          var noteOp = ev ? ev.cartNoteUpdate(this, { context: "cart", note: note }) : null;
+          var gen = cartGeneration();
+
+          cartRequest(
+            cartUrl("cart/update.js"),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                note: note,
+                sections: this.getSectionsToRender(),
+                sections_url: window.location.pathname,
+              }),
             },
-            body: JSON.stringify({
-              note: note,
-              sections: this.getSectionsToRender(),
-              sections_url: window.location.pathname,
-            }),
-          })
-            .then(function (r) {
-              return r.json();
+            { mutation: true },
+          )
+            .then(function (res) {
+              gen = res.generation;
+              return settleCartResponse(noteOp, res);
             })
             .then(function (cart) {
-              if (self.applyCartResponse(cart)) {
-                self.announce(self._getString("note_updated"));
-              } else {
-                self._suppressNextBroadcast = true;
-                broadcastCartState(cart);
-                self.announce(self._getString("note_updated"));
-              }
+              // applyCartResponse() publishes the cart state either way
+              // (with or without section markup in the response).
+              self.applyCartResponse(cart, gen);
+              self.announce(self._getString("note_updated"));
             })
             .catch(function (err) {
               console.error("[Valor cart] note update failed:", err);
+              if (noteOp && !err.cartResponseHandled) noteOp.fail(err);
             });
         }
 
@@ -710,45 +882,56 @@
           return sections;
         }
 
-        renderExternalSections(sections) {
+        renderExternalSections(sections, generation) {
           if (!sections || !sections[CART_DRAWER_SECTION_ID]) return;
           var drawer = document.getElementById("ValorCartDrawer");
           if (drawer && typeof drawer.renderFromSections === "function") {
-            drawer.renderFromSections(sections);
+            drawer.renderFromSections(sections, generation);
           }
         }
 
         /* Apply a cart response: render the freshly rendered section if
            the bundled response carried it, update the icon bubble, broadcast
            cart state. Returns true on success. */
-        applyCartResponse(cart) {
+        /* generation: the cart generation this response belongs to (from
+           cartMutated() when the response arrived). */
+        applyCartResponse(cart, generation) {
           if (!cart) return false;
-          this.renderExternalSections(cart.sections);
+          var gen = typeof generation === "number" ? generation : cartGeneration();
+          this.renderExternalSections(cart.sections, gen);
           var newSectionHtml = cart.sections && cart.sections[this.sectionId];
           if (!newSectionHtml) {
-            updateCartIconBubble(cart);
-            this._suppressNextBroadcast = true;
-            broadcastCartState(cart);
+            updateCartIconBubble(cart, gen);
+            broadcastCartState(cart, gen, this);
             return false;
           }
 
-          this.renderSection(newSectionHtml);
-          updateCartIconBubble(cart);
+          this.renderSection(newSectionHtml, { generation: gen });
+          updateCartIconBubble(cart, gen);
           // Re-inject any shipping pills the new Liquid render didn't include
           syncShippingPills(this, cart);
-          this._suppressNextBroadcast = true;
-          broadcastCartState(cart);
+          broadcastCartState(cart, gen, this);
           this.setBusy(false);
           return true;
         }
 
-        renderSection(html) {
+        /* Returns true when the markup was replaced. options.noFallback:
+           return false instead of starting a section re-fetch when the HTML
+           doesn't contain the cart page (refreshSection uses it, so a
+           persistent error page can't turn into a refresh loop). */
+        renderSection(html, options) {
           var doc = new DOMParser().parseFromString(html, "text/html");
           var fresh = doc.querySelector("valor-cart-page");
           if (!fresh) {
+            if (options && options.noFallback) return false;
             this.refreshSection();
-            return;
+            return false;
           }
+          // Never move the page back to markup older than what it shows
+          // (options.generation: the cart generation the HTML belongs to).
+          var gen = options && typeof options.generation === "number" ? options.generation : cartGeneration();
+          if (typeof this._renderedGeneration === "number" && gen < this._renderedGeneration) return true;
+          this._renderedGeneration = gen;
           this.innerHTML = fresh.innerHTML;
           this.liveRegion = this.querySelector("[data-cart-live-region]");
 
@@ -778,25 +961,63 @@
               currentRecs.remove();
             }
           }
+          return true;
         }
 
-        refreshSection() {
+        /* Re-fetch and re-render this section. Returns a promise.
+           options.strict: reject when the request fails, returns a non-2xx
+           status or the response has no cart-page markup (refreshCartUI uses
+           this so Shopify.actions.updateCart can fall back to a reload).
+           Otherwise failures are logged and the promise resolves, as before. */
+        refreshSection(options) {
           var self = this;
-          if (!this.sectionId) return;
+          var strict = !!(options && options.strict);
+          if (!this.sectionId) return Promise.resolve();
 
-          this.setBusy(true);
-          fetch(window.location.pathname + "?section_id=" + encodeURIComponent(this.sectionId))
-            .then(function (r) {
-              return r.text();
-            })
-            .then(function (html) {
-              self.renderSection(html);
-              self.setBusy(false);
-            })
-            .catch(function (err) {
-              console.error("[Valor cart] section refresh failed:", err);
-              self.setBusy(false);
+          // Coalesce: join a refresh that hasn't started yet (it is queued and
+          // will read the latest state) or that started at the current
+          // generation or later; otherwise queue a new one. The request runs
+          // in the shared serial queue and is tagged with the generation
+          // current when it starts, so it is dropped if a newer render (own
+          // mutation, newer refresh) already landed.
+          var inFlight = this._refreshInFlight;
+          var joinable =
+            inFlight &&
+            (this._refreshInFlightGeneration === null || this._refreshInFlightGeneration >= cartGeneration());
+          if (!joinable) {
+            this.setBusy(true);
+            var startedGeneration = null;
+            var request = cartSectionRequest(
+              window.location.pathname + "?section_id=" + encodeURIComponent(this.sectionId),
+              function (startGeneration) {
+                startedGeneration = startGeneration;
+                if (self._refreshInFlight === request) self._refreshInFlightGeneration = startGeneration;
+              },
+            ).then(function (res) {
+              if (!res.ok) throw new Error("Cart page section request failed (" + res.status + ")");
+              if (!self.renderSection(res.html, { noFallback: true, generation: res.generation })) {
+                throw new Error("Cart page markup missing from section response");
+              }
             });
+            var settle = function () {
+              if (self._refreshInFlight === request) {
+                self._refreshInFlight = null;
+                self.setBusy(false);
+              }
+            };
+            request.then(settle, settle);
+            this._refreshInFlight = request;
+            // null while queued (it will read the latest state when it
+            // starts); set to the start generation by onStart above.
+            // The local fallback invokes onStart synchronously, before
+            // request is assigned. Preserve that generation as well.
+            this._refreshInFlightGeneration = startedGeneration;
+          }
+
+          return this._refreshInFlight.catch(function (err) {
+            console.error("[Valor cart] section refresh failed:", err);
+            if (strict) throw err;
+          });
         }
 
         /* ----- Loading state ----- */
@@ -909,6 +1130,16 @@
            customer-applied discount. Mirrors getApplicableDiscountCodes()
            — both cart-level and line-level sources count, so codes
            that target specific products are recognized. */
+        /* True when the cart kept the code but reports it as not
+           applicable (unknown, expired, or its conditions aren't met). */
+        _cartRejectedCode(cart, code) {
+          if (!cart || !code || !Array.isArray(cart.discount_codes)) return false;
+          var needle = String(code).trim().toLowerCase();
+          return cart.discount_codes.some(function (entry) {
+            return entry && entry.applicable === false && String(entry.code).trim().toLowerCase() === needle;
+          });
+        }
+
         _cartHasCode(cart, code) {
           if (!cart || !code) return false;
           var needle = String(code).trim().toLowerCase();

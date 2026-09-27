@@ -19,12 +19,17 @@
      - Sold-out marking on individual option pills
      - Share button (Web Share API with clipboard fallback)
      - Cart event sync via 'valor:cart:updated' (no extra /cart.js fetch)
+     - Shopify standard event shopify:product:select on every option
+       change, resolved with the variant the options map to (see
+       storefront-events.js)
 
    Reads from the DOM:
      dataset.sectionId    — the Shopify section id (used for the fetch URL
                             and the section-scoped fragment ids)
      dataset.productId    — used to total per-product cart quantity
      dataset.productUrl   — base URL for the variant fetch + URL state
+     dataset.productTitle / dataset.productHandle — product identity for
+                            the shopify:product:select event payload
      dataset.prefix       — class prefix for this skin ('valor-mp' default,
                             'valor-fp' for featured-product)
      <script data-product-info-i18n> — JSON map of translated strings
@@ -589,6 +594,8 @@ class ValorProductInfo extends HTMLElement {
     const variant = this.findVariant(opts);
     this.currentVariant = variant;
 
+    this._dispatchProductSelect(variant);
+
     if (variant) {
       this.renderVariant(variant);
       this.updateGalleryMedia(variant);
@@ -601,6 +608,45 @@ class ValorProductInfo extends HTMLElement {
     }
     this.updateAddButton(variant);
     this.updateSoldOutPills(opts);
+  }
+
+  /* --- shopify:product:select ---
+     Dispatched from this element (it holds the option picker) after every
+     option change. Variant resolution is synchronous (the variants JSON is
+     already on the page), so the event's promise is resolved immediately
+     with the matching variant, or null when no variant matches. */
+  _getSelectedOptionsNamed() {
+    const byPosition = {};
+    const add = (el, value) => {
+      const position = parseInt(el.dataset.optionPosition, 10);
+      const name = el.dataset.optionName || "";
+      if (!name || isNaN(position)) return;
+      byPosition[position] = { name: name, value: String(value) };
+    };
+    this.optionInputs.forEach((input) => {
+      if (input.checked) add(input, input.value);
+    });
+    this.optionSelects.forEach((select) => add(select, select.value));
+    return Object.keys(byPosition)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map((position) => byPosition[position]);
+  }
+
+  _dispatchProductSelect(variant) {
+    const ev = window.ValorEvents;
+    if (!ev || typeof ev.productSelect !== "function" || !this.productId) return;
+    const selectedOptions = this._getSelectedOptionsNamed();
+    if (!selectedOptions.length) return;
+    const operation = ev.productSelect(this, {
+      product: {
+        id: String(this.productId),
+        title: this.dataset.productTitle || "",
+        handle: this.dataset.productHandle || "",
+      },
+      selectedOptions: selectedOptions,
+    });
+    operation.resolve(variant || null);
   }
 
   /* --- Cart event sync ---

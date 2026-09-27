@@ -81,9 +81,24 @@
   endif
 -%}
 
+{%- comment -%}
+  shopify:collection:view (Shopify standard storefront event). Rendered
+  OUTSIDE <valor-collection>, whose children are replaced on every AJAX
+  filter / sort, so the view event fires once per page load only.
+{%- endcomment -%}
+<valor-view-event
+  hidden
+  view-event-payload="{{ collection | standard_event_data: 'view' | escape }}"
+></valor-view-event>
+
 <valor-collection
   class="color-{{ section.settings.color_scheme }} valor-collection"
   data-collection-section-id="{{ section.id }}"
+  data-template="collection"
+  data-collection-id="{{ collection.id }}"
+  data-collection-handle="{{ collection.handle | escape }}"
+  data-products-count="{{ collection.all_products_count }}"
+  data-results-count="{{ collection.products_count }}"
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
 >
   {%- if show_image and collection.image -%}

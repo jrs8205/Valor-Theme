@@ -216,12 +216,22 @@
         {%- render 'header-search', input_id: 'ValorSearchInput' -%}
       {%- endif -%}
 
+      {%- comment -%}
+        Shopify's account component. Shown on desktop AND mobile (a Theme
+        Store requirement since 30 July 2026), so buyers can sign in and
+        reach their account from the header on any device. The signed-out
+        avatar uses Valor's own icon through the component's documented
+        "signed-out-avatar" slot.
+      {%- endcomment -%}
       {% if shop.customer_accounts_enabled %}
         <shopify-account menu="{{ section.settings.customer_account_menu }}">
           {%- if section.settings.enable_customer_avatar and customer and customer.has_avatar? -%}
             {{ customer | avatar }}
           {%- else -%}
-            {{ 'icon-account.svg' | inline_asset_content }}
+            <span slot="signed-out-avatar" class="valor-header__account-icon">
+              {{- 'icon-account.svg' | inline_asset_content -}}
+              <span class="visually-hidden">{{ 'header.log_in' | t }}</span>
+            </span>
           {%- endif -%}
         </shopify-account>
       {% endif %}
@@ -989,10 +999,28 @@
   }
 
   @media (max-width: 989px) {
+    /* Mobile: menu + search on the left, account + cart on the right, logo
+       centred between two equal-width icon pairs (the Dawn / Horizon
+       mobile layout). The icon container dissolves (display: contents) so
+       each icon takes its own fixed-width cell; a cell stays empty when its
+       icon is turned off, which keeps the logo centred in every
+       combination. */
     .valor-header {
-      grid-template-areas: 'left-icons heading icons';
-      grid-template-columns: 1fr auto 1fr;
-      column-gap: 0.5rem;
+      grid-template-areas: 'left-icons mobile-search heading mobile-account mobile-cart';
+      grid-template-columns: 2.75rem 2.75rem minmax(0, 1fr) 2.75rem 2.75rem;
+      column-gap: 0.25rem;
+    }
+    .valor-header .valor-header__icons {
+      display: contents;
+    }
+    .valor-header .valor-header__icons > .valor-header__search-toggle {
+      grid-area: mobile-search;
+    }
+    .valor-header .valor-header__icons > shopify-account {
+      grid-area: mobile-account;
+    }
+    .valor-header .valor-header__icons > .valor-header__cart {
+      grid-area: mobile-cart;
     }
     .valor-header__menu-toggle {
       display: flex;
@@ -1010,9 +1038,21 @@
       justify-self: end;
       gap: 0.25rem;
     }
-    /* Hide account icon on mobile — it's accessible from the drawer footer (Dawn pattern) */
-    .valor-header .valor-header__icons > shopify-account {
-      display: none;
+  }
+
+  /* Very narrow phones: slightly smaller icon cells leave the centred logo
+     more room. */
+  @media (max-width: 374px) {
+    .valor-header {
+      grid-template-columns: 2.5rem 2.5rem minmax(0, 1fr) 2.5rem 2.5rem;
+    }
+    .valor-header__menu-toggle,
+    .valor-header .valor-header__icons > a,
+    .valor-header .valor-header__icons > shopify-account,
+    .valor-header .valor-header__icons > .valor-header__search-toggle {
+      flex-basis: 2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
     }
   }
 
@@ -1718,6 +1758,41 @@
     }
   }
 
+  /* ===== <shopify-account> theming =====
+     The account sheet is rendered by Shopify; these documented custom
+     properties make it follow Valor's fonts, colours and corner radii. The
+     sheet opens from the bottom edge of the account button (the offset is
+     measured on open by the script at the end of this section), matching
+     the Horizon 4.2 alignment fix. */
+  .valor-header shopify-account {
+    --shopify-account-font-heading: var(--font-heading--family);
+    --shopify-account-font-heading-weight: var(--font-heading--weight);
+    --shopify-account-font-body: var(--font-body--family);
+    --shopify-account-font-body-weight: var(--font-body--weight);
+    --shopify-account-radius-button: var(--style-border-radius-buttons, 0px);
+    --shopify-account-radius-button-small: var(--style-border-radius-buttons, 0px);
+    --shopify-account-radius-input: var(--style-border-radius-inputs, 0px);
+    --shopify-account-color-background: var(--color-background);
+    --shopify-account-color-text: var(--color-foreground);
+    --shopify-account-color-accent: var(--color-foreground);
+    --shopify-account-color-accent-text: var(--color-background);
+    --shopify-account-dialog-position-top: calc(var(--valor-account-dialog-top, 0px) + 0.5rem);
+    color: inherit;
+  }
+  .valor-header shopify-account:not(:defined) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .valor-header__account-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+  }
+
   /* ===== Customer avatar inside <shopify-account> ===== */
   .valor-header__icons shopify-account img {
     width: 1.75rem;
@@ -1968,6 +2043,28 @@
 {% endstylesheet %}
 
 <script src="{{ 'localization-form.js' | asset_url }}" defer></script>
+
+<script>
+  /* Anchor the <shopify-account> sheet to the bottom of the account button
+     that opened it, so it drops down from the header icon on desktop and
+     mobile alike instead of from a fixed offset (Horizon 4.2 behaviour).
+     The component dispatches a non-bubbling "open" event; listen in the
+     capture phase on the document. */
+  (function () {
+    if (window.__valorAccountAnchor) return;
+    window.__valorAccountAnchor = true;
+    document.addEventListener(
+      'open',
+      function (event) {
+        var target = event.target;
+        if (!(target instanceof HTMLElement) || !target.matches('shopify-account')) return;
+        var bottom = Math.max(0, Math.round(target.getBoundingClientRect().bottom));
+        target.style.setProperty('--valor-account-dialog-top', bottom + 'px');
+      },
+      true
+    );
+  })();
+</script>
 
 <script>
   /* Sticky header controller.

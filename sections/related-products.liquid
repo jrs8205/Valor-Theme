@@ -71,6 +71,7 @@
         {%- for recommendation in recommendations.products -%}
           {%- render 'product-card',
             product: recommendation,
+            view_context: 'recommendation',
             image_ratio: section.settings.image_ratio,
             show_secondary_image: section.settings.show_secondary_image,
             show_vendor: section.settings.show_vendor,

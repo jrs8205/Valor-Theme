@@ -457,3 +457,363 @@ body {
 .valor-heading--large {
   font-size: var(--font-size-heading-xl);
 }
+
+/* =====================================================================
+   Product disclosures (snippets/product-disclosures.liquid)
+   Safety warnings / regulatory notices from the product's
+   shopify.disclosure metafield. Shared by the product page block and
+   the cart line items (drawer + cart page), so it lives here rather
+   than in a page-specific stylesheet.
+   ===================================================================== */
+.valor-disclosures {
+  width: 100%;
+}
+.valor-disclosures__heading {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-body--family);
+  font-size: 0.9375rem;
+  font-weight: var(--font-body--weight-bold);
+  letter-spacing: 0;
+}
+.valor-disclosures__summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.valor-disclosures__summary::-webkit-details-marker {
+  display: none;
+}
+.valor-disclosures__summary::marker {
+  content: "";
+}
+.valor-disclosures__summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.valor-disclosures__warning-icon,
+.valor-disclosures__chevron {
+  flex-shrink: 0;
+}
+.valor-disclosures__chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
+}
+.valor-disclosures[open] .valor-disclosures__chevron,
+.valor-disclosures__panel[open] .valor-disclosures__chevron {
+  transform: rotate(180deg);
+}
+.valor-disclosures__summary-label {
+  min-width: 0;
+}
+/* Disclosure titles read as one line: "Title · Title". Each title wraps
+   as a unit, so a line break never splits one title in two. */
+.valor-disclosures__summary-title {
+  display: inline-block;
+}
+.valor-disclosures__summary-title + .valor-disclosures__summary-title::before {
+  content: "\00B7";
+  margin: 0 0.5em;
+  color: color-mix(in srgb, var(--color-foreground) 55%, transparent);
+}
+.valor-disclosures__list {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.valor-disclosures__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+.valor-disclosures__symbol {
+  flex-shrink: 0;
+  display: block;
+  width: auto;
+  height: 1.5rem;
+  max-width: 3rem;
+  object-fit: contain;
+}
+.valor-disclosures__item-body {
+  min-width: 0;
+}
+.valor-disclosures__item-title {
+  margin: 0;
+  font-weight: var(--font-body--weight-bold);
+  color: var(--color-foreground);
+}
+.valor-disclosures__text {
+  margin-top: 0.125rem;
+  color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+  overflow-wrap: anywhere;
+}
+/* Rich text from the metafield follows the panel's type size. */
+.valor-disclosures__text :is(p, ul, ol, li, h1, h2, h3, h4, h5, h6) {
+  margin: 0 0 0.375em;
+  font-size: inherit;
+  line-height: inherit;
+}
+.valor-disclosures__text > :last-child {
+  margin-bottom: 0;
+}
+.valor-disclosures__text a {
+  color: var(--color-foreground);
+}
+
+/* Product page: a quiet bordered panel. */
+.valor-disclosures__panel {
+  border: 1px solid var(--valor-border-default);
+  border-radius: var(--style-border-radius-inputs, 0px);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.valor-disclosures--product .valor-disclosures__summary {
+  padding: 0.875rem 1rem;
+  font-weight: var(--font-body--weight-bold);
+}
+.valor-disclosures--product .valor-disclosures__warning-icon,
+.valor-disclosures--product .valor-disclosures__chevron {
+  margin-top: 0.1875rem;
+}
+.valor-disclosures--product .valor-disclosures__list {
+  padding: 0.875rem 1rem 1rem;
+  border-top: 1px solid var(--valor-border-subtle);
+}
+
+/* Cart line item: a small inline toggle. */
+.valor-disclosures--cart {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.valor-disclosures--cart .valor-disclosures__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0;
+}
+.valor-disclosures--cart .valor-disclosures__summary-label {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.valor-disclosures--cart .valor-disclosures__warning-icon {
+  width: 14px;
+  height: 14px;
+}
+.valor-disclosures--cart .valor-disclosures__chevron {
+  width: 12px;
+  height: 12px;
+  margin-left: 0;
+}
+.valor-disclosures--cart .valor-disclosures__list {
+  gap: 0.5rem;
+  padding: 0.5rem 0 0.125rem;
+}
+.valor-disclosures--cart .valor-disclosures__symbol {
+  height: 1.125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valor-disclosures__chevron {
+    transition: none;
+  }
+}
+
+/* =====================================================================
+   EU legal guarantee (snippets/legal-guarantee-notice.liquid and
+   snippets/product-legal-guarantee.liquid). The official notice and
+   label are fixed designs that must be shown whole and unmodified, so
+   the image is never cropped: it keeps its intrinsic aspect ratio and
+   the popover scrolls instead.
+   ===================================================================== */
+.valor-legal-guarantee-trigger {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.valor-legal-popover {
+  width: min(48rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--valor-border-default);
+  border-radius: var(--style-border-radius-inputs, 0px);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.18);
+}
+.valor-legal-popover--label {
+  width: min(32rem, calc(100vw - 2rem));
+}
+.valor-legal-popover::backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+.valor-legal-popover__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--valor-border-subtle);
+  background-color: var(--color-background);
+}
+.valor-legal-popover__title {
+  margin: 0;
+  font-family: var(--font-body--family);
+  font-size: 1rem;
+  font-weight: var(--font-body--weight-bold);
+  letter-spacing: 0;
+}
+.valor-legal-popover__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.5rem -0.5rem -0.5rem 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.valor-legal-popover__close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.valor-legal-popover__body {
+  display: grid;
+  /* minmax(0, 1fr): the artwork's minimum width must not widen the column,
+     so only the artwork scrolls sideways and the text wraps to the pop-up. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+/* The artwork must stay legible at its default display size (Commission
+   guidelines 2.3 / 3.3.2). On narrow screens it keeps a readable minimum
+   width and scrolls sideways inside the pop-up instead of shrinking. */
+.valor-legal-popover__artwork {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.valor-legal-popover__artwork:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.valor-legal-popover__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.valor-legal-popover__artwork--notice .valor-legal-popover__image {
+  min-width: 36rem;
+}
+.valor-legal-popover__artwork--label .valor-legal-popover__image {
+  min-width: 20rem;
+}
+.valor-legal-popover__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.valor-legal-popover__links a,
+.valor-legal-popover__text a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+}
+.valor-legal-popover__caption {
+  margin: 0;
+}
+.valor-legal-popover__text-version {
+  border-top: 1px solid var(--valor-border-subtle);
+  padding-top: 0.75rem;
+}
+.valor-legal-popover__text-version > summary {
+  cursor: pointer;
+  font-weight: var(--font-body--weight-bold);
+}
+.valor-legal-popover__text {
+  padding-top: 0.5rem;
+}
+.valor-legal-popover__text :is(h3, p, ul, ol) {
+  margin: 0 0 0.625rem;
+  font-size: inherit;
+  line-height: inherit;
+}
+.valor-legal-popover__text h3 {
+  font-family: var(--font-body--family);
+  font-weight: var(--font-body--weight-bold);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.valor-legal-popover__text :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+.valor-legal-popover__text > :last-child {
+  margin-bottom: 0;
+}
+.valor-mp__legal-guarantee {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+}
+.valor-mp__garan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+.valor-mp__garan-label {
+  appearance: none;
+  display: block;
+  flex-shrink: 0;
+  width: var(--valor-garan-label-width, 200px);
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.valor-mp__garan-label-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.valor-mp__garan-text {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 12rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.valor-mp__garan-text a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}

@@ -1,0 +1,169 @@
+{%- comment -%}
+  EU legal guarantee notice (Directive 2011/83/EU Art. 22a, design and
+  content set by Commission Implementing Regulation (EU) 2025/1960).
+  From 27 September 2026 traders selling goods to consumers in the EU must
+  show the harmonised notice on the legal guarantee of conformity
+  prominently, before the consumer is bound by the contract, and in colour
+  when the sale happens online.
+
+  The notice is an official, fixed design published by the European
+  Commission in every EU language. It must be used in full and unmodified,
+  so the theme never recreates the artwork: the merchant uploads the
+  official RGB file in Theme settings > EU legal guarantee, and Valor shows
+  that image whole (no cropping, no overlays) in a popover opened from the
+  footer and from the product page "EU legal guarantee" block — the
+  "Your legal guarantee rights" + first click pattern described in the
+  Commission's practical guidelines (section 2.3, digital display).
+
+  Alongside the artwork the popover always offers, per the guidelines and
+  for accessibility:
+    - a clickable link to the QR code's destination, the Your Europe page
+      on legal guarantees in the shopper's language (derived from the
+      storefront language, overridable in theme settings);
+    - a text version of the notice (the official English wording, stored
+      in the locale file so merchants can translate it under
+      "Edit default theme content" to match the language of their notice).
+
+  Modes:
+    mode: 'dialog'   the popover holding the notice. Rendered once per page
+                     by layout/theme.liquid.
+    mode: 'trigger'  a button that opens the popover. Accepts:
+                       class  {String} extra classes for the button
+                       label  {String} button text (defaults to the
+                              theme setting)
+
+  Renders nothing when no notice image has been uploaded.
+{%- endcomment -%}
+
+{%- liquid
+  assign notice_image = settings.legal_guarantee_notice
+  assign notice_label = label | default: settings.legal_guarantee_label
+  if notice_label == blank
+    assign notice_label = 'general.legal_guarantee.default_label' | t
+  endif
+  assign notice_alt = notice_image.alt | default: notice_label
+
+  comment
+    Destination of the notice's QR code: the Your Europe page on legal
+    guarantees, in one of the 24 official EU languages. The short links in
+    the Commission's guidelines (europa.eu/youreurope/guarantees,
+    …/virhevastuu, …) redirect to this canonical per-language URL.
+  endcomment
+  assign info_url = settings.legal_guarantee_info_url | strip
+  if info_url == blank
+    assign eu_languages = 'bg,cs,da,de,el,en,es,et,fi,fr,ga,hr,hu,it,lt,lv,mt,nl,pl,pt,ro,sk,sl,sv' | split: ','
+    assign info_language = request.locale.iso_code | slice: 0, 2 | downcase
+    unless eu_languages contains info_language
+      assign info_language = 'en'
+    endunless
+    assign info_url = 'https://europa.eu/youreurope/citizens/consumers/shopping/guarantees/index_' | append: info_language | append: '.htm'
+  endif
+-%}
+
+{%- if notice_image != blank -%}
+  {%- if mode == 'dialog' -%}
+    <div
+      id="ValorLegalGuaranteeNotice"
+      class="valor-legal-popover"
+      popover
+      role="dialog"
+      aria-labelledby="ValorLegalGuaranteeNoticeTitle"
+    >
+      <div class="valor-legal-popover__header">
+        <h2 id="ValorLegalGuaranteeNoticeTitle" class="valor-legal-popover__title">
+          {{- notice_label | escape -}}
+        </h2>
+        <button
+          type="button"
+          class="valor-legal-popover__close"
+          popovertarget="ValorLegalGuaranteeNotice"
+          popovertargetaction="hide"
+          aria-label="{{ 'accessibility.close' | t }}"
+          autofocus
+        >
+          {{- 'icon-close.svg' | inline_asset_content -}}
+        </button>
+      </div>
+      <div class="valor-legal-popover__body">
+        {%- comment -%}
+          The artwork keeps a legible minimum width and scrolls sideways on
+          narrow screens / high zoom, so the scroll region is focusable and
+          named for keyboard and screen-reader users.
+        {%- endcomment -%}
+        <div
+          class="valor-legal-popover__artwork valor-legal-popover__artwork--notice"
+          role="region"
+          aria-label="{{ notice_label | escape }}"
+          tabindex="0"
+        >
+          {{-
+            notice_image
+            | image_url: width: 1600
+            | image_tag:
+              class: 'valor-legal-popover__image',
+              loading: 'lazy',
+              widths: '600, 800, 1000, 1200, 1600',
+              sizes: '(min-width: 800px) 760px, 36rem',
+              alt: notice_alt
+          -}}
+        </div>
+
+        <ul class="valor-legal-popover__links" role="list">
+          <li>
+            <a href="{{ info_url }}" target="_blank" rel="noopener">
+              {{- 'general.legal_guarantee.info_link' | t -}}
+              <span class="visually-hidden">{{ 'accessibility.link_messages.new_window' | t }}</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ notice_image | image_url: width: 3000 }}" target="_blank" rel="noopener">
+              {{- 'general.legal_guarantee.open_full_size' | t -}}
+              <span class="visually-hidden">{{ 'accessibility.link_messages.new_window' | t }}</span>
+            </a>
+          </li>
+        </ul>
+
+        <details class="valor-legal-popover__text-version">
+          <summary>{{ 'general.legal_guarantee.text_version' | t }}</summary>
+          <div id="ValorLegalGuaranteeNoticeText" class="valor-legal-popover__text rte">
+            <h3>{{ 'general.legal_guarantee.notice.title' | t }}</h3>
+            <p><strong>{{ 'general.legal_guarantee.notice.intro' | t }}</strong></p>
+            <p>{{ 'general.legal_guarantee.notice.claim' | t }}</p>
+            <ul>
+              <li>{{ 'general.legal_guarantee.notice.claim_description' | t }}</li>
+              <li>{{ 'general.legal_guarantee.notice.claim_function' | t }}</li>
+            </ul>
+            <p>{{ 'general.legal_guarantee.notice.liability' | t }}</p>
+            <ul>
+              <li>{{ 'general.legal_guarantee.notice.remedy_repair' | t }}</li>
+              <li>{{ 'general.legal_guarantee.notice.remedy_price' | t }}</li>
+            </ul>
+            <p><strong>{{ 'general.legal_guarantee.notice.steps_title' | t }}</strong></p>
+            <ol>
+              <li>{{ 'general.legal_guarantee.notice.step_contact' | t }}</li>
+              <li>{{ 'general.legal_guarantee.notice.step_proof' | t }}</li>
+            </ol>
+            <p>{{ 'general.legal_guarantee.notice.countries' | t }}</p>
+            <p>
+              {{ 'general.legal_guarantee.notice.more_information' | t }}
+              <a href="{{ info_url }}" target="_blank" rel="noopener">
+                {{- info_url | remove: 'https://' -}}
+                <span class="visually-hidden">{{ 'accessibility.link_messages.new_window' | t }}</span>
+              </a>
+            </p>
+            <p>{{ 'general.legal_guarantee.notice.commercial' | t }}</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  {%- else -%}
+    <button
+      type="button"
+      class="valor-legal-guarantee-trigger{% if class != blank %} {{ class }}{% endif %}"
+      popovertarget="ValorLegalGuaranteeNotice"
+      aria-haspopup="dialog"
+    >
+      {{- notice_label | escape -}}
+    </button>
+  {%- endif -%}
+{%- endif -%}

@@ -1,0 +1,175 @@
+{%- comment -%}
+  Renders a product's disclosures: the safety warnings and regulatory
+  notices (for example California Proposition 65 or CPSC choking-hazard
+  warnings) that merchants attach to a product in Shopify admin.
+
+  Data model (Shopify product disclosures):
+    product.metafields.shopify.disclosure  list.disclosure_reference
+    Each entry is a disclosure metaobject with:
+      title                buyer-facing heading (single line text)
+      content              rich text, rendered verbatim via metafield_tag
+      symbol               optional image (e.g. the Prop 65 triangle)
+      display_preferences  JSON { "surfaces": ["product_page", "cart", …] }
+  Only disclosures whose display_preferences list the requested surface
+  are shown, so the merchant controls where each one appears.
+
+  Layout:
+    product_page  a bordered panel. The summary row names every
+                  disclosure on one line ("Prop 65 Cancer Warning ·
+                  Choking Hazard"); expanding it shows each disclosure's
+                  symbol, title and full text.
+    cart          a compact "Safety information" toggle under the line
+                  item that expands to the same titles and texts.
+
+  Renders nothing when there is nothing to show. In the theme editor a
+  product-page block with nothing to show renders a small helper card so
+  the merchant can see the block exists.
+
+  Accepts:
+    product     {Object}  required
+    surface     {String}  'product_page' (default) or 'cart'
+    heading     {String}  optional heading above the panel (product page)
+    open        {Boolean} expanded by default (default false)
+    block       {Object}  optional theme block (for shopify_attributes)
+
+  Usage:
+    {% render 'product-disclosures', product: product, block: block, heading: block.settings.heading %}
+    {% render 'product-disclosures', product: item.product, surface: 'cart' %}
+{%- endcomment -%}
+
+{%- liquid
+  assign surface = surface | default: 'product_page'
+  assign disclosures = product.metafields.shopify.disclosure.value
+
+  assign visible_count = 0
+  for disclosure in disclosures
+    assign surfaces = disclosure.display_preferences.value.surfaces
+    assign disclosure_title = disclosure.title.value | default: disclosure.title
+    if surfaces contains surface and disclosure_title != blank
+      assign visible_count = visible_count | plus: 1
+    endif
+  endfor
+-%}
+
+{%- capture warning_icon -%}
+  <svg
+    class="valor-disclosures__warning-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M8 1.75 15 14.25H1L8 1.75Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>
+    <path d="M8 6.25v3.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+    <circle cx="8" cy="11.75" r="0.75" fill="currentColor"/>
+  </svg>
+{%- endcapture -%}
+
+{%- capture chevron_icon -%}
+  <svg
+    class="valor-disclosures__chevron"
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+{%- endcapture -%}
+
+{%- if visible_count > 0 -%}
+  {%- capture disclosure_items -%}
+    {%- for disclosure in disclosures -%}
+      {%- liquid
+        assign surfaces = disclosure.display_preferences.value.surfaces
+        assign disclosure_title = disclosure.title.value | default: disclosure.title
+        assign disclosure_symbol = disclosure.symbol.value
+      -%}
+      {%- if surfaces contains surface and disclosure_title != blank -%}
+        <li class="valor-disclosures__item">
+          {%- if disclosure_symbol != blank -%}
+            {{-
+              disclosure_symbol
+              | image_url: width: 96
+              | image_tag:
+                class: 'valor-disclosures__symbol',
+                loading: 'lazy',
+                alt: '',
+                width: disclosure_symbol.width,
+                height: disclosure_symbol.height
+            -}}
+          {%- endif -%}
+          <div class="valor-disclosures__item-body">
+            <p class="valor-disclosures__item-title">{{ disclosure_title | escape }}</p>
+            {%- if disclosure.content != blank -%}
+              <div class="valor-disclosures__text">
+                {{- disclosure.content | metafield_tag -}}
+              </div>
+            {%- endif -%}
+          </div>
+        </li>
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endcapture -%}
+
+  {%- if surface == 'cart' -%}
+    <details class="valor-disclosures valor-disclosures--cart">
+      <summary class="valor-disclosures__summary">
+        {{- warning_icon -}}
+        <span class="valor-disclosures__summary-label">{{ 'product.disclosures.cart_label' | t }}</span>
+        {{- chevron_icon -}}
+      </summary>
+      <ul class="valor-disclosures__list" role="list">
+        {{- disclosure_items -}}
+      </ul>
+    </details>
+  {%- else -%}
+    <div
+      class="valor-disclosures valor-disclosures--product"
+      {% if block %}
+        {{ block.shopify_attributes }}
+      {% endif %}
+    >
+      {%- if heading != blank -%}
+        <h2 class="valor-disclosures__heading">{{ heading | escape }}</h2>
+      {%- endif -%}
+      <details
+        class="valor-disclosures__panel"
+        {% if open %}
+          open
+        {% endif %}
+      >
+        <summary class="valor-disclosures__summary">
+          {{- warning_icon -}}
+          <span class="valor-disclosures__summary-label">
+            <span class="visually-hidden">{{ 'product.disclosures.label' | t }}:</span>
+            {%- for disclosure in disclosures -%}
+              {%- liquid
+                assign surfaces = disclosure.display_preferences.value.surfaces
+                assign disclosure_title = disclosure.title.value | default: disclosure.title
+              -%}
+              {%- if surfaces contains surface and disclosure_title != blank -%}
+                <span class="valor-disclosures__summary-title">{{ disclosure_title | escape }}</span>
+              {%- endif -%}
+            {%- endfor -%}
+          </span>
+          {{- chevron_icon -}}
+        </summary>
+        <ul class="valor-disclosures__list" role="list">
+          {{- disclosure_items -}}
+        </ul>
+      </details>
+    </div>
+  {%- endif -%}
+{%- elsif surface == 'product_page' and request.design_mode and block -%}
+  <div class="valor-mp__collapsible-empty" {{ block.shopify_attributes }}>
+    <p class="valor-mp__collapsible-empty-heading">{{ 'product.disclosures.editor_heading' | t }}</p>
+    <p class="valor-mp__collapsible-empty-text">{{ 'product.disclosures.editor_text' | t }}</p>
+  </div>
+{%- endif -%}

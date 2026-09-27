@@ -22,6 +22,18 @@
  *
  * Only one collection wrapper is expected per page; if multiple
  * exist (unlikely) each wrapper handles itself.
+ *
+ * Shopify standard storefront events (see storefront-events.js):
+ *   - collection template: a filter or sort change dispatches
+ *     shopify:collection:update from this element, resolved with the
+ *     number of matching products once the new markup is in;
+ *   - search template: the same change dispatches shopify:search:update,
+ *     and a search results page load dispatches it once for the search
+ *     the buyer just submitted.
+ * Pagination alone (only ?page= changes) is not a filter change and
+ * dispatches nothing. The Liquid host carries the identity and counts:
+ * data-template, data-collection-id / -handle, data-products-count
+ * (unfiltered) and data-results-count (after filters).
  */
 
 (function () {
@@ -50,6 +62,71 @@
       this._bindDrawer();
       this._bindFacetsBar();
       this._bindPopState();
+
+      // Filter/sort state last rendered, used to tell a real filter or sort
+      // change from pagination when deciding whether to dispatch an event.
+      this._lastFilterKey = this._filterKey(window.location.search);
+
+      // Only after shopify:page:view (storefront-events.js dispatches it on
+      // DOMContentLoaded, once every deferred script has run), so the page
+      // view always comes first and apps have attached their listeners.
+      // Timers and readyState are not used: a slow later deferred script
+      // can hold DOMContentLoaded back well past a setTimeout.
+      const ev = window.ValorEvents;
+      if (ev && typeof ev.afterPageView === "function") {
+        ev.afterPageView(() => this._dispatchInitialSearch());
+      }
+    }
+
+    /* Normalised filter + sort + query state of a query string, ignoring
+       the page number and the section_id plumbing. */
+    _filterKey(search) {
+      const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+      const pairs = [];
+      params.forEach(function (value, key) {
+        if (key === "page" || key === "section_id") return;
+        pairs.push(key + "=" + value);
+      });
+      return pairs.sort().join("&");
+    }
+
+    /* shopify:search:update for the search the buyer submitted to reach
+       this results page (a full page load, so no fetch is involved). */
+    _dispatchInitialSearch() {
+      const ev = window.ValorEvents;
+      if (!ev || this.getAttribute("data-template") !== "search") return;
+      const query = this.getAttribute("data-search-query") || "";
+      if (!query) return;
+      const operation = ev.searchUpdate(this, { query: query, params: window.location.search });
+      operation.resolve(this.getAttribute("data-results-count"));
+    }
+
+    /* Start shopify:collection:update / shopify:search:update for a fetch
+       to `search`. Returns an operation with resolve(count) / fail(error);
+       inert when nothing about the filters or sort order changes. */
+    _startUpdateEvent(search) {
+      const inert = { resolve: function () {}, fail: function () {} };
+      const ev = window.ValorEvents;
+      if (!ev) return inert;
+      const key = this._filterKey(search);
+      if (key === this._lastFilterKey) return inert;
+      this._lastFilterKey = key;
+
+      if (this.getAttribute("data-template") === "search") {
+        const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+        return ev.searchUpdate(this, {
+          query: params.get("q") || this.getAttribute("data-search-query") || "",
+          params: params,
+        });
+      }
+      return ev.collectionUpdate(this, {
+        collection: {
+          id: this.getAttribute("data-collection-id") || null,
+          handle: this.getAttribute("data-collection-handle") || "",
+          productsCount: this.getAttribute("data-products-count"),
+        },
+        params: search,
+      });
     }
 
     /* All <input> changes inside the facets form trigger a refetch.
@@ -228,6 +305,8 @@
 
       this.classList.add("valor-collection--loading");
 
+      const updateEvent = this._startUpdateEvent(search);
+
       fetch(fetchUrl)
         .then(function (r) {
           if (!r.ok) throw new Error("Section fetch failed");
@@ -238,10 +317,15 @@
           tmp.innerHTML = html;
           const fresh = tmp.querySelector("[" + SECTION_DATA_ATTR + "]");
           if (!fresh) {
+            updateEvent.fail(new Error("Section markup missing from response"));
             // Fallback: full reload to the new URL
             window.location.href = sectionUrl;
             return;
           }
+
+          // Counts for the event come from the freshly rendered host.
+          const freshResultsCount = fresh.getAttribute("data-results-count");
+          if (freshResultsCount != null) self.setAttribute("data-results-count", freshResultsCount);
 
           // Drawer state across the swap.
           //
@@ -316,6 +400,8 @@
           const newTitle = tmp.querySelector("title");
           if (newTitle) document.title = newTitle.textContent;
 
+          updateEvent.resolve(freshResultsCount);
+
           // Notify other components (e.g. analytics) that the page
           // has refreshed in place
           self.dispatchEvent(
@@ -326,6 +412,7 @@
         })
         .catch(function (err) {
           console.error("[Valor collection]", err);
+          updateEvent.fail(err);
           window.location.href = sectionUrl;
         })
         .finally(function () {

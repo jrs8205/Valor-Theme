@@ -1,0 +1,167 @@
+{%- comment -%}
+  Product page "EU legal guarantee" block.
+
+  1. A button that opens the EU legal guarantee notice (the official image
+     uploaded in Theme settings > EU legal guarantee; see
+     snippets/legal-guarantee-notice.liquid).
+  2. Optionally, the EU harmonised label for a producer's commercial
+     guarantee of durability (the "GARAN" label, Regulation (EU)
+     2025/1960 Annex II). It only applies when the producer offers a free
+     guarantee on the whole product that lasts longer than two years, so
+     it is set per product: connect the block's settings to product
+     metafields with the theme editor's dynamic source picker.
+
+     Display follows the Commission's practical guidelines (section 3.3):
+       - the label stays associated with the product, visible before
+         purchase;
+       - a compact "nested label" may stand in for it on the page, with
+         the full label opening on the first click;
+       - the nested label is always accompanied by accessible text (the
+         "Label text" setting, e.g. "Producer guarantee of durability:
+         5 years. Brand, model ABC-123");
+       - a clickable link to the QR code's destination (the Your Europe
+         page on the commercial guarantee of durability) is always
+         available.
+
+  Renders nothing when neither the notice nor a label is available; in
+  the theme editor an empty block shows a helper card instead.
+
+  Accepts:
+    block       {Object} required
+    section_id  {String} required (keeps popover ids unique per section)
+{%- endcomment -%}
+
+{%- liquid
+  assign notice_image = settings.legal_guarantee_notice
+  assign garan_label = block.settings.garan_label
+  assign garan_nested_label = block.settings.garan_nested_label
+  assign show_notice = false
+  if block.settings.show_notice and notice_image != blank
+    assign show_notice = true
+  endif
+
+  assign label_popover_id = 'ValorGaranLabel-' | append: section_id | append: '-' | append: block.id
+  assign label_text_id = label_popover_id | append: '-text'
+  assign label_width = block.settings.garan_label_width | default: 200
+  assign label_sizes = label_width | append: 'px'
+
+  assign garan_title = 'general.legal_guarantee.garan_label_title' | t
+  assign garan_text = block.settings.garan_description | strip
+  if garan_text == blank
+    assign garan_text = garan_title
+  endif
+  assign garan_alt = garan_label.alt | default: garan_text
+
+  comment
+    Destination of the GARAN label's QR code (one page for all languages,
+    per the Commission's practical guidelines, section 3.1).
+  endcomment
+  assign garan_info_url = 'https://europa.eu/youreurope/commercial-guarantee-durability/index.htm'
+
+  if garan_nested_label != blank
+    assign page_label_image = garan_nested_label
+  else
+    assign page_label_image = garan_label
+  endif
+-%}
+
+{%- if show_notice or garan_label != blank -%}
+  <div class="valor-mp__legal-guarantee" {{ block.shopify_attributes }}>
+    {%- if show_notice -%}
+      {%- render 'legal-guarantee-notice',
+        mode: 'trigger',
+        class: 'valor-mp__legal-guarantee-link',
+        label: block.settings.text
+      -%}
+    {%- endif -%}
+
+    {%- if garan_label != blank -%}
+      <div class="valor-mp__garan">
+        <button
+          type="button"
+          class="valor-mp__garan-label"
+          popovertarget="{{ label_popover_id }}"
+          aria-haspopup="dialog"
+          aria-describedby="{{ label_text_id }}"
+          style="--valor-garan-label-width: {{ label_width }}px;"
+        >
+          {{-
+            page_label_image
+            | image_url: width: 640
+            | image_tag:
+              class: 'valor-mp__garan-label-image',
+              loading: 'lazy',
+              widths: '160, 240, 320, 480, 640',
+              sizes: label_sizes,
+              alt: ''
+          -}}
+          <span class="visually-hidden">{{ 'general.legal_guarantee.open_garan_label' | t }}</span>
+        </button>
+        <p id="{{ label_text_id }}" class="valor-mp__garan-text">
+          <span>{{ garan_text | escape }}</span>
+          <a href="{{ garan_info_url }}" target="_blank" rel="noopener">
+            {{- 'general.legal_guarantee.garan_info_link' | t -}}
+            <span class="visually-hidden">{{ 'accessibility.link_messages.new_window' | t }}</span>
+          </a>
+        </p>
+      </div>
+
+      <div
+        id="{{ label_popover_id }}"
+        class="valor-legal-popover valor-legal-popover--label"
+        popover
+        role="dialog"
+        aria-labelledby="{{ label_popover_id }}-title"
+      >
+        <div class="valor-legal-popover__header">
+          <h2 id="{{ label_popover_id }}-title" class="valor-legal-popover__title">
+            {{- garan_title -}}
+          </h2>
+          <button
+            type="button"
+            class="valor-legal-popover__close"
+            popovertarget="{{ label_popover_id }}"
+            popovertargetaction="hide"
+            aria-label="{{ 'accessibility.close' | t }}"
+            autofocus
+          >
+            {{- 'icon-close.svg' | inline_asset_content -}}
+          </button>
+        </div>
+        <div class="valor-legal-popover__body">
+          <div
+            class="valor-legal-popover__artwork valor-legal-popover__artwork--label"
+            role="region"
+            aria-label="{{ garan_title | escape }}"
+            tabindex="0"
+          >
+            {{-
+              garan_label
+              | image_url: width: 1200
+              | image_tag:
+                class: 'valor-legal-popover__image',
+                loading: 'lazy',
+                widths: '400, 600, 800, 1200',
+                sizes: '(min-width: 800px) 480px, 22rem',
+                alt: garan_alt
+            -}}
+          </div>
+          <p class="valor-legal-popover__caption">{{ garan_text | escape }}</p>
+          <ul class="valor-legal-popover__links" role="list">
+            <li>
+              <a href="{{ garan_info_url }}" target="_blank" rel="noopener">
+                {{- 'general.legal_guarantee.garan_info_link' | t -}}
+                <span class="visually-hidden">{{ 'accessibility.link_messages.new_window' | t }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+{%- elsif request.design_mode -%}
+  <div class="valor-mp__collapsible-empty" {{ block.shopify_attributes }}>
+    <p class="valor-mp__collapsible-empty-heading">{{ 'general.legal_guarantee.editor_heading' | t }}</p>
+    <p class="valor-mp__collapsible-empty-text">{{ 'general.legal_guarantee.editor_text' | t }}</p>
+  </div>
+{%- endif -%}

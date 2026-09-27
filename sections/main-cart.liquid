@@ -81,7 +81,9 @@
   assign visible_code_titles = visible_code_titles | concat: line_code_titles
   assign visible_code_titles = visible_code_titles | uniq
 
-  assign all_applicable_codes = cart.discount_codes | map: 'code'
+  # A code the cart rejected stays in cart.discount_codes with
+  # applicable: false; only accepted codes are shown as applied.
+  assign all_applicable_codes = cart.discount_codes | where: 'applicable' | map: 'code'
 
   assign code_discount_titles = visible_code_titles | concat: all_applicable_codes | uniq
 
@@ -93,6 +95,16 @@
     endunless
   endfor
 -%}
+
+{%- comment -%}
+  shopify:cart:view (context "page"). Rendered OUTSIDE <valor-cart-page>,
+  whose children are replaced after every cart change, so the view event
+  fires once per page load.
+{%- endcomment -%}
+<valor-view-event
+  hidden
+  view-event-payload="{{ cart | standard_event_data: 'view', context: 'page' | escape }}"
+></valor-view-event>
 
 <valor-cart-page
   class="color-{{ section.settings.color_scheme }} valor-cart valor-section valor-cart--heading-align-{{ section.settings.heading_alignment }} valor-cart--summary-align-{{ section.settings.summary_text_alignment }}{% if cart_is_empty %} valor-cart--empty{% endif %}"
@@ -531,6 +543,7 @@
           {%- for product in recs_products limit: recs_products_to_show -%}
             {%- render 'product-card',
               product: product,
+              view_context: 'recommendation',
               image_ratio: recs_image_ratio,
               show_secondary_image: recs_show_secondary_image,
               show_vendor: recs_show_vendor,

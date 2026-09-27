@@ -12,7 +12,7 @@ accessories, and other visual product brands.
 
 ## Current Version
 
-The current release is `2.0.0`.
+The current release is `2.1.0`.
 
 Downloadable release ZIPs are published from the official website. This
 repository contains the theme source so issues, fixes, and improvements can be
@@ -54,8 +54,8 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Product page blocks for title, vendor, SKU, price, unit price, variant
   picker, quantity, buy buttons with gift card recipient fields, inventory
   status, description, collapsible rows, popups, text, share, rating,
-  complementary products, custom Liquid, pickup availability, payment terms,
-  and app blocks.
+  complementary products, product disclosures, EU legal guarantee, custom
+  Liquid, pickup availability, payment terms, and app blocks.
 - Homepage sections including image banner, slideshow, featured collection,
   featured product, collection list, image with text, icon columns, rich text,
   newsletter, collapsible content, marquee, testimonials, logo list, countdown
@@ -64,6 +64,22 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Video section with hero-style overlay content: heading, subheading, and
   buttons over the video, with position, text box, and darkening controls plus
   a one-click "Video hero" preset.
+- EU legal guarantee notice: upload the official European Commission notice in
+  Theme settings and Valor shows it in full from a "Your legal guarantee
+  rights" link in the footer and on product pages, with a text version and a
+  link to the Your Europe page in the shopper's language. Product pages can
+  also show a producer's GARAN durability guarantee label per product.
+- Product disclosures: safety warnings and regulatory notices added to a
+  product in Shopify admin appear on the product page and, when enabled for
+  the cart, under the cart line item.
+- Shopify standard storefront events and actions: page, product, collection,
+  search, and cart events for apps and AI agents, and `Shopify.actions`
+  configured so apps that change or open the cart update the cart drawer,
+  header count, and cart page in place.
+- Shopify account sign-in in the header on desktop and mobile.
+- Ordered cart updates: quantity, discount, and note changes are processed in
+  sequence so the cart drawer, cart page, and header count always match the
+  cart, including after returning with the browser Back button.
 - Theme Editor controls for typography, color schemes, buttons, sections, and
   custom CSS.
 
@@ -74,6 +90,19 @@ Install dependencies:
 ```powershell
 npm install
 ```
+
+Run the isolated Chromium cart and storefront-event regressions:
+
+```powershell
+npx playwright install chromium
+npm test
+```
+
+These tests use simulated cart responses and never modify a Shopify store.
+To check the event contract against a downloaded copy of Shopify's
+`https://cdn.shopify.com/storefront/standard-events.js` module, set
+`VALOR_STANDARD_EVENTS` to its local path before running `npm test`.
+The default event tests use an offline contract double.
 
 Run formatting check:
 

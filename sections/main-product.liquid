@@ -108,11 +108,22 @@
       -%}
     </div>
 
+    {%- comment -%}
+      shopify:product:view (context "page"). Outside <product-info> so
+      variant changes, which swap fragments inside it, never re-fire it.
+    {%- endcomment -%}
+    <valor-view-event
+      hidden
+      view-event-payload="{{ product | standard_event_data: 'view', context: 'page' | escape }}"
+    ></valor-view-event>
+
     <product-info
       class="valor-mp__info"
       data-section-id="{{ section.id }}"
       data-product-id="{{ product.id }}"
       data-product-url="{{ product.url }}"
+      data-product-title="{{ product.title | escape }}"
+      data-product-handle="{{ product.handle | escape }}"
       data-prefix="valor-mp"
     >
       <script type="application/json" data-product-info-i18n>
@@ -237,6 +248,17 @@
 
           {%- when 'collapsible_tab' -%}
             {%- render 'product-collapsible-tab', block: block -%}
+
+          {%- when 'disclosures' -%}
+            {%- render 'product-disclosures',
+              product: product,
+              block: block,
+              heading: block.settings.heading,
+              open: block.settings.open_by_default
+            -%}
+
+          {%- when 'legal_guarantee' -%}
+            {%- render 'product-legal-guarantee', block: block, section_id: section.id -%}
 
           {%- when 'popup' -%}
             {%- liquid
@@ -1004,6 +1026,87 @@
           "id": "custom_liquid",
           "label": "Custom Liquid",
           "info": "Add app snippets or other Liquid code to create advanced customizations."
+        }
+      ]
+    },
+    {
+      "type": "disclosures",
+      "name": "Product disclosures",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Shows the safety warnings and regulatory disclosures (for example Proposition 65 or choking hazard warnings) added to the product in Shopify admin. Only disclosures set to show on the product page appear, and the block is hidden on products without any."
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "default": false,
+          "label": "Open by default"
+        }
+      ]
+    },
+    {
+      "type": "legal_guarantee",
+      "name": "EU legal guarantee",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Links to the EU legal guarantee notice uploaded in Theme settings > EU legal guarantee, and can show a producer's commercial guarantee of durability label (GARAN) for this product."
+        },
+        {
+          "type": "checkbox",
+          "id": "show_notice",
+          "default": true,
+          "label": "Show legal guarantee notice link"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Link text",
+          "info": "Leave blank to use the text from Theme settings > EU legal guarantee."
+        },
+        {
+          "type": "header",
+          "content": "Durability guarantee label (GARAN)"
+        },
+        {
+          "type": "paragraph",
+          "content": "Only for products whose producer offers a free guarantee on the whole product for longer than two years. Connect these settings to product metafields so each product shows its own label."
+        },
+        {
+          "type": "image_picker",
+          "id": "garan_label",
+          "label": "Label",
+          "info": "The official label filled in by the producer (years, brand, model), unmodified. Opens in full on click."
+        },
+        {
+          "type": "image_picker",
+          "id": "garan_nested_label",
+          "label": "Nested label (optional)",
+          "info": "The compact online version of the label. When set, it is shown on the page instead of the full label."
+        },
+        {
+          "type": "text",
+          "id": "garan_description",
+          "label": "Label text",
+          "info": "Shown next to the label and read by screen readers, for example: Producer guarantee of durability: 5 years. Brand, model ABC-123."
+        },
+        {
+          "type": "range",
+          "id": "garan_label_width",
+          "min": 96,
+          "max": 320,
+          "step": 8,
+          "unit": "px",
+          "default": 200,
+          "label": "Label width on the page"
         }
       ]
     }

@@ -32,7 +32,9 @@
   assign visible_code_titles = visible_code_titles | concat: line_code_titles
   assign visible_code_titles = visible_code_titles | uniq
 
-  assign all_applicable_codes = cart.discount_codes | map: 'code'
+  # A code the cart rejected stays in cart.discount_codes with
+  # applicable: false; only accepted codes are shown as applied.
+  assign all_applicable_codes = cart.discount_codes | where: 'applicable' | map: 'code'
 
   assign code_discount_titles = visible_code_titles | concat: all_applicable_codes | uniq
 
@@ -62,6 +64,18 @@
   <div class="valor-cart-drawer__overlay" data-cart-drawer-close></div>
 
   <aside class="valor-cart-drawer__inner">
+    {%- comment -%}
+      shopify:cart:view (context "dialog"). Manual trigger: cart-drawer.js
+      dispatches it each time the drawer opens. It lives inside the drawer
+      markup that is re-rendered after every cart change, so the payload
+      always matches the cart the buyer sees.
+    {%- endcomment -%}
+    <valor-view-event
+      hidden
+      data-cart-view
+      view-event-trigger="manual"
+      view-event-payload="{{ cart | standard_event_data: 'view', context: 'dialog' | escape }}"
+    ></valor-view-event>
     <header class="valor-cart-drawer__topbar">
       <h2 id="ValorCartDrawerTitle" class="valor-cart-drawer__title">{{ 'cart.title' | t }}</h2>
       <button

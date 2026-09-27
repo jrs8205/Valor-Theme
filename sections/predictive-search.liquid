@@ -9,7 +9,12 @@
     assign total_results = products.size | plus: collections.size | plus: queries.size | plus: pages.size | plus: articles.size
   -%}
 
-  <div id="predictive-search-results" class="valor-psearch__results" role="listbox">
+  <div
+    id="predictive-search-results"
+    class="valor-psearch__results"
+    role="listbox"
+    data-total-results="{{ total_results }}"
+  >
     {%- if total_results == 0 -%}
       <p class="valor-psearch__empty">
         {{ 'general.search.no_results_html' | t: terms: predictive_search.terms }}
@@ -46,6 +51,11 @@
                 role="option"
                 aria-selected="false"
               >
+                {%- comment -%} shopify:product:view (context "search") when the suggestion renders {%- endcomment -%}
+                <valor-view-event
+                  hidden
+                  view-event-payload="{{ product | standard_event_data: 'view', context: 'search' | escape }}"
+                ></valor-view-event>
                 <a href="{{ product.url }}" class="valor-psearch__item valor-psearch__item--product" tabindex="-1">
                   {%- if product.featured_media != blank -%}
                     <img

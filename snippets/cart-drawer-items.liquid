@@ -64,6 +64,8 @@
             </div>
           {%- endif -%}
 
+          {%- render 'product-disclosures', product: item.product, surface: 'cart' -%}
+
           {%- if item.line_level_discount_allocations.size > 0 -%}
             <ul class="valor-cart-items__discounts" aria-label="{{ 'cart.discounts' | t }}">
               {%- for discount in item.line_level_discount_allocations -%}
