@@ -145,3 +145,10 @@ Please do not report security issues publicly. Follow
 
 There is no guaranteed support for the free version. For questions, use the
 contact form on [valortheme.com](https://valortheme.com/#contact).
+
+## Sponsor
+
+If Valor is useful to you, you can support its development:
+
+- [GitHub Sponsors](https://github.com/sponsors/jrs8205) — monthly or one-time
+- [Buy Me a Coffee](https://buymeacoffee.com/jrs8205) — no sign-up needed
