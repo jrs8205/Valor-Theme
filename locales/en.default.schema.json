@@ -59,6 +59,7 @@
     "page_margin_mobile": "Page margin (mobile)",
     "page_margin_mobile_info": "Side margin used on screens under 750px wide. Lower values give products more room on phones.",
     "page_width": "Page width",
+    "page_width_info": "The widest the page content gets on large screens. Full width fills the screen, keeping the page margins.",
     "show_payment_icons": "Show payment icons",
     "text_style": "Text style",
     "text": "Text",
@@ -107,9 +108,10 @@
       "vertical": "Vertical"
     },
     "page_width": {
-      "narrow": "Narrow",
+      "narrow": "Standard",
       "wide": "Wide",
-      "compact": "Compact"
+      "compact": "Compact",
+      "full": "Full width"
     },
     "size": {
       "large": "Large",
@@ -163,7 +165,7 @@
         },
         "desktop_gallery_layout": {
           "label": "Desktop gallery layout",
-          "info": "Stacked grid shows one large image followed by two smaller images side by side on desktop. Mobile keeps the swipe gallery.",
+          "info": "Stacked grid shows one large image followed by two smaller images side by side on desktop. Two columns shows every image two per row. Mobile keeps the swipe gallery.",
           "options": {
             "single": "Single image with thumbnails",
             "stacked": "Stacked grid"

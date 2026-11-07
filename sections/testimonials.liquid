@@ -28,7 +28,10 @@
         {%- for block in section.blocks -%}
           <figure class="valor-testimonial" {{ block.shopify_attributes }}>
             {%- if section.settings.show_stars and block.settings.rating > 0 -%}
-              <div class="valor-testimonial__stars" aria-label="{{ block.settings.rating }} out of 5 stars">
+              <div
+                class="valor-testimonial__stars"
+                aria-label="{{ 'product.rating' | t: rating: block.settings.rating, scale: 5 }}"
+              >
                 {%- for i in (1..5) -%}
                   <span
                     class="valor-testimonial__star{% if i > block.settings.rating %} valor-testimonial__star--empty{% endif %}"
@@ -72,7 +75,7 @@
   }
   .valor-testimonials__inner {
     width: 100%;
-    max-width: 75rem;
+    max-width: var(--page-width, 75rem);
     margin: 0 auto;
     padding: 0 clamp(1rem, 4vw, 3rem);
   }

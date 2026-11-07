@@ -2,10 +2,13 @@
   Collection page
 
   Layout:
-    Banner (optional)
-      → renders collection.image as a hero image when both the
-        merchant has uploaded one AND show_collection_image is on.
-        Hidden cleanly otherwise; we don't placeholder a missing image.
+    Banner (optional, show_collection_image)
+      → a banner video (banner_video) and an optional mobile video
+        (banner_video_mobile), or else collection.image. A collection's
+        own videos in the metafields custom.banner_video and
+        custom.banner_video_mobile replace the section's videos, which are
+        the default. Hidden cleanly when there is no media; we don't
+        placeholder a missing image.
     Header
       → title + optional description.
     Toolbar
@@ -58,6 +61,62 @@
   assign cols_mobile = section.settings.columns_mobile
   assign per_page = section.settings.products_per_page
   assign image_ratio = section.settings.image_ratio
+
+  comment
+    Banner media per screen width. Desktop: the banner video, else the
+    collection image, else the mobile video. Phones: the mobile video, else
+    the banner video, else the collection image.
+  endcomment
+  assign banner_video = section.settings.banner_video
+  assign banner_video_mobile = section.settings.banner_video_mobile
+
+  comment
+    A collection's own videos: the collection metafields
+    custom.banner_video and custom.banner_video_mobile (File, videos), read
+    here without any connection in the editor. Only a video counts. With
+    either one set, the collection's own pair replaces the section's
+    videos, which are the default for collections without their own, so a
+    collection never mixes its own video with the store-wide one.
+  endcomment
+  assign own_video = collection.metafields.custom.banner_video.value
+  assign own_video_mobile = collection.metafields.custom.banner_video_mobile.value
+  assign has_own_video = false
+  if own_video.media_type == 'video' or own_video_mobile.media_type == 'video'
+    assign has_own_video = true
+  endif
+  if has_own_video
+    assign banner_video = null
+    assign banner_video_mobile = null
+    if own_video.media_type == 'video'
+      assign banner_video = own_video
+    endif
+    if own_video_mobile.media_type == 'video'
+      assign banner_video_mobile = own_video_mobile
+    endif
+  endif
+
+  assign desktop_media = ''
+  if banner_video != blank
+    assign desktop_media = 'video'
+  elsif collection.image
+    assign desktop_media = 'image'
+  elsif banner_video_mobile != blank
+    assign desktop_media = 'mobile_video'
+  endif
+  assign mobile_media = ''
+  if banner_video_mobile != blank
+    assign mobile_media = 'mobile_video'
+  elsif banner_video != blank
+    assign mobile_media = 'video'
+  elsif collection.image
+    assign mobile_media = 'image'
+  endif
+  assign has_banner_video = false
+  if show_image
+    if banner_video != blank or banner_video_mobile != blank
+      assign has_banner_video = true
+    endif
+  endif
   assign show_secondary = section.settings.show_secondary_image
   assign show_vendor = section.settings.show_vendor
   assign enable_filtering = section.settings.enable_filtering
@@ -81,6 +140,10 @@
   endif
 -%}
 
+{%- if has_banner_video -%}
+  <script src="{{ 'collection-banner-video.js' | asset_url }}" defer></script>
+{%- endif -%}
+
 {%- comment -%}
   shopify:collection:view (Shopify standard storefront event). Rendered
   OUTSIDE <valor-collection>, whose children are replaced on every AJAX
@@ -99,9 +162,106 @@
   data-collection-handle="{{ collection.handle | escape }}"
   data-products-count="{{ collection.all_products_count }}"
   data-results-count="{{ collection.products_count }}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-filter-bar-border-width: {{ section.settings.filter_bar_border_width }}px;{% if section.settings.filter_bar_border_color != blank %} --valor-filter-bar-border-color: {{ section.settings.filter_bar_border_color }};{% endif %}"
 >
-  {%- if show_image and collection.image -%}
+  {%- if has_banner_video -%}
+    {%- comment -%}
+      Video banner. Every medium is in the markup once; CSS shows the one
+      for the screen width and collection-banner-video.js plays only that
+      one (preload="none": the hidden one never loads). data-banner-key
+      lets a filter or sort refresh keep the playing banner (collection.js).
+    {%- endcomment -%}
+    <valor-banner-video
+      class="valor-collection__banner valor-collection__banner--height-{{ banner_height }} valor-collection__banner--video"
+      data-banner-key="{{ banner_video.id }}-{{ banner_video_mobile.id }}-{{ banner_height }}"
+    >
+      {%- if desktop_media == 'image' or mobile_media == 'image' -%}
+        <div class="valor-collection__banner-media{% if desktop_media == 'image' %} is-desktop{% endif %}{% if mobile_media == 'image' %} is-mobile{% endif %}">
+          <img
+            src="{{ collection.image | image_url: width: 1600 }}"
+            srcset="
+              {{ collection.image | image_url: width: 600 }} 600w,
+              {{ collection.image | image_url: width: 1000 }} 1000w,
+              {{ collection.image | image_url: width: 1600 }} 1600w
+            "
+            sizes="100vw"
+            alt="{{ collection.image.alt | default: collection.title | escape }}"
+            class="valor-collection__banner-image"
+            loading="eager"
+            width="{{ collection.image.width }}"
+            height="{{ collection.image.height }}"
+          >
+        </div>
+      {%- endif -%}
+      {%- if banner_video != blank -%}
+        <div
+          class="valor-collection__banner-media{% if desktop_media == 'video' %} is-desktop{% endif %}{% if mobile_media == 'video' %} is-mobile{% endif %}"
+          aria-hidden="true"
+        >
+          {{
+            banner_video
+            | video_tag:
+              class: 'valor-collection__banner-video',
+              autoplay: false,
+              muted: true,
+              loop: true,
+              playsinline: true,
+              controls: false,
+              preload: 'none',
+              image_size: '1600x'
+          }}
+        </div>
+      {%- endif -%}
+      {%- if banner_video_mobile != blank -%}
+        <div
+          class="valor-collection__banner-media valor-collection__banner-media--own-ratio{% if desktop_media == 'mobile_video' %} is-desktop{% endif %}{% if mobile_media == 'mobile_video' %} is-mobile{% endif %}"
+          style="--valor-banner-ratio: {{ banner_video_mobile.aspect_ratio | default: 1.7778 }};"
+          aria-hidden="true"
+        >
+          {{
+            banner_video_mobile
+            | video_tag:
+              class: 'valor-collection__banner-video',
+              autoplay: false,
+              muted: true,
+              loop: true,
+              playsinline: true,
+              controls: false,
+              preload: 'none',
+              image_size: '900x'
+          }}
+        </div>
+      {%- endif -%}
+      <button
+        type="button"
+        class="valor-collection__banner-toggle"
+        data-banner-video-toggle
+        data-label-play="{{ 'video.play' | t }}"
+        data-label-pause="{{ 'video.pause' | t }}"
+        aria-label="{{ 'video.play' | t }}"
+        hidden
+      >
+        <svg
+          class="valor-collection__banner-toggle-icon--play"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg
+          class="valor-collection__banner-toggle-icon--pause"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+        </svg>
+      </button>
+    </valor-banner-video>
+  {%- elsif show_image and collection.image -%}
     <div class="valor-collection__banner valor-collection__banner--height-{{ banner_height }}">
       <img
         src="{{ collection.image | image_url: width: 1600 }}"
@@ -294,9 +454,21 @@
     {
       "type": "checkbox",
       "id": "show_collection_image",
-      "label": "Show collection image as banner",
-      "info": "Uses the image set on the collection. Hidden if no image is uploaded.",
+      "label": "Show collection banner",
+      "info": "Shows the collection's own video, else the banner video below, else the image set on the collection. Hidden if there is none.",
       "default": false
+    },
+    {
+      "type": "video",
+      "id": "banner_video",
+      "label": "Banner video",
+      "info": "Plays muted on a loop, with a pause button, on every collection without its own video. To give a collection its own: Settings > Metafields and metaobjects > Collections > Add definition, namespace and key custom.banner_video, type File (videos). Then upload the video on the collection's page."
+    },
+    {
+      "type": "video",
+      "id": "banner_video_mobile",
+      "label": "Mobile video",
+      "info": "Optional. Plays on phones in its own shape, so a portrait or square cut shows whole. A collection's own phone video: the metafield custom.banner_video_mobile, set up the same way."
     },
     {
       "type": "select",
@@ -439,6 +611,23 @@
       "id": "enable_sorting",
       "label": "Enable sorting",
       "default": true
+    },
+    {
+      "type": "range",
+      "id": "filter_bar_border_width",
+      "label": "Line thickness",
+      "info": "The lines above and below the filter and sort bar. Set to 0 to remove them.",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "filter_bar_border_color",
+      "label": "Line color",
+      "info": "Leave empty to use the color scheme's border color."
     },
     {
       "type": "header",

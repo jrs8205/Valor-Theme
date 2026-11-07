@@ -48,6 +48,85 @@
   aspect-ratio: 2 / 1;
 }
 
+/* Banner video (and a separate mobile video): each medium sits in its own
+   box; .is-desktop / .is-mobile say on which screen widths it shows.
+   assets/collection-banner-video.js plays only the video that is shown. */
+.valor-collection__banner--video {
+  display: block;
+  position: relative;
+}
+.valor-collection__banner-media {
+  display: none;
+}
+.valor-collection__banner-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.valor-collection__banner--video .valor-collection__banner-media .valor-collection__banner-image {
+  height: 100%;
+  aspect-ratio: auto;
+}
+.valor-collection__banner--height-small .valor-collection__banner-media {
+  aspect-ratio: 4 / 1;
+}
+.valor-collection__banner--height-medium .valor-collection__banner-media {
+  aspect-ratio: 3 / 1;
+}
+.valor-collection__banner--height-large .valor-collection__banner-media {
+  aspect-ratio: 2 / 1;
+}
+@media (min-width: 750px) {
+  .valor-collection__banner-media.is-desktop {
+    display: block;
+  }
+}
+@media (max-width: 749.98px) {
+  .valor-collection__banner-media.is-mobile {
+    display: block;
+  }
+  /* The mobile video keeps its own shape: a portrait or square cut shows
+     whole instead of being cropped to the wide banner. */
+  .valor-collection__banner .valor-collection__banner-media--own-ratio {
+    aspect-ratio: var(--valor-banner-ratio, 16 / 9);
+  }
+}
+
+/* Pause / play: WCAG 2.2.2, moving content can be paused. */
+.valor-collection__banner-toggle {
+  position: absolute;
+  inset-block-end: 0.75rem;
+  inset-inline-end: 0.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  cursor: pointer;
+}
+.valor-collection__banner-toggle[hidden] {
+  display: none;
+}
+.valor-collection__banner-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.valor-collection__banner-toggle:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55);
+}
+.valor-collection__banner-toggle[data-playing="true"] .valor-collection__banner-toggle-icon--play,
+.valor-collection__banner-toggle:not([data-playing="true"]) .valor-collection__banner-toggle-icon--pause {
+  display: none;
+}
+
 /* === Header ====================================================== */
 .valor-collection__header {
   margin-bottom: 1.5rem;
@@ -107,8 +186,11 @@
   gap: 0.75rem;
   padding: 0.875rem 0;
   margin-bottom: 1.25rem;
-  border-top: 1px solid var(--valor-border-default);
-  border-bottom: 1px solid var(--valor-border-default);
+  /* Filter bar lines: the section's thickness and colour settings. */
+  border-top: var(--valor-filter-bar-border-width, 1px) solid
+    var(--valor-filter-bar-border-color, var(--valor-border-default));
+  border-bottom: var(--valor-filter-bar-border-width, 1px) solid
+    var(--valor-filter-bar-border-color, var(--valor-border-default));
 }
 .valor-collection__count {
   font-size: var(--font-size-body-sm);

@@ -480,6 +480,47 @@
   }
 }
 
+/* ===== Two-column desktop layout — ADDITIVE =====
+   Every product image, two per row, on desktop; an odd last image is centred
+   under the others at the same size (flex-wrap + centre, so it also holds
+   after the per-colour filter hides images). Same carousel main items as the
+   single-column layout above; mobile keeps the swipe gallery. */
+@media (min-width: 990px) {
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__main {
+    aspect-ratio: auto;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__main-item[hidden] {
+    display: block;
+  }
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__main-item {
+    flex: 0 0 calc((100% - 0.25rem) / 2);
+    width: calc((100% - 0.25rem) / 2);
+  }
+  .valor-product-media--desktop-layout-two_columns.valor-product-media--square .valor-product-media__main-item {
+    aspect-ratio: 1 / 1;
+  }
+  .valor-product-media--desktop-layout-two_columns.valor-product-media--portrait .valor-product-media__main-item {
+    aspect-ratio: 4 / 5;
+  }
+  .valor-product-media--desktop-layout-two_columns.valor-product-media--adapt .valor-product-media__main-item {
+    aspect-ratio: auto;
+  }
+  .valor-product-media--desktop-layout-two_columns.valor-product-media--adapt .valor-product-media__main-item img {
+    height: auto;
+  }
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__nav,
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__counter,
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__progress,
+  .valor-product-media--desktop-layout-two_columns .valor-product-media__thumbs-wrap {
+    display: none;
+  }
+}
+
 /* ===== Per-color image filter — ADDITIVE =====
    product-media-gallery.js adds .is-color-hidden to media (and its thumb /
    grid / progress representations) that don't belong to the selected color.

@@ -203,9 +203,7 @@
      resolves var() references at the element that declares it, so a single
      :root declaration could not follow the enclosing scheme class. */
   {% for scheme in settings.color_schemes -%}
-  {% if forloop.first %}:root,
-  {% endif -%}
-  .color-{{ scheme.id }} {
+  {%- capture scheme_declarations -%}
     --color-background: {{ scheme.settings.background }};
     --color-foreground: {{ scheme.settings.text }};
 
@@ -221,6 +219,19 @@
     --color-button-outline-border:         {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
     --color-button-outline-hover-text:     {%- if button_outline_hover_text_is_set -%}{{ settings.button_outline_hover_text_color }}{%- elsif button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
     --color-button-outline-hover-border:   {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+  {%- endcapture %}
+  {% if forloop.first %}:root,
+  {% endif -%}
+  .color-{{ scheme.id }} {
+    {{ scheme_declarations }}
+  }
+
+  /* The header's scheme class sits on <header>, but the header section
+     around it paints the header (sticky and transparent states), so the
+     section takes the same scheme. A rule of its own: a browser without
+     :has() drops this rule only, never the scheme classes above. */
+  .valor-section-header:has(> valor-sticky-header > .color-{{ scheme.id }}) {
+    {{ scheme_declarations }}
   }
   {% endfor %}
 

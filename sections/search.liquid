@@ -122,7 +122,7 @@
   data-template="search"
   data-search-query="{{ search.terms | escape }}"
   data-results-count="{{ search.results_count }}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-filter-bar-border-width: {{ section.settings.filter_bar_border_width }}px;{% if section.settings.filter_bar_border_color != blank %} --valor-filter-bar-border-color: {{ section.settings.filter_bar_border_color }};{% endif %}"
 >
   <header class="valor-search__header valor-search__header--{{ heading_align }}">
     <h1 class="valor-search__title valor-heading valor-heading--{{ heading_size }}">
@@ -600,6 +600,23 @@
       "id": "enable_sorting",
       "label": "Enable sorting",
       "default": true
+    },
+    {
+      "type": "range",
+      "id": "filter_bar_border_width",
+      "label": "Line thickness",
+      "info": "The lines above and below the filter and sort bar. Set to 0 to remove them.",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "filter_bar_border_color",
+      "label": "Line color",
+      "info": "Leave empty to use the color scheme's border color."
     },
     {
       "type": "header",

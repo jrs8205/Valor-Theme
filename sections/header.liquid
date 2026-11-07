@@ -1,6 +1,19 @@
+{%- comment -%}
+  Bottom border settings on the section wrapper, so both the header's own
+  border and the divider the pinned transparent header draws on the wrapper
+  (::after) follow them.
+{%- endcomment -%}
+{%- style -%}
+  #shopify-section-{{ section.id }} {
+    --header-border-width: {{ section.settings.border_width }}px;
+    {%- if section.settings.border_color != blank %}
+      --header-border-color: {{ section.settings.border_color }};
+    {%- endif %}
+  }
+{%- endstyle -%}
 <valor-sticky-header data-sticky-type="{{ section.settings.sticky_header_type | default: 'always' }}">
   <header
-    class="color-{{ section.settings.color_scheme }} valor-header valor-header--logo-{{ section.settings.logo_position }}{% if settings.transparent_logo != blank %} valor-header--has-transparent-logo{% endif %}"
+    class="color-{{ section.settings.color_scheme }} valor-header valor-header--logo-{{ section.settings.logo_position }}{% if section.settings.show_desktop_menu_button %} valor-header--desktop-menu-button{% endif %}{% if settings.transparent_logo != blank %} valor-header--has-transparent-logo{% endif %}"
     style="--header-logo-height: {{ settings.logo_height }}px; --header-logo-height-mobile: {{ settings.logo_height_mobile | default: 32 }}px;"
   >
     <button
@@ -348,6 +361,19 @@
               {%- if mega_menu_links.size > 0 -%}
                 {% for child in mega_menu_links %}
                   <a href="{{ child.url }}">{{ child.title }}</a>
+                  {%- comment -%}
+                    The third menu level, as the desktop mega menu shows it
+                    under each column heading. The drawer is the whole menu
+                    on phones and, with "Use drawer menu on desktop", on
+                    desktop too, so it must not drop a level.
+                  {%- endcomment -%}
+                  {%- if child.links.size > 0 -%}
+                    <div class="valor-mobile-drawer__third">
+                      {% for grandchild in child.links %}
+                        <a href="{{ grandchild.url }}">{{ grandchild.title }}</a>
+                      {% endfor %}
+                    </div>
+                  {%- endif -%}
                 {% endfor %}
               {%- endif -%}
               {%- if has_mega_promo -%}
@@ -466,7 +492,9 @@
     /* Default (center): menu on left, logo centered, icons right */
     grid-template-areas: 'navigation heading icons';
     grid-template-columns: 1fr auto 1fr;
-    border-bottom: 1px solid var(--valor-border-default);
+    /* Bottom border: thickness and colour are header settings (0 removes the
+       line; no colour follows the colour scheme). */
+    border-bottom: var(--header-border-width, 1px) solid var(--header-border-color, var(--valor-border-default));
     /* Smooth color transitions so transparent and solid state changes
        (top of banner, scrolled, drawer-open) blend instead of snapping. */
     transition:
@@ -885,6 +913,33 @@
     .valor-header--logo-left .valor-header__icons {
       justify-self: end;
     }
+
+    /* Drawer menu on desktop (header setting "Use drawer menu on desktop"):
+       on desktop too the menu sits behind the menu button, at the inline
+       start, which opens the same drawer as on phones. The menu links leave
+       the header; the logo and the icons (search, account, cart, selectors)
+       keep their places. The button takes the menu's grid cell; with the logo
+       on the left the logo follows the button. */
+    .valor-header--desktop-menu-button .valor-header__menu {
+      display: none;
+    }
+    .valor-header--desktop-menu-button .valor-header__menu-toggle {
+      display: flex;
+      grid-area: navigation;
+      justify-self: start;
+      align-self: center;
+    }
+    .valor-header--desktop-menu-button.valor-header--logo-left {
+      grid-template-areas: 'navigation heading icons';
+      grid-template-columns: auto auto 1fr;
+      column-gap: 0.75rem;
+    }
+
+    /* On desktop the side panel holds only the menu: account, localization
+       and social links stay in the header. */
+    .valor-mobile-drawer__footer {
+      display: none;
+    }
   }
 
   @media (max-width: 989px) {
@@ -1162,6 +1217,16 @@
     padding-block: 0.75rem;
     padding-inline: 1rem 0;
     font-size: 1rem;
+  }
+  /* Third menu level: under its parent link, one step further in. */
+  .valor-mobile-drawer__third {
+    display: flex;
+    flex-direction: column;
+  }
+  .valor-mobile-drawer__sublist .valor-mobile-drawer__third a {
+    padding-block: 0.5rem;
+    padding-inline: 2rem 0;
+    font-size: 0.9375rem;
   }
   .valor-mobile-drawer__promo {
     margin-block: 0.75rem 1rem;
@@ -1642,6 +1707,13 @@
      Also acts as the positioned ancestor for the absolutely-positioned drawer. */
   .valor-section-header {
     position: relative;
+    /* The header's colour scheme applies to the whole header section
+       (snippets/css-variables.liquid), so the section paints the header's
+       background and text colour from edge to edge (the account component
+       inherits its colour); the transparent header states below override
+       them. */
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     /* Raised above other sections (which can create their own stacking
        contexts via transforms, sticky positioning, or video embeds) so the
        absolutely-positioned mobile drawer (z-index: 100) always overlays
@@ -1854,10 +1926,11 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 1px;
+      /* Follows the header's bottom border settings (thickness 0 removes it). */
+      height: var(--header-border-width, 1px);
       z-index: 2;
       pointer-events: none;
-      background: color-mix(in srgb, var(--color-foreground) 10%, transparent);
+      background: var(--header-border-color, color-mix(in srgb, var(--color-foreground) 10%, transparent));
       opacity: 0;
       transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -2141,6 +2214,39 @@
       return activeToggle;
     }
 
+    // The drawer is a modal dialog (aria-modal="true"): keyboard focus moves
+    // into it on open and stays in it until it closes. Only what is
+    // actually shown counts: links inside a closed submenu, or the footer
+    // hidden on desktop, are skipped.
+    function inClosedSubmenu(el) {
+      // A closed <details> still lays out its content in some browsers
+      // (content-visibility), so check for it: only its own <summary>
+      // shows. Any closed <details> on the way up hides the element.
+      var details = el.closest('details');
+      while (details && drawer.contains(details)) {
+        if (!details.open) {
+          var summary = details.querySelector(':scope > summary');
+          if (!summary || !summary.contains(el)) return true;
+        }
+        details = details.parentElement ? details.parentElement.closest('details') : null;
+      }
+      return false;
+    }
+
+    function focusables() {
+      if (!drawer) return [];
+      return Array.prototype.filter.call(
+        drawer.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
+        ),
+        function (el) {
+          return (
+            el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden' && !inClosedSubmenu(el)
+          );
+        },
+      );
+    }
+
     function openDrawer() {
       var toggle = getToggle();
       if (!drawer || !toggle) return;
@@ -2158,6 +2264,10 @@
         if (backdrop) backdrop.setAttribute('data-open', '');
         toggle.setAttribute('aria-expanded', 'true');
         toggle.setAttribute('aria-label', '{{ "accessibility.close_menu" | t }}');
+        // Focus starts on the drawer's close button; Tab then reaches the
+        // menu. Closing puts it back on the menu button.
+        var start = drawer.querySelector('[data-drawer-close]') || focusables()[0];
+        if (start) start.focus({ preventScroll: true });
       });
     }
 
@@ -2226,6 +2336,25 @@
           var toggle = getToggle();
           if (toggle) toggle.focus();
         }
+      });
+
+      // Keep Tab and Shift+Tab inside the open drawer, going through its
+      // shown items in order and round from the last to the first. The
+      // drawer moves focus itself: browsers differ in what Tab reaches
+      // (Safari skips links by default), and a menu is links.
+      document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Tab' || !drawer.hasAttribute('data-open')) return;
+        var items = focusables();
+        if (!items.length) return;
+        event.preventDefault();
+        var index = items.indexOf(document.activeElement);
+        var next;
+        if (index === -1) {
+          next = event.shiftKey ? items[items.length - 1] : items[0];
+        } else {
+          next = items[(index + (event.shiftKey ? -1 : 1) + items.length) % items.length];
+        }
+        next.focus();
       });
     }
 
@@ -2308,6 +2437,34 @@
       "label": "Show \"View all\" link in menu dropdowns",
       "info": "Adds an automatic \"View all [item]\" link at the top of each dropdown, pointing to the parent menu item's own URL. Off by default to match Shopify reference themes (Dawn, Horizon). If you want a \"View all\" entry, you can also add it manually as a nested link in your navigation.",
       "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_desktop_menu_button",
+      "label": "Use drawer menu on desktop",
+      "info": "On desktop the menu links move behind a menu icon at the start of the header, which opens the menu in a drawer, as on phones. Search, account, cart and the selectors stay in the header.",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Bottom border"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "unit": "px",
+      "label": "Thickness",
+      "info": "Set to 0 to remove the line.",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Color",
+      "info": "Leave empty to use the color scheme's border color."
     },
     {
       "type": "link_list",

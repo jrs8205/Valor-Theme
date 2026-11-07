@@ -86,27 +86,48 @@
       </div>
       <div class="valor-legal-popover__body">
         {%- comment -%}
-          The artwork keeps a legible minimum width and scrolls sideways on
-          narrow screens / high zoom, so the scroll region is focusable and
-          named for keyboard and screen-reader users.
+          The artwork keeps a legible minimum width (the Commission guidelines
+          ask for the notice to be legible at its default display size) and
+          scrolls sideways on narrow screens / high zoom, so the scroll region
+          is focusable and named for keyboard and screen-reader users. The hint
+          shows on narrow screens only. legal-guarantee.js shades the edge with
+          more to read and reveals the "Show the whole notice" overview.
         {%- endcomment -%}
-        <div
-          class="valor-legal-popover__artwork valor-legal-popover__artwork--notice"
-          role="region"
-          aria-label="{{ notice_label | escape }}"
-          tabindex="0"
-        >
-          {{-
-            notice_image
-            | image_url: width: 1600
-            | image_tag:
-              class: 'valor-legal-popover__image',
-              loading: 'lazy',
-              widths: '600, 800, 1000, 1200, 1600',
-              sizes: '(min-width: 800px) 760px, 36rem',
-              alt: notice_alt
-          -}}
+        <p class="valor-legal-popover__hint" data-legal-hint>
+          {{- 'general.legal_guarantee.scroll_hint' | t -}}
+        </p>
+        <div class="valor-legal-popover__frame" data-legal-frame>
+          <div
+            id="ValorLegalGuaranteeArtwork"
+            class="valor-legal-popover__artwork valor-legal-popover__artwork--notice"
+            role="region"
+            aria-label="{{ notice_label | escape }}"
+            tabindex="0"
+            data-legal-artwork
+          >
+            {{-
+              notice_image
+              | image_url: width: 1600
+              | image_tag:
+                class: 'valor-legal-popover__image',
+                loading: 'lazy',
+                widths: '600, 800, 1000, 1200, 1600',
+                sizes: '(min-width: 800px) 760px, 36rem',
+                alt: notice_alt
+            -}}
+          </div>
         </div>
+        <button
+          type="button"
+          class="valor-legal-popover__fit"
+          aria-controls="ValorLegalGuaranteeArtwork"
+          data-legal-fit
+          data-label-whole="{{ 'general.legal_guarantee.show_whole' | t }}"
+          data-label-readable="{{ 'general.legal_guarantee.show_readable' | t }}"
+          hidden
+        >
+          {{- 'general.legal_guarantee.show_whole' | t -}}
+        </button>
 
         <ul class="valor-legal-popover__links" role="list">
           <li>

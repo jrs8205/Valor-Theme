@@ -87,7 +87,7 @@
           }}
         {%- endif -%}
         <span class="valor-header-promo__resource-copy">
-          <span class="valor-header-promo__resource-kicker">Featured product</span>
+          <span class="valor-header-promo__resource-kicker">{{ 'header.featured_product' | t }}</span>
           <span class="valor-header-promo__resource-title">{{ promo_product.title | escape }}</span>
           <span class="valor-header-promo__resource-price">{{ promo_product.price | money }}</span>
         </span>
@@ -110,7 +110,7 @@
           }}
         {%- endif -%}
         <span class="valor-header-promo__resource-copy">
-          <span class="valor-header-promo__resource-kicker">Featured collection</span>
+          <span class="valor-header-promo__resource-kicker">{{ 'header.featured_collection' | t }}</span>
           <span class="valor-header-promo__resource-title">{{ promo_collection.title | escape }}</span>
         </span>
       </a>

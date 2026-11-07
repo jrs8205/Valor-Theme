@@ -138,6 +138,9 @@
     {%- endif -%}
 
     {%- render 'legal-guarantee-notice', mode: 'dialog' -%}
+    {%- if settings.legal_guarantee_notice != blank -%}
+      <script src="{{ 'legal-guarantee.js' | asset_url }}" defer></script>
+    {%- endif -%}
 
     {%- render 'lightbox' -%}
     <script src="{{ 'lightbox.js' | asset_url }}" defer></script>

@@ -142,6 +142,33 @@ body {
   grid-column: 1 / -1;
 }
 
+/* A section's colour scheme paints its whole row, edge to edge, as in Dawn
+   and Horizon, while its content stays in the page-width column with the
+   page margins. The section's root (the element with the scheme class)
+   keeps painting its own box; a border image paints only the two side
+   strips beside it, out to the screen edges: the left and right border
+   image regions are 100vw wide and sit in the outset, the middle is not
+   filled. So every point of the row is painted exactly once, and a
+   translucent scheme colour looks the same beside the content as behind
+   it, however narrow the content.
+   Paint only: border image outsets never move anything, add a scrollbar or
+   clip anything, and margins stay unpainted. A border image takes over
+   drawing the box's borders, which only the footer's top line used (drawn
+   in footer.liquid instead); full-width roots are left alone (the
+   announcement bar keeps its separator), and the cart drawer is an
+   overlay, not a row. A root that paints another colour (the marquee uses
+   the scheme's text colour) sets --valor-section-paint to it. */
+.shopify-section > [class*="color-"]:not(.valor-cart-drawer):not(.valor-full-width) {
+  border-image-source: linear-gradient(
+    var(--valor-section-paint, var(--color-background)),
+    var(--valor-section-paint, var(--color-background))
+  );
+  border-image-slice: 0 50%;
+  border-image-width: 0 100vw;
+  border-image-outset: 0 100vw;
+  border-image-repeat: stretch;
+}
+
 /* Keep focused elements and anchor targets clear of the sticky header
    (WCAG 2.4.11). header.liquid keeps the variable at the header's height
    while the header is sticky. */
@@ -747,7 +774,43 @@ html {
 }
 /* The artwork must stay legible at its default display size (Commission
    guidelines 2.3 / 3.3.2). On narrow screens it keeps a readable minimum
-   width and scrolls sideways inside the pop-up instead of shrinking. */
+   width and scrolls sideways inside the pop-up instead of shrinking; a hint
+   says so, and legal-guarantee.js shades the edge that has more to read and
+   offers the whole notice as an overview. */
+.valor-legal-popover__hint {
+  display: none;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
+}
+.valor-legal-popover__frame {
+  position: relative;
+}
+.valor-legal-popover__frame[data-more]::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 2rem;
+  pointer-events: none;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0));
+}
+[dir="rtl"] .valor-legal-popover__frame[data-more]::after {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0));
+}
+.valor-legal-popover__fit {
+  display: none;
+  justify-self: start;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
 .valor-legal-popover__artwork {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -763,6 +826,33 @@ html {
 }
 .valor-legal-popover__artwork--notice .valor-legal-popover__image {
   min-width: 36rem;
+}
+/* Without legal-guarantee.js: the hint on screens narrower than the legible
+   size at the default text scale. */
+@media screen and (max-width: 40rem) {
+  .valor-legal-popover__body:not([data-legal-enhanced]) .valor-legal-popover__hint {
+    display: block;
+  }
+}
+/* With legal-guarantee.js: the hint, "Show the whole notice" and tap-to-fit
+   follow the notice's measured overflow (data-needs-fit), so they also appear
+   when the theme's text scale makes the legible size wider than the pop-up.
+   data-fit is the whole-notice overview. */
+.valor-legal-popover__body[data-needs-fit] .valor-legal-popover__hint {
+  display: block;
+}
+.valor-legal-popover__body[data-needs-fit] .valor-legal-popover__fit:not([hidden]) {
+  display: inline-block;
+}
+.valor-legal-popover__body[data-needs-fit] .valor-legal-popover__artwork--notice .valor-legal-popover__image {
+  cursor: zoom-out;
+}
+.valor-legal-popover__artwork--notice[data-fit] .valor-legal-popover__image {
+  min-width: 0;
+  cursor: zoom-in;
+}
+.valor-legal-popover__body:has([data-fit]) .valor-legal-popover__hint {
+  display: none;
 }
 .valor-legal-popover__artwork--label .valor-legal-popover__image {
   min-width: 20rem;

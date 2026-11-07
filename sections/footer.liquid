@@ -273,12 +273,21 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     border-top: 1px solid var(--valor-border-default);
+    /* The row's edge-to-edge paint (critical.css) is a border image, which
+       takes over drawing borders: the top line is painted as a 1px
+       background layer in the border's place instead, across the same
+       width as before. */
+    background-image: linear-gradient(var(--valor-border-default), var(--valor-border-default));
+    background-size: 100% 1px;
+    background-position: top;
+    background-origin: border-box;
+    background-repeat: no-repeat;
   }
 
   /* TOP: blocks + newsletter (newsletter centered below blocks) */
   .valor-footer__top {
     width: 100%;
-    max-width: 75rem;
+    max-width: var(--page-width, 75rem);
     margin: 0 auto;
     padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
     display: flex;
@@ -644,7 +653,7 @@
   /* BOTTOM: localization, payment, copyright */
   .valor-footer__bottom {
     width: 100%;
-    max-width: 75rem;
+    max-width: var(--page-width, 75rem);
     margin: 0 auto;
     padding: 1.25rem clamp(1rem, 4vw, 3rem) 1.25rem;
     border-top: 1px solid var(--valor-border-default);

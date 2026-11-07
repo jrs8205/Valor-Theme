@@ -15,7 +15,7 @@ accessories, and other visual product brands.
 
 ## Current Version
 
-The current release is `2.2.0`.
+The current release is `2.2.1`.
 
 Download the release ZIP from
 [GitHub Releases](https://github.com/jrs8205/Valor-Theme/releases/latest) or
@@ -50,7 +50,10 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Complete Shopify Online Store 2.0 theme structure.
 - Color schemes: reusable background/text schemes defined in Theme settings and
   applied per section. Four ship out of the box (light, subtle, dark, accent);
-  borders and button fallbacks derive from the chosen scheme automatically.
+  borders and button fallbacks derive from the chosen scheme automatically. A
+  section's scheme fills its whole row from edge to edge, with the content kept
+  within the page width.
+- Page width: Compact, Standard, Wide, or Full width, followed by every section.
 - Product, collection, search, cart, blog, article, policy, password, and gift
   card templates.
 - Cart drawer with discounts and order notes.
@@ -59,7 +62,12 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
   to the shipping policy when they apply.
 - Checkout waits for quantity changes that are still saving, and Enter in a
   cart quantity field saves the quantity instead of starting checkout.
-- AJAX collection filtering and sorting.
+- AJAX collection filtering and sorting, with settings for the filter bar's
+  line thickness and colour.
+- Collection banner with a video and a separate phone video; each collection
+  can have its own videos through collection metafields.
+- Header with an optional drawer menu on desktop and a bottom border with
+  thickness and colour settings.
 - Predictive search.
 - Product cards with in-place colour swatch swap: click a swatch to update the
   card image and price without leaving the page.
@@ -69,7 +77,7 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
   swatches for multicolour products.
 - Combined listings: choosing a colour or other option that belongs to a sibling
   product opens that product, on product pages and product cards.
-- Product media gallery with lightbox support.
+- Product media gallery with lightbox support and a two-column desktop layout.
 - Product page blocks for title, vendor, SKU, price, unit price, variant
   picker, quantity, buy buttons with gift card recipient fields, inventory
   status, description, collapsible rows, popups, text, share, rating,
@@ -89,7 +97,8 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - EU legal guarantee notice: upload the official European Commission notice in
   Theme settings and Valor shows it in full from a "Your legal guarantee
   rights" link in the footer and on product pages, with a text version and a
-  link to the Your Europe page in the shopper's language. Product pages can
+  link to the Your Europe page in the shopper's language. On phones the notice
+  opens at a legible size, with an overview of the whole notice one tap away. Product pages can
   also show a producer's GARAN durability guarantee label per product.
 - Product disclosures: safety warnings and regulatory notices added to a
   product in Shopify admin appear on the product page and, when enabled for

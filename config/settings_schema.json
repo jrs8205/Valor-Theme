@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "2.2.0",
+    "theme_version": "2.2.1",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -61,6 +61,7 @@
         "type": "select",
         "id": "max_page_width",
         "label": "t:labels.page_width",
+        "info": "t:labels.page_width_info",
         "options": [
           {
             "value": "75rem",
@@ -73,6 +74,10 @@
           {
             "value": "110rem",
             "label": "t:options.page_width.wide"
+          },
+          {
+            "value": "100%",
+            "label": "t:options.page_width.full"
           }
         ],
         "default": "75rem"

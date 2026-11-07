@@ -19,8 +19,11 @@
   .valor-facets-bar {
     display: block;
     margin-bottom: 1.5rem;
-    border-top: 1px solid var(--valor-border-default);
-    border-bottom: 1px solid var(--valor-border-default);
+    /* Filter bar lines: the section's thickness and colour settings. */
+    border-top: var(--valor-filter-bar-border-width, 1px) solid
+      var(--valor-filter-bar-border-color, var(--valor-border-default));
+    border-bottom: var(--valor-filter-bar-border-width, 1px) solid
+      var(--valor-filter-bar-border-color, var(--valor-border-default));
   }
 
   .valor-facets-bar__inner {
@@ -345,7 +348,8 @@
     gap: 0.5rem;
     flex-wrap: wrap;
     padding: 0.625rem 0;
-    border-top: 1px solid var(--valor-border-default);
+    border-top: var(--valor-filter-bar-border-width, 1px) solid
+      var(--valor-filter-bar-border-color, var(--valor-border-default));
   }
 
   .valor-facets-bar__pill {

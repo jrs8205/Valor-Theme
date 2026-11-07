@@ -366,7 +366,33 @@
             document.body.classList.remove("valor-collection-drawer-open");
           }
 
+          // A banner video keeps playing (or stays paused) through the
+          // refresh: when the fresh banner shows the same media
+          // (data-banner-key), it is swapped for a placeholder in the
+          // detached response before anything enters the page, and the
+          // current banner takes the placeholder's place. So the fresh
+          // banner never connects, starts or loads its video.
+          const oldBanner = self.querySelector("valor-banner-video[data-banner-key]");
+          let keepBanner = false;
+          if (oldBanner) {
+            const freshBanner = fresh.querySelector("valor-banner-video[data-banner-key]");
+            if (
+              freshBanner &&
+              freshBanner.getAttribute("data-banner-key") === oldBanner.getAttribute("data-banner-key")
+            ) {
+              const slot = document.createElement("div");
+              slot.setAttribute("data-valor-banner-slot", "");
+              freshBanner.replaceWith(slot);
+              keepBanner = true;
+            }
+          }
+
           self.innerHTML = fresh.innerHTML;
+
+          if (keepBanner) {
+            const slot = self.querySelector("[data-valor-banner-slot]");
+            if (slot) slot.replaceWith(oldBanner);
+          }
 
           if (wasDrawerOpen && !shouldClose) {
             // The attribute was already on the host, but be explicit

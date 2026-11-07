@@ -375,7 +375,7 @@
      swapped with --media-right. */
   .valor-mp__inner {
     width: 100%;
-    max-width: 75rem;
+    max-width: var(--page-width, 75rem);
     margin: 0 auto;
     padding: 0 clamp(1rem, 4vw, 3rem);
     display: grid;
@@ -1295,7 +1295,8 @@
       "options": [
         { "value": "single", "label": "t:sections.main_product.settings.desktop_gallery_layout.options.single" },
         { "value": "stacked", "label": "t:sections.main_product.settings.desktop_gallery_layout.options.stacked" },
-        { "value": "column", "label": "Single column (full width)" }
+        { "value": "column", "label": "Single column (full width)" },
+        { "value": "two_columns", "label": "Two columns" }
       ],
       "default": "single",
       "label": "t:sections.main_product.settings.desktop_gallery_layout.label",

@@ -340,7 +340,7 @@
         <div class="valor-fp__price">
           <span class="valor-fp__price-current">{{ 1999 | money }}</span>
         </div>
-        <p class="valor-fp__description"><em>Select a product in the section settings.</em></p>
+        <p class="valor-fp__description"><em>{{ 'sections.featured_product.placeholder' | t }}</em></p>
       </div>
     {%- endif -%}
   </div>
@@ -361,7 +361,7 @@
   }
   .valor-fp__inner {
     width: 100%;
-    max-width: 75rem;
+    max-width: var(--page-width, 75rem);
     margin: 0 auto;
     padding: 0 clamp(1rem, 4vw, 3rem);
     display: grid;
@@ -1049,7 +1049,8 @@
       "options": [
         { "value": "single", "label": "Single (main image + thumbnails)" },
         { "value": "stacked", "label": "Stacked grid" },
-        { "value": "column", "label": "Single column (full width)" }
+        { "value": "column", "label": "Single column (full width)" },
+        { "value": "two_columns", "label": "Two columns" }
       ],
       "default": "single"
     },
