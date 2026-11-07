@@ -67,7 +67,29 @@
     "subtotal": "Subtotal",
     "total": "Total",
     "summary_heading": "Order summary",
-    "taxes_and_shipping_at_checkout": "Taxes and shipping calculated at checkout.",
+    "tax_note": {
+      "duties_and_taxes_included": "Duties and taxes included.",
+      "taxes_included": "Taxes included.",
+      "duties_included": "Duties included.",
+      "at_checkout": {
+        "shipping": "Shipping calculated at checkout.",
+        "shipping_html": "<a href=\"{{ link }}\">Shipping</a> calculated at checkout.",
+        "fees_shipping": "Fees and shipping calculated at checkout.",
+        "fees_shipping_html": "Fees and <a href=\"{{ link }}\">shipping</a> calculated at checkout.",
+        "discounts_shipping": "Discounts and shipping calculated at checkout.",
+        "discounts_shipping_html": "Discounts and <a href=\"{{ link }}\">shipping</a> calculated at checkout.",
+        "discounts_fees_shipping": "Discounts, fees and shipping calculated at checkout.",
+        "discounts_fees_shipping_html": "Discounts, fees and <a href=\"{{ link }}\">shipping</a> calculated at checkout.",
+        "taxes_shipping": "Taxes and shipping calculated at checkout.",
+        "taxes_shipping_html": "Taxes and <a href=\"{{ link }}\">shipping</a> calculated at checkout.",
+        "taxes_fees_shipping": "Taxes, fees and shipping calculated at checkout.",
+        "taxes_fees_shipping_html": "Taxes, fees and <a href=\"{{ link }}\">shipping</a> calculated at checkout.",
+        "taxes_discounts_shipping": "Taxes, discounts and shipping calculated at checkout.",
+        "taxes_discounts_shipping_html": "Taxes, discounts and <a href=\"{{ link }}\">shipping</a> calculated at checkout.",
+        "taxes_discounts_fees_shipping": "Taxes, discounts, fees and shipping calculated at checkout.",
+        "taxes_discounts_fees_shipping_html": "Taxes, discounts, fees and <a href=\"{{ link }}\">shipping</a> calculated at checkout."
+      }
+    },
     "login_title": "Have an account?",
     "login_text_html": "<a href=\"{{ link }}\">Log in</a> to check out faster.",
     "note": "Order note",
@@ -80,7 +102,7 @@
     "discount_added": "Discount applied.",
     "discount_removed": "Discount removed.",
     "discount_applied": "{{ code }} applied",
-    "discount_invalid": "This discount code is not valid.",
+    "discount_invalid": "This discount code can’t be applied to your cart.",
     "shipping_discount_notice": "Shipping discount will be applied at checkout.",
     "active_discounts": "Active discounts",
     "recommendations_heading": "You may also like",
@@ -91,7 +113,8 @@
     "quantity_decrease": "Decrease quantity",
     "item_removed": "Item removed.",
     "item_updated": "Cart updated. Subtotal: {{ subtotal }}.",
-    "error_generic": "Something went wrong. Please try again."
+    "error_generic": "Something went wrong. Please try again.",
+    "line_changed": "Your cart changed before this update was saved. Please check your cart and try again."
   },
   "collection": {
     "no_products": "No products found.",
@@ -220,6 +243,18 @@
     "save_percent": "Save {{ percent }}%",
     "sold_out": "Sold out",
     "from_price": "From {{ price }}",
+    "regular_price": "Regular price",
+    "safety": {
+      "manufacturer": "Manufacturer",
+      "responsible_person": "EU responsible person",
+      "identifiers": "Product identifiers",
+      "brand": "Brand",
+      "sku": "SKU",
+      "barcode": "Barcode",
+      "warnings": "Warnings and safety information",
+      "editor_empty": "Add manufacturer, responsible person, or warning details, or show product identifiers, to display this block."
+    },
+    "sale_price": "Sale price",
     "include_taxes": "Tax included.",
     "quantity_label": "Quantity",
     "view_full_details": "View full details",

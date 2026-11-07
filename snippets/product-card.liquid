@@ -80,7 +80,10 @@
     assign all_card_values_have_swatch = true
     for value in color_option.values
       assign value_has_swatch = false
-      if value.swatch.color or value.swatch.image
+      capture custom_swatch_check
+        render 'swatch-custom-background', value: value.name
+      endcapture
+      if custom_swatch_check != blank or value.swatch.color or value.swatch.image
         assign value_has_swatch = true
       else
         for variant in product.variants
@@ -126,7 +129,12 @@
     view-event-trigger="intersect"
     view-event-payload="{{ product | standard_event_data: 'view', context: view_context | escape }}"
   ></valor-view-event>
-  <a href="{{ product.url }}" class="valor-card__media-link" aria-label="{{ product.title | escape }}">
+  {%- comment -%}
+    The image link duplicates the title link, so it stays out of the tab
+    order and the accessibility tree; the title link is the card's one
+    named link (its name then matches its visible text).
+  {%- endcomment -%}
+  <a href="{{ product.url }}" class="valor-card__media-link" tabindex="-1" aria-hidden="true">
     <div class="valor-card__media">
       {%- if product.featured_media != blank -%}
         <img
@@ -178,9 +186,19 @@
     {%- if show_vendor and product.vendor != blank -%}
       <div class="valor-card__vendor">{{ product.vendor }}</div>
     {%- endif -%}
-    <h3 class="valor-card__title">
-      <a href="{{ product.url }}" class="valor-card__title-link">{{ product.title | escape }}</a>
-    </h3>
+    {%- capture card_title_link -%}
+      <a href="{{ product.url }}" class="valor-card__title-link">
+        {{- product.title | escape -}}
+        {%- if product.available == false -%}
+          <span class="visually-hidden"> ({{ 'product.sold_out' | t }})</span>
+        {%- endif -%}
+      </a>
+    {%- endcapture -%}
+    {%- if heading_tag == 'h2' -%}
+      <h2 class="valor-card__title">{{ card_title_link }}</h2>
+    {%- else -%}
+      <h3 class="valor-card__title">{{ card_title_link }}</h3>
+    {%- endif -%}
     {%- if show_card_subtitle and card_subtitle != blank -%}
       <p class="valor-card__subtitle">{{ card_subtitle | escape }}</p>
     {%- endif -%}
@@ -204,7 +222,7 @@
     {%- if show_price -%}
       <div class="valor-card__price">
         {%- if is_on_sale -%}
-          <span class="valor-card__price-current valor-card__price-current--sale">{{ product.price | money }}</span>
+          <span class="valor-card__price-current valor-card__price-current--sale"><span class="visually-hidden">{{ 'product.sale_price' | t }}</span>{{ product.price | money }}</span>
           {%- comment -%}
             Hide the compare-at strikethrough when every variant shares the same
             price but only some carry a compare-at (price_varies == false,
@@ -214,7 +232,7 @@
           {%- endcomment -%}
           {%- unless product.price_varies == false and product.compare_at_price_varies -%}
             <span class="valor-card__price-compare"
-              ><s>{{ product.compare_at_price | money }}</s></span
+              >{%- render 'price-compare-label' -%}<s>{{ product.compare_at_price | money }}</s></span
             >
           {%- endunless -%}
         {%- elsif product.price_varies -%}
@@ -238,7 +256,15 @@
           {%- liquid
             assign swatch_color = null
             assign swatch_image_url = null
-            if value.swatch.color
+            assign swatch_gradient = null
+            capture custom_swatch
+              render 'swatch-custom-background', value: value.name
+            endcapture
+            if custom_swatch contains 'gradient'
+              assign swatch_gradient = custom_swatch
+            elsif custom_swatch != blank
+              assign swatch_color = custom_swatch
+            elsif value.swatch.color
               assign swatch_color = 'rgb(' | append: value.swatch.color.rgb | append: ')'
             elsif value.swatch.image
               assign swatch_image_url = value.swatch.image | image_url: width: 96
@@ -261,31 +287,58 @@
               endif
             endfor
 
-            if swatch_color == null and swatch_image_url == null and swatch_variant_image
+            if swatch_color == null and swatch_gradient == null and swatch_image_url == null and swatch_variant_image
               assign swatch_image_url = swatch_variant_image
+            endif
+
+            # Combined listings: a colour that belongs to another product of
+            # the listing links there and navigates instead of swapping in place.
+            assign swatch_sibling = false
+            if value.product_url != blank and value.product_url != product.url
+              assign swatch_sibling = true
+              assign swatch_variant_url = value.product_url
+              assign swatch_available = value.available
             endif
 
             assign swatch_media_image = null
             assign swatch_media_alt = null
-            if swatch_variant and swatch_variant.featured_media
+            if swatch_sibling == false and swatch_variant and swatch_variant.featured_media
               assign swatch_media_image = swatch_variant.featured_media.preview_image
               assign swatch_media_alt = swatch_variant.featured_media.alt
             endif
           -%}
-          {%- if swatch_color or swatch_image_url -%}
-            {%- capture swatch_price_html -%}{%- if swatch_variant.compare_at_price > swatch_variant.price and swatch_variant.compare_at_price > 0 -%}<span class="valor-card__price-current valor-card__price-current--sale">{{ swatch_variant.price | money }}</span><span class="valor-card__price-compare"><s>{{ swatch_variant.compare_at_price | money }}</s></span>{%- else -%}<span class="valor-card__price-current">{{ swatch_variant.price | money }}</span>{%- endif -%}{%- endcapture -%}
+          {%- liquid
+            # Per-colour price: when this colour's variants (e.g. its sizes)
+            # differ in price, show "From" the lowest one like the card does
+            # for the whole product, instead of one variant's exact price.
+            assign colour_option_position = color_option_index | plus: 1
+            assign colour_option_key = 'option' | append: colour_option_position
+            assign colour_prices = product.variants | where: colour_option_key, value.name | map: 'price' | uniq | sort
+            assign colour_price_varies = false
+            if colour_prices.size > 1
+              assign colour_price_varies = true
+            endif
+            assign swatch_unit_price = ''
+            if swatch_variant.unit_price_measurement
+              assign swatch_unit_price = swatch_variant.unit_price | unit_price_with_measurement: swatch_variant.unit_price_measurement
+            endif
+          -%}
+          {%- if swatch_color or swatch_gradient or swatch_image_url -%}
+            {%- capture swatch_price_html -%}{%- if colour_price_varies -%}{%- assign colour_from_price = colour_prices.first | money -%}<span class="valor-card__price-current">{{ 'product.from_price' | t: price: colour_from_price }}</span>{%- elsif swatch_variant.compare_at_price > swatch_variant.price and swatch_variant.compare_at_price > 0 -%}<span class="valor-card__price-current valor-card__price-current--sale"><span class="visually-hidden">{{ 'product.sale_price' | t }}</span>{{ swatch_variant.price | money }}</span><span class="valor-card__price-compare">{%- render 'price-compare-label' -%}<s>{{ swatch_variant.compare_at_price | money }}</s></span>{%- else -%}<span class="valor-card__price-current">{{ swatch_variant.price | money }}</span>{%- endif -%}{%- endcapture -%}
             <a
               href="{{ swatch_variant_url }}"
               class="valor-card__swatch{% if selected_color == value %} is-active{% endif %}{% unless swatch_available %} is-unavailable{% endunless %}"
               aria-label="{{ color_option.name | escape }}: {{ value | escape }}"
               data-swatch-swap
-              {%- if swatch_variant %} data-price="{{ swatch_price_html | escape }}" data-available="{{ swatch_available }}"{%- endif -%}
+              {%- if swatch_variant and swatch_sibling == false %} data-price="{{ swatch_price_html | escape }}" data-unit-price="{{ swatch_unit_price | escape }}" data-available="{{ swatch_available }}"{%- endif -%}
               {%- if swatch_media_image %} data-media-src="{{ swatch_media_image | image_url: width: 600 }}" data-media-srcset="{{ swatch_media_image | image_url: width: 250 }} 250w, {{ swatch_media_image | image_url: width: 400 }} 400w, {{ swatch_media_image | image_url: width: 600 }} 600w, {{ swatch_media_image | image_url: width: 800 }} 800w, {{ swatch_media_image | image_url: width: 1100 }} 1100w" data-media-alt="{{ swatch_media_alt | escape }}" data-media-width="{{ swatch_media_image.width }}" data-media-height="{{ swatch_media_image.height }}"{%- endif -%}
               {% if selected_color == value %}
                 aria-current="true"
               {% endif %}
               {% if swatch_color %}
                 style="--valor-card-swatch-color: {{ swatch_color }};"
+              {% elsif swatch_gradient %}
+                style="--valor-card-swatch-image: {{ swatch_gradient }};"
               {% elsif swatch_image_url %}
                 style="--valor-card-swatch-image: url('{{ swatch_image_url }}');"
               {% endif %}

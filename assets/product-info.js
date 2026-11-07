@@ -36,7 +36,7 @@
      <script data-section-variants>  — JSON array of variant objects
 
    Swapped fragments (by section-scoped id, prefix-independent):
-     ProductPrice-SID, ProductUnitPrice-SID, ProductSku-SID,
+     ProductPrice-SID, ProductUnitPrice-SID, ProductSku-SID, ProductSafetyIds-SID,
      ProductInventory-SID, StickyPrice-SID. The sticky price lives in the
      section root (outside this element), so its swap destination is looked
      up in this.sectionRoot rather than within the element.
@@ -363,6 +363,20 @@ class ValorProductInfo extends HTMLElement {
     this.swapFragment(doc, "ProductSku");
     this.swapFragment(doc, "ProductInventory");
     this.swapFragment(doc, "StickyPrice");
+    this.swapFragment(doc, "ProductSafetyIds");
+    // The Product safety shell keeps its content and open state; only its
+    // visibility follows the variant (hidden when it has nothing to show).
+    this.syncHidden(doc, "ProductSafety");
+  }
+
+  /* Mirror only the hidden state of a section-scoped element. */
+  syncHidden(doc, idBase) {
+    const id = idBase + "-" + this.sectionId;
+    const source = doc.getElementById(id);
+    if (!source) return;
+    let dest = this.querySelector('[id="' + id + '"]');
+    if (!dest && this.sectionRoot) dest = this.sectionRoot.querySelector('[id="' + id + '"]');
+    if (dest) dest.hidden = source.hidden;
   }
 
   /* Replace a single fragment's innerHTML (and mirror its hidden state)
@@ -590,6 +604,14 @@ class ValorProductInfo extends HTMLElement {
       if (displaySpan) displaySpan.textContent = e.target.value;
     }
 
+    // Combined listings: a value that belongs to another product of the
+    // listing opens that product with the chosen values.
+    const siblingUrl = this._siblingProductUrl(e && e.target);
+    if (siblingUrl) {
+      this._openSiblingProduct(siblingUrl);
+      return;
+    }
+
     const opts = this.getCurrentOptions();
     const variant = this.findVariant(opts);
     this.currentVariant = variant;
@@ -608,6 +630,57 @@ class ValorProductInfo extends HTMLElement {
     }
     this.updateAddButton(variant);
     this.updateSoldOutPills(opts);
+  }
+
+  /* --- Combined listings ---
+     Liquid writes data-product-url on an option value (radio or <option>)
+     only when product_option_value.product_url points to a different
+     product. Choosing it navigates there with option_values= (the chosen
+     option value ids), which Shopify resolves to the matching variant.
+     Values of the current product never carry the attribute, so stores
+     without combined listings are unaffected. */
+  _siblingProductUrl(target) {
+    if (!target) return "";
+    let source = target;
+    if (target.tagName === "SELECT") {
+      source = target.options[target.selectedIndex] || null;
+    }
+    const url = source && source.dataset ? source.dataset.productUrl || "" : "";
+    if (!url || url === this.productUrl) return "";
+    return url;
+  }
+
+  _selectedOptionValueIds() {
+    const byPosition = {};
+    this.optionInputs.forEach(function (input) {
+      if (input.checked && input.dataset.optionValueId) {
+        byPosition[parseInt(input.dataset.optionPosition, 10)] = input.dataset.optionValueId;
+      }
+    });
+    this.optionSelects.forEach(function (select) {
+      const option = select.options[select.selectedIndex];
+      if (option && option.dataset.optionValueId) {
+        byPosition[parseInt(select.dataset.optionPosition, 10)] = option.dataset.optionValueId;
+      }
+    });
+    return Object.keys(byPosition)
+      .map(Number)
+      .sort(function (a, b) {
+        return a - b;
+      })
+      .map(function (position) {
+        return byPosition[position];
+      });
+  }
+
+  _openSiblingProduct(url) {
+    if (this._fetchAbort) {
+      this._fetchAbort.abort();
+      this._fetchAbort = null;
+    }
+    const ids = this._selectedOptionValueIds();
+    const separator = url.indexOf("?") === -1 ? "?" : "&";
+    window.location.assign(ids.length ? url + separator + "option_values=" + ids.join(",") : url);
   }
 
   /* --- shopify:product:select ---

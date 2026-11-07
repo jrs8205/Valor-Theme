@@ -7,14 +7,14 @@
   data-end-time="{{ section.settings.end_time | escape }}"
   data-timezone-offset="{{ section.settings.timezone_offset | escape }}"
   data-expired-behavior="{{ section.settings.expired_behavior }}"
-  data-summary-template="{{ 'sections.countdown_timer.summary' | t: time: '__TIME__' | escape }}"
-  data-summary-under-minute="{{ 'sections.countdown_timer.under_minute' | t | escape }}"
-  data-day-one="{{ 'sections.countdown_timer.day.one' | t | escape }}"
-  data-day-other="{{ 'sections.countdown_timer.day.other' | t | escape }}"
-  data-hour-one="{{ 'sections.countdown_timer.hour.one' | t | escape }}"
-  data-hour-other="{{ 'sections.countdown_timer.hour.other' | t | escape }}"
-  data-minute-one="{{ 'sections.countdown_timer.minute.one' | t | escape }}"
-  data-minute-other="{{ 'sections.countdown_timer.minute.other' | t | escape }}"
+  data-summary-template="{{ 'sections.countdown_timer.summary' | t: time: '__TIME__' }}"
+  data-summary-under-minute="{{ 'sections.countdown_timer.under_minute' | t }}"
+  data-day-one="{{ 'sections.countdown_timer.day.one' | t }}"
+  data-day-other="{{ 'sections.countdown_timer.day.other' | t }}"
+  data-hour-one="{{ 'sections.countdown_timer.hour.one' | t }}"
+  data-hour-other="{{ 'sections.countdown_timer.hour.other' | t }}"
+  data-minute-one="{{ 'sections.countdown_timer.minute.one' | t }}"
+  data-minute-other="{{ 'sections.countdown_timer.minute.other' | t }}"
   {% if section.settings.end_date == blank
     and section.settings.expired_behavior == 'hide'
     and request.design_mode == false
@@ -95,7 +95,7 @@
     text-align: center;
   }
   .valor-countdown--align-right .valor-countdown__inner {
-    text-align: right;
+    text-align: end;
   }
   .valor-countdown__copy {
     display: grid;

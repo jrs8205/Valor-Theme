@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "2.1.0",
+    "theme_version": "2.2.0",
     "theme_author": "Valor",
     "theme_documentation_url": "https://valortheme.com",
     "theme_support_url": "https://valortheme.com"
@@ -240,6 +240,13 @@
         "default": "Sale"
       },
       {
+        "type": "text",
+        "id": "compare_at_price_label",
+        "label": "Compare-at price label",
+        "placeholder": "Lowest price in the last 30 days",
+        "info": "Shown before struck-through compare-at prices. In the EU a price reduction must state the lowest price of the last 30 days; set the compare-at price to that price. Leave blank to hide."
+      },
+      {
         "type": "header",
         "content": "Sold out badge"
       },
@@ -404,6 +411,13 @@
         "unit": "px",
         "default": 18,
         "info": "Size of the small colour swatches shown on product cards (collection, search, and the Featured collection section). The Swatch shape above applies here too."
+      },
+      {
+        "type": "textarea",
+        "id": "swatch_custom_colors",
+        "label": "Custom swatch colors",
+        "placeholder": "Navy/White: #1f2a44, #ffffff",
+        "info": "One option value per line: name, colon, then one to three colors as hex codes or color names. Two or three colors show as a split swatch. Overrides the swatch set in Shopify admin for that value on product pages, product cards, and color filters."
       },
       {
         "type": "select",

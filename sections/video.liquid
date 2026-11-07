@@ -553,13 +553,13 @@
      well with full-width video sections. Inherits from text-align so it
      works regardless of width modifier. */
   .valor-video__heading--align-left {
-    text-align: left;
+    text-align: start;
   }
   .valor-video__heading--align-center {
     text-align: center;
   }
   .valor-video__heading--align-right {
-    text-align: right;
+    text-align: end;
   }
 
   /* Video frame — 16:9 by default, full-bleed image fills it */
@@ -668,7 +668,7 @@
   /* Play icon offset slightly right so it appears optically centered */
   .valor-video__play .valor-video__play-icon--play,
   .valor-video__cover .valor-video__play svg:not(.valor-video__play-icon--pause) {
-    margin-left: 4px;
+    margin-inline-start: 4px;
   }
   @media (hover: hover) {
     .valor-video__play:hover {
@@ -788,13 +788,13 @@
     /* Like the hero: foreground/background flip — light text on dark video */
   }
   .valor-video__content-wrapper--align-left {
-    text-align: left;
+    text-align: start;
   }
   .valor-video__content-wrapper--align-center {
     text-align: center;
   }
   .valor-video__content-wrapper--align-right {
-    text-align: right;
+    text-align: end;
   }
 
   .valor-video__content--box {
@@ -855,7 +855,7 @@
   /* Mobile content alignment override */
   @media (max-width: 749px) {
     .valor-video__content-wrapper--mobile-left {
-      text-align: left;
+      text-align: start;
     }
     .valor-video__content-wrapper--mobile-left .valor-video__buttons {
       justify-content: flex-start;

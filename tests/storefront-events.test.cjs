@@ -2,7 +2,11 @@ const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
+const playwright = require("playwright");
+
+// VALOR_BROWSER=webkit|firefox runs the same tests on another engine
+// (webkit = Safari's engine); chromium by default.
+const engine = playwright[process.env.VALOR_BROWSER || "chromium"];
 const root = path.resolve(__dirname, "..");
 const bootstrap = fs
   .readFileSync(path.join(root, "layout/theme.liquid"), "utf8")
@@ -32,10 +36,12 @@ const library = process.env.VALOR_STANDARD_EVENTS
   `;
 let browser;
 before(async () => {
-  browser = await chromium.launch({ headless: true });
+  browser = await engine.launch({ headless: true });
 });
 after(async () => {
-  await browser?.close();
+  // WebKit on Windows can stall in close() after every test has passed;
+  // npm test runs with --test-force-exit, so a stalled close can't hold the run.
+  await Promise.race([browser?.close(), new Promise((resolve) => setTimeout(resolve, 5000).unref())]);
 });
 function gate() {
   let release;

@@ -21,6 +21,7 @@
       this.card = this.querySelector('.valor-card');
       this.primaryImage = this.querySelector('.valor-card__image--primary');
       this.priceEl = this.querySelector('.valor-card__price');
+      this.unitPriceEl = this.querySelector('.valor-card__unit-price');
 
       // Remember the card's initial image + hover-swap state so a colour that
       // has no distinct image of its own can restore it, instead of leaving a
@@ -109,6 +110,16 @@
 
       if (priceHtml && this.priceEl) {
         this.priceEl.innerHTML = priceHtml;
+      }
+
+      // Unit price of the colour's variant. An empty value means the colour
+      // has none, so the line hides; cards rendered without the attribute
+      // keep their unit price.
+      const unitPrice = swatch.getAttribute('data-unit-price');
+      if (unitPrice !== null && this.unitPriceEl) {
+        const unitValue = this.unitPriceEl.querySelector('[data-unit-price]');
+        if (unitValue) unitValue.innerHTML = unitPrice;
+        this.unitPriceEl.hidden = unitPrice === '';
       }
 
       const href = swatch.getAttribute('href');

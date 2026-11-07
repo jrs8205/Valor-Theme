@@ -142,11 +142,18 @@ body {
   grid-column: 1 / -1;
 }
 
+/* Keep focused elements and anchor targets clear of the sticky header
+   (WCAG 2.4.11). header.liquid keeps the variable at the header's height
+   while the header is sticky. */
+html {
+  scroll-padding-top: var(--valor-sticky-header-height, 0px);
+}
+
 /* Skip to content link - accessible for keyboard users */
 .valor-skip-to-content-link {
   position: absolute;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   z-index: 9999;
   padding: 0.75rem 1rem;
   background-color: var(--color-background);
@@ -341,7 +348,7 @@ body {
 .rte ul,
 .rte ol {
   margin: 0 0 1em;
-  padding-left: 1.5em;
+  padding-inline-start: 1.5em;
 }
 .rte ul {
   list-style: disc;
@@ -360,8 +367,9 @@ body {
 
 .rte blockquote {
   margin: 1.5em 0;
-  padding: 0.5rem 0 0.5rem 1.25rem;
-  border-left: 3px solid color-mix(in srgb, var(--color-foreground) 20%, transparent);
+  padding-block: 0.5rem;
+  padding-inline: 1.25rem 0;
+  border-inline-start: 3px solid color-mix(in srgb, var(--color-foreground) 20%, transparent);
   color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
   font-style: italic;
 }
@@ -407,7 +415,7 @@ body {
 .rte td {
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--valor-border-default);
-  text-align: left;
+  text-align: start;
 }
 .rte th {
   font-weight: var(--font-body--weight-bold);
@@ -498,7 +506,7 @@ body {
   flex-shrink: 0;
 }
 .valor-disclosures__chevron {
-  margin-left: auto;
+  margin-inline-start: auto;
   transition: transform 0.2s ease;
   color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
 }
@@ -608,14 +616,42 @@ body {
 .valor-disclosures--cart .valor-disclosures__chevron {
   width: 12px;
   height: 12px;
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 .valor-disclosures--cart .valor-disclosures__list {
   gap: 0.5rem;
   padding: 0.5rem 0 0.125rem;
 }
+.valor-disclosures__symbol--fallback {
+  width: 1.5rem;
+}
+/* Compare-at price label ("Lowest price in the last 30 days"), set in
+   Theme settings > Products. Sits before the struck-through price. */
+/* Left/right arrow icons that must point the other way in right-to-left
+   stores (previous/next controls). */
+[dir="rtl"] .valor-icon-flip-rtl {
+  transform: scaleX(-1);
+}
+
+/* "2 / 7" style counters keep their number order in right-to-left stores.
+   plaintext resolves the digits' order from the content (left-to-right)
+   without changing the element's direction, so inset-inline-start still
+   mirrors the counter's position. */
+.valor-product-media__counter,
+.valor-lightbox__counter {
+  unicode-bidi: plaintext;
+}
+
+.valor-price-compare-label {
+  font-size: 0.875em;
+  color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
+  margin-inline-end: 0.25em;
+}
 .valor-disclosures--cart .valor-disclosures__symbol {
   height: 1.125rem;
+}
+.valor-disclosures--cart .valor-disclosures__symbol--fallback {
+  width: 1.125rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -687,7 +723,8 @@ body {
   flex-shrink: 0;
   width: 2.75rem;
   height: 2.75rem;
-  margin: -0.5rem -0.5rem -0.5rem 0;
+  margin-block: -0.5rem;
+  margin-inline: 0 -0.5rem;
   padding: 0;
   border: 0;
   background: none;
@@ -770,7 +807,7 @@ body {
   text-transform: uppercase;
 }
 .valor-legal-popover__text :is(ul, ol) {
-  padding-left: 1.25rem;
+  padding-inline-start: 1.25rem;
 }
 .valor-legal-popover__text > :last-child {
   margin-bottom: 0;

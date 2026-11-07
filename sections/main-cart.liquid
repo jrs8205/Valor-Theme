@@ -111,16 +111,17 @@
   style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
   data-section-id="{{ section.id }}"
   data-section-type="main-cart"
-  data-strings-item-removed="{{ 'cart.item_removed' | t | escape }}"
-  data-strings-item-updated="{{ 'cart.item_updated' | t | escape }}"
-  data-strings-error-generic="{{ 'cart.error_generic' | t | escape }}"
-  data-strings-discount-added="{{ 'cart.discount_added' | t | escape }}"
-  data-strings-discount-applied="{{ 'cart.discount_applied' | t | escape }}"
-  data-strings-discount-removed="{{ 'cart.discount_removed' | t | escape }}"
-  data-strings-discount-invalid="{{ 'cart.discount_invalid' | t | escape }}"
-  data-strings-shipping-notice="{{ 'cart.shipping_discount_notice' | t | escape }}"
-  data-strings-remove-discount="{{ 'cart.remove_discount' | t | escape }}"
-  data-strings-note-updated="{{ 'cart.note_updated' | t | escape }}"
+  data-strings-item-removed="{{ 'cart.item_removed' | t }}"
+  data-strings-item-updated="{{ 'cart.item_updated' | t }}"
+  data-strings-error-generic="{{ 'cart.error_generic' | t }}"
+  data-strings-line-changed="{{ 'cart.line_changed' | t }}"
+  data-strings-discount-added="{{ 'cart.discount_added' | t }}"
+  data-strings-discount-applied="{{ 'cart.discount_applied' | t }}"
+  data-strings-discount-removed="{{ 'cart.discount_removed' | t }}"
+  data-strings-discount-invalid="{{ 'cart.discount_invalid' | t }}"
+  data-strings-shipping-notice="{{ 'cart.shipping_discount_notice' | t }}"
+  data-strings-remove-discount="{{ 'cart.remove_discount' | t }}"
+  data-strings-note-updated="{{ 'cart.note_updated' | t }}"
 >
   <div
     id="ValorCartLiveRegion"
@@ -136,6 +137,10 @@
         {{ cart_heading | escape }}
       </h1>
     </header>
+
+    <div class="valor-cart__notice" data-cart-notice>
+      <small></small>
+    </div>
 
     {%- if cart_is_empty -%}
       <div class="valor-cart__empty" data-cart-empty>
@@ -311,7 +316,7 @@
                               class="valor-cart__active-discounts"
                               aria-label="{{ 'cart.active_discounts' | t }}"
                               data-active-discounts
-                              data-remove-label="{{ 'cart.remove_discount' | t | escape }}"
+                              data-remove-label="{{ 'cart.remove_discount' | t }}"
                               {% if code_discount_titles.size == 0 %}
                                 hidden
                               {% endif %}
@@ -420,7 +425,16 @@
                 </div>
               {%- endif -%}
 
-              <p class="valor-cart__taxes-note">{{ 'cart.taxes_and_shipping_at_checkout' | t }}</p>
+              {%- liquid
+                assign cart_has_discount_input = false
+                for block in section.blocks
+                  if block.type == 'discount_code'
+                    assign cart_has_discount_input = true
+                    break
+                  endif
+                endfor
+              -%}
+              {%- render 'cart-tax-note', discounts_in_cart: cart_has_discount_input, class: 'valor-cart__taxes-note' -%}
 
               {%- comment -%}
                 Critical checkout flow: hard-coded so merchants cannot

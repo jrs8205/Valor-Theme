@@ -416,118 +416,7 @@
       {%- if settings.social_whatsapp_url != blank -%}{%- assign has_social = true -%}{%- endif -%}
 
       {%- if has_social -%}
-        <ul class="valor-mobile-drawer__social">
-          {%- if settings.social_instagram_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_instagram_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-              >
-                {{- 'icon-instagram.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_facebook_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_facebook_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-              >
-                {{- 'icon-facebook.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_x_url != blank -%}
-            <li>
-              <a href="{{ settings.social_x_url }}" target="_blank" rel="noopener noreferrer" aria-label="X">
-                {{- 'icon-x.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_tiktok_url != blank -%}
-            <li>
-              <a href="{{ settings.social_tiktok_url }}" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-                {{- 'icon-tiktok.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_pinterest_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_pinterest_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Pinterest"
-              >
-                {{- 'icon-pinterest.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_youtube_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_youtube_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-              >
-                {{- 'icon-youtube.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_linkedin_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_linkedin_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-              >
-                {{- 'icon-linkedin.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_threads_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_threads_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Threads"
-              >
-                {{- 'icon-threads.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_snapchat_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_snapchat_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Snapchat"
-              >
-                {{- 'icon-snapchat.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-          {%- if settings.social_whatsapp_url != blank -%}
-            <li>
-              <a
-                href="{{ settings.social_whatsapp_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-              >
-                {{- 'icon-whatsapp.svg' | inline_asset_content -}}
-              </a>
-            </li>
-          {%- endif -%}
-        </ul>
+        {%- render 'social-icons', class: 'valor-mobile-drawer__social' -%}
       {%- endif -%}
     </div>
   </div>
@@ -605,7 +494,7 @@
   .valor-cart-count {
     position: absolute;
     top: 0.25rem;
-    right: 0.25rem;
+    inset-inline-end: 0.25rem;
     min-width: 1.125rem;
     height: 1.125rem;
     padding: 0 0.3rem;
@@ -741,7 +630,7 @@
   .valor-header__submenu {
     position: absolute;
     top: 100%;
-    left: 0;
+    inset-inline-start: 0;
     list-style: none;
     padding: 0.75rem 0 0.5rem;
     margin: 0;
@@ -838,7 +727,7 @@
   .valor-header__mega-heading,
   .valor-header__mega-sublist a {
     justify-content: flex-start;
-    text-align: left;
+    text-align: start;
   }
   .valor-header__mega-heading {
     width: fit-content;
@@ -868,7 +757,7 @@
     min-width: 0;
     display: grid;
     color: var(--color-foreground);
-    text-align: left;
+    text-align: start;
     justify-content: stretch;
   }
   .valor-header-promo__feature {
@@ -1066,7 +955,7 @@
   .valor-mobile-drawer {
     position: fixed;
     top: 0;
-    left: 0;
+    inset-inline-start: 0;
     /* Side panel, not full-width. min() keeps it usable on tablets while
        still capping at a comfortable phone width. */
     width: min(90vw, 420px);
@@ -1093,6 +982,9 @@
     transform: translateX(0);
     visibility: visible;
     transition-delay: 0s, 0s;
+  }
+  [dir="rtl"] .valor-mobile-drawer:not([data-open]) {
+    transform: translateX(100%);
   }
   /* When drawer is open, prevent the page beneath from scrolling */
   body.valor-drawer-open {
@@ -1153,7 +1045,7 @@
     justify-content: center;
     width: 2.75rem;
     height: 2.75rem;
-    margin-right: -0.5rem;
+    margin-inline-end: -0.5rem;
     border: 0;
     background: transparent;
     color: inherit;
@@ -1267,11 +1159,13 @@
   .valor-mobile-drawer__sublist a {
     color: inherit;
     text-decoration: none;
-    padding: 0.75rem 0 0.75rem 1rem;
+    padding-block: 0.75rem;
+    padding-inline: 1rem 0;
     font-size: 1rem;
   }
   .valor-mobile-drawer__promo {
-    margin: 0.75rem 0 1rem 1rem;
+    margin-block: 0.75rem 1rem;
+    margin-inline: 1rem 0;
     padding-top: 0.9rem;
     border-top: 1px solid color-mix(in srgb, var(--color-foreground) 10%, transparent);
   }
@@ -1318,7 +1212,11 @@
     width: 1.5rem;
     height: 1.5rem;
   }
-  .valor-mobile-drawer__social {
+  /* Drawer social row reuses snippets/social-icons.liquid. The footer
+     styles the shared .valor-social-icons* classes too, so the drawer rules
+     use two-class selectors to keep the drawer's own size and spacing
+     whatever the footer settings are (and to stand alone without a footer). */
+  .valor-social-icons.valor-mobile-drawer__social {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -1327,17 +1225,26 @@
     padding: 1rem 0 0;
     margin: 0;
   }
-  .valor-mobile-drawer__social li {
+  .valor-mobile-drawer__social .valor-social-icons__item {
     display: flex;
   }
-  .valor-mobile-drawer__social a {
+  .valor-mobile-drawer__social .valor-social-icons__link {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: auto;
+    height: auto;
     color: var(--color-foreground);
     padding: 0.5rem;
+    border-radius: 0;
   }
-  .valor-mobile-drawer__social svg {
+  .valor-mobile-drawer__social .valor-social-icons__link:hover {
+    background-color: transparent;
+  }
+  .valor-mobile-drawer__social .valor-social-icons__icon {
+    display: flex;
+  }
+  .valor-mobile-drawer__social .valor-social-icons__icon svg {
     width: 1.5rem;
     height: 1.5rem;
     fill: currentColor;
@@ -1419,7 +1326,7 @@
   .valor-localization__panel {
     position: absolute;
     top: calc(100% + 0.75rem);
-    right: 0;
+    inset-inline-end: 0;
     z-index: 20;
     min-width: 14rem;
     max-width: 90vw;
@@ -1430,8 +1337,8 @@
   }
   /* Modifier: dropdown opens to the right (used in footer where selector sits on the left). */
   .valor-localization--align-left .valor-localization__panel {
-    right: auto;
-    left: 0;
+    inset-inline-end: auto;
+    inset-inline-start: 0;
   }
   /* Modifier: dropdown opens upwards (used in footer where space below is limited). */
   .valor-localization--align-up .valor-localization__panel {
@@ -1467,7 +1374,8 @@
   }
   .valor-localization__filter-input {
     width: 100%;
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem 2rem;
     background: transparent;
     color: var(--color-foreground);
     border: 1px solid var(--valor-border-strong);
@@ -1482,7 +1390,7 @@
   .valor-localization__filter-reset {
     position: absolute;
     top: 50%;
-    right: 1rem;
+    inset-inline-end: 1rem;
     transform: translateY(-50%);
     background: transparent;
     border: 0;
@@ -1644,7 +1552,7 @@
   }
   .valor-search-modal__search-icon {
     position: absolute;
-    left: 0;
+    inset-inline-start: 0;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -1679,7 +1587,7 @@
   }
   .valor-search-modal__reset {
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
     top: 50%;
     transform: translateY(-50%);
     background: transparent;
@@ -2107,6 +2015,10 @@
         disconnectedCallback() {
           document.removeEventListener('DOMContentLoaded', this.init);
           window.removeEventListener('scroll', this.onScroll);
+          if (this.heightObserver) {
+            this.heightObserver.disconnect();
+            this.heightObserver = null;
+          }
         }
 
         init() {
@@ -2153,7 +2065,27 @@
           this.setStickyState();
         }
 
+        trackHeight() {
+          if (this.heightObserver || typeof ResizeObserver === 'undefined') return;
+          var root = document.documentElement;
+          this.heightObserver = new ResizeObserver(
+            function () {
+              root.style.setProperty('--valor-sticky-header-height', this.sectionEl.offsetHeight + 'px');
+            }.bind(this),
+          );
+          this.heightObserver.observe(this.sectionEl);
+        }
+
+        untrackHeight() {
+          if (this.heightObserver) {
+            this.heightObserver.disconnect();
+            this.heightObserver = null;
+          }
+          document.documentElement.style.removeProperty('--valor-sticky-header-height');
+        }
+
         clearStickyState() {
+          this.untrackHeight();
           this.sectionEl.classList.remove(
             'valor-section-header--sticky',
             'valor-section-header--animate',
@@ -2164,9 +2096,11 @@
 
         setStickyState() {
           this.sectionEl.classList.add('valor-section-header--sticky', 'valor-section-header--animate');
+          this.trackHeight();
         }
 
         setTransparentPinnedState() {
+          this.trackHeight();
           this.sectionEl.classList.remove('valor-section-header--sticky');
           this.sectionEl.classList.add('valor-section-header--transparent-pinned', 'valor-section-header--animate');
         }

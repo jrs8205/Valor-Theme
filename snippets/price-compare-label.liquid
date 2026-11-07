@@ -1,0 +1,19 @@
+{%- doc -%}
+  Renders the text announced before a compare-at (struck-through) price.
+  When the "Compare-at price label" theme setting is filled in (for example
+  "Lowest price in the last 30 days" for EU price-reduction rules) it shows
+  that label; otherwise screen readers hear "Regular price" so the struck
+  price is never read without context.
+
+  @param {boolean} [visually_hidden] - Keep the label for screen readers only, for compact spots such as the sticky add-to-cart bar. Defaults to false.
+
+  @example
+  {% render 'price-compare-label' %}<s>{{ product.compare_at_price | money }}</s>
+{%- enddoc -%}
+{%- if settings.compare_at_price_label != blank -%}
+  <span class="{% if visually_hidden %}visually-hidden{% else %}valor-price-compare-label{% endif %}">
+    {{- settings.compare_at_price_label | escape -}}
+  </span>
+{%- else -%}
+  <span class="visually-hidden">{{ 'product.regular_price' | t }}</span>
+{%- endif -%}

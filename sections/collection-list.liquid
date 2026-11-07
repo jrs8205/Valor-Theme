@@ -133,7 +133,7 @@
   .valor-collection-list__header--align-right {
     flex-direction: column;
     align-items: flex-end;
-    text-align: right;
+    text-align: end;
     gap: 0.75rem;
   }
   .valor-collection-list__view-all {
@@ -211,10 +211,10 @@
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       gap: var(--valor-grid-gap-mobile, var(--valor-grid-gap, 16px));
-      margin-left: calc(-1 * clamp(1rem, 4vw, 3rem));
-      margin-right: calc(-1 * clamp(1rem, 4vw, 3rem));
-      padding-left: 0;
-      padding-right: clamp(1rem, 4vw, 3rem);
+      margin-inline-start: calc(-1 * clamp(1rem, 4vw, 3rem));
+      margin-inline-end: calc(-1 * clamp(1rem, 4vw, 3rem));
+      padding-inline-start: 0;
+      padding-inline-end: clamp(1rem, 4vw, 3rem);
       scroll-padding-left: 0;
       scroll-padding-right: clamp(1rem, 4vw, 3rem);
       -webkit-overflow-scrolling: touch;

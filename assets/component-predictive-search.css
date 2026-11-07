@@ -164,7 +164,7 @@ valor-predictive-search[loading] .valor-psearch__results {
 .valor-psearch__price-current {
   color: var(--color-foreground, currentColor);
   font-weight: var(--font-body--weight-bold);
-  margin-right: 0.375rem;
+  margin-inline-end: 0.375rem;
 }
 .valor-psearch__price-compare {
   color: color-mix(in srgb, var(--color-foreground, currentColor) 50%, transparent);
@@ -191,7 +191,7 @@ valor-predictive-search[loading] .valor-psearch__results {
   font-size: 0.9375rem;
   font-weight: var(--font-body--weight-bold);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
 }
 .valor-psearch__view-all:hover,
 .valor-psearch__view-all-wrap[aria-selected="true"] .valor-psearch__view-all {

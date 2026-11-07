@@ -59,6 +59,13 @@
  * Reads for publishing go through one coalesced loop that reads again if
  * the generation moved during a read, so the latest state is always
  * published even when the newest change publishes nothing itself (a note).
+ *
+ * Line identity: a quantity change names its line by the AJAX key, and
+ * Shopify can re-key lines when the cart changes (a discount that starts or
+ * stops applying). The key is therefore settled when the request's turn in
+ * the queue comes, against the newest cart state (changeLineRequest), never
+ * by position; a key change is followed only for a line without an
+ * identical twin on screen, and a removed line stays removed.
  */
 
 (function () {
@@ -112,6 +119,167 @@
     return ev && typeof ev.cartGeneration === "function" ? ev.cartGeneration() : 0;
   }
 
+  /* ----- Line identity across re-keying -----
+     Shopify can give a line a new key when the cart changes: a discount that
+     starts or stops applying re-keys the lines it touches. A quantity change
+     is aimed at the line the buyer saw, so the key read from its row is
+     checked against the newest cart state right before the request is sent,
+     inside the queue (changeLineRequest): the line still has that key, or it
+     was re-keyed, i.e. exactly one line with the same variant, selling plan
+     and properties is in the cart now. A key change is followed only for a
+     line that had no identical twin on screen: between identical lines (a
+     discount split one variant) the next response may re-key the twin too,
+     and new keys can't be told apart, so such a change is not sent and
+     fails visibly, as before. A line this page removed stays removed. Never
+     a position, and never a guess. */
+
+  // Newest full cart a queued request returned: { items, generation }.
+  var latestCart = null;
+  // Keys of lines removed through changeLineRequest (the key the buyer saw
+  // and the key sent for it), with the generation of the response that
+  // confirmed the removal.
+  var removedLines = Object.create(null);
+
+  function rememberCart(cart, generation) {
+    if (!cart || !Array.isArray(cart.items) || typeof cart.item_count !== "number") return;
+    if (latestCart && latestCart.generation > generation) return;
+    latestCart = { items: cart.items, generation: generation };
+  }
+
+  var HTML_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+  function decodeEntities(text) {
+    if (typeof text !== "string" || text.indexOf("&") === -1) return text;
+    return text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, function (match, entity) {
+      if (entity.charAt(0) !== "#") return HTML_ENTITIES[entity.toLowerCase()];
+      var code = entity.charAt(1).toLowerCase() === "x" ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    });
+  }
+
+  /* The row's line item properties as { name: value }, matching the AJAX
+     cart, or null when they can't be read. Liquid renders
+     `item.properties | json` as [[name, value], …] with names and values
+     already HTML-escaped; the AJAX cart has an object of raw strings. */
+  function readLineProperties(row) {
+    var parsed;
+    try {
+      parsed = JSON.parse(row.getAttribute("data-properties") || "null");
+    } catch (e) {
+      return null;
+    }
+    if (!parsed || typeof parsed !== "object") return null;
+    var pairs = Array.isArray(parsed)
+      ? parsed
+      : Object.keys(parsed).map(function (name) {
+          return [name, parsed[name]];
+        });
+    var properties = {};
+    for (var i = 0; i < pairs.length; i++) {
+      if (!Array.isArray(pairs[i]) || pairs[i].length !== 2) return null;
+      properties[decodeEntities(String(pairs[i][0]))] = decodeEntities(pairs[i][1]);
+    }
+    return properties;
+  }
+
+  var IDENTITY_ATTRIBUTES = ["data-variant-id", "data-selling-plan-id", "data-properties"];
+
+  /* Another row on the same cart surface shows a line identical to row's. */
+  function hasIdenticalTwin(row) {
+    var scope = row.closest("valor-cart-drawer, valor-cart-page") || row.parentNode;
+    if (!scope) return false;
+    var rows = scope.querySelectorAll("[data-key][data-variant-id]");
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] === row || rows[i].getAttribute("data-key") === row.getAttribute("data-key")) continue;
+      var identical = IDENTITY_ATTRIBUTES.every(function (name) {
+        return rows[i].getAttribute(name) === row.getAttribute(name);
+      });
+      if (identical) return true;
+    }
+    return false;
+  }
+
+  /* What identifies the line a cart row shows (the Liquid row carries
+     data-key, data-variant-id, data-selling-plan-id and data-properties),
+     whether an identical line was on screen with it, and the cart
+     generation the buyer saw it at. null without a key. */
+  function lineTarget(row) {
+    var key = row && row.getAttribute("data-key");
+    if (!key) return null;
+    return {
+      key: key,
+      variantId: row.getAttribute("data-variant-id") || "",
+      sellingPlanId: row.getAttribute("data-selling-plan-id") || "",
+      properties: readLineProperties(row),
+      hasTwin: hasIdenticalTwin(row),
+      generation: cartGeneration(),
+    };
+  }
+
+  function propertyValue(value) {
+    return typeof value === "string" ? value : JSON.stringify(value);
+  }
+
+  function isSameLine(item, target) {
+    if (String(item.variant_id) !== target.variantId) return false;
+    var allocation = item.selling_plan_allocation;
+    var plan = allocation && allocation.selling_plan ? String(allocation.selling_plan.id) : "";
+    if (plan !== target.sellingPlanId) return false;
+    // Without readable properties on the row, uniqueness alone decides.
+    if (!target.properties) return true;
+    var own = target.properties;
+    var other = item.properties || {};
+    var names = Object.keys(own);
+    if (names.length !== Object.keys(other).length) return false;
+    return names.every(function (name) {
+      return (
+        Object.prototype.hasOwnProperty.call(other, name) && propertyValue(own[name]) === propertyValue(other[name])
+      );
+    });
+  }
+
+  function hasLineKey(items, key) {
+    return items.some(function (item) {
+      return item.key === key;
+    });
+  }
+
+  /* Where target's line is in items: { key } when found; { key: null,
+     gone: true } when it no longer exists (removed by this page since the
+     buyer saw it, or no line has its identity); { key: null, gone: false }
+     when that can't be told (an identical twin was on screen, the row has no
+     identity, or several lines match). */
+  function findLine(items, target) {
+    var removedAt = removedLines[target.key];
+    if (removedAt !== undefined && removedAt > target.generation) return { key: null, gone: true };
+    if (hasLineKey(items, target.key)) return { key: target.key, gone: false };
+    if (!target.variantId || target.hasTwin) return { key: null, gone: false };
+    var matches = items.filter(function (item) {
+      return isSameLine(item, target);
+    });
+    if (matches.length === 1) return { key: matches[0].key, gone: false };
+    return { key: null, gone: matches.length === 0 };
+  }
+
+  /* Resolves with findLine's answer for target against the newest cart.
+     Call it inside a queued task (cartRequest's init function): every
+     earlier change has then completed. Reads /cart.js only when the cart
+     changed since the buyer saw the row and no newer full cart is known. */
+  function resolveLine(target) {
+    var now = cartGeneration();
+    var known = latestCart && latestCart.generation === now ? latestCart.items : null;
+    // The newest cart is known and either newer than the row or consistent with it.
+    if (known && (target.generation < now || hasLineKey(known, target.key))) {
+      return Promise.resolve(findLine(known, target));
+    }
+    // Nothing changed since the buyer saw the row.
+    if (!known && target.generation === now) return Promise.resolve({ key: target.key, gone: false });
+    return fetchCartState().then(function (cart) {
+      rememberCart(cart, now);
+      return findLine((cart && cart.items) || [], target);
+    });
+  }
+
   function isDeclineStatus(status) {
     var ev = events();
     if (ev && typeof ev.isDeclineStatus === "function") return ev.isDeclineStatus(status);
@@ -142,14 +310,147 @@
      request (that would deadlock); post-processing belongs in the caller's
      .then(). */
   var cartRequestTail = Promise.resolve();
+  var inFlightCartRequests = 0;
   function enqueueCartRequest(task) {
+    inFlightCartRequests += 1;
     var run = cartRequestTail.then(task, task);
-    cartRequestTail = run.then(
-      function () {},
-      function () {},
-    );
+    var settled = function () {
+      inFlightCartRequests -= 1;
+    };
+    cartRequestTail = run.then(settled, settled);
     return run;
   }
+
+  /* ----- Checkout waits for pending quantity saves -----
+     A quantity edit saves through Ajax (immediately on the cart page, after
+     a short debounce in the drawer). A checkout form post at the same time
+     can cancel that save (iOS Safari), and a rejected quantity would then
+     fail silently. So a Check out submit made while a cart request is
+     queued or a debounced quantity edit is waiting is held: pending edits
+     are flushed, the queue is awaited, and the submit is replayed only when
+     every mutation in between succeeded. A rejected change keeps the buyer
+     on the cart with its line error. */
+  var failedCartMutations = 0;
+  var pendingQuantityCommits = [];
+  var IDLE_SETTLE_MS = 50;
+  var IDLE_MAX_WAIT_MS = 15000;
+
+  function addPendingQuantityCommit(commit) {
+    if (pendingQuantityCommits.indexOf(commit) === -1) pendingQuantityCommits.push(commit);
+  }
+
+  function removePendingQuantityCommit(commit) {
+    var index = pendingQuantityCommits.indexOf(commit);
+    if (index !== -1) pendingQuantityCommits.splice(index, 1);
+  }
+
+  function flushPendingQuantityCommits() {
+    var commits = pendingQuantityCommits.slice();
+    pendingQuantityCommits.length = 0;
+    commits.forEach(function (commit) {
+      commit();
+    });
+  }
+
+  function cartIsBusy() {
+    return inFlightCartRequests > 0 || pendingQuantityCommits.length > 0;
+  }
+
+  /* Resolves with { failed, timedOut } once no cart request is queued and no
+     quantity edit is waiting. failed counts mutations that did not succeed
+     since the call. Post-processing may queue follow-up requests (a fallback
+     section refresh), so idle must hold for IDLE_SETTLE_MS before resolving. */
+  function whenCartIdle() {
+    var startFailed = failedCartMutations;
+    flushPendingQuantityCommits();
+    return new Promise(function (resolve) {
+      var done = false;
+      var capTimer = null;
+      var finish = function (timedOut) {
+        if (done) return;
+        done = true;
+        clearTimeout(capTimer);
+        resolve({ failed: failedCartMutations - startFailed, timedOut: timedOut });
+      };
+      // The cap runs on its own timer: a request that never settles must not
+      // keep the buyer waiting, even though the queue below never resolves.
+      capTimer = setTimeout(function () {
+        finish(true);
+      }, IDLE_MAX_WAIT_MS);
+      (function check() {
+        if (done) return;
+        if (cartIsBusy()) {
+          flushPendingQuantityCommits();
+          cartRequestTail.then(function () {
+            setTimeout(check, 0);
+          });
+          return;
+        }
+        setTimeout(function () {
+          if (done) return;
+          if (cartIsBusy()) {
+            check();
+            return;
+          }
+          finish(false);
+        }, IDLE_SETTLE_MS);
+      })();
+    });
+  }
+
+  var checkoutWaiting = false;
+  // Set for the one replayed submit, so it is not held again when the cart is
+  // still busy (a save that never settled before the cap).
+  var bypassCheckoutGate = false;
+  function findCheckoutButton(form, submitter) {
+    if (submitter && submitter.isConnected && submitter.form === form) return submitter;
+    if (submitter && submitter.id) {
+      var byId = document.getElementById(submitter.id);
+      if (byId && byId.form === form) return byId;
+    }
+    var inside = form.querySelector('[type="submit"][name="checkout"]');
+    if (inside) return inside;
+    return form.id ? document.querySelector('[type="submit"][name="checkout"][form="' + form.id + '"]') : null;
+  }
+
+  document.addEventListener(
+    "submit",
+    function (event) {
+      var submitter = event.submitter;
+      if (event.defaultPrevented || !submitter || submitter.name !== "checkout") return;
+      if (bypassCheckoutGate) {
+        bypassCheckoutGate = false;
+        return;
+      }
+      if (!checkoutWaiting && !cartIsBusy()) return;
+      event.preventDefault();
+      if (checkoutWaiting) return;
+      checkoutWaiting = true;
+      var form = event.target;
+      var formId = form.id;
+      submitter.setAttribute("aria-disabled", "true");
+      whenCartIdle().then(function (result) {
+        checkoutWaiting = false;
+        submitter.removeAttribute("aria-disabled");
+        if (result.failed > 0) return;
+        // A save re-renders the cart, so the form and button may be new nodes.
+        var liveForm = form.isConnected ? form : formId ? document.getElementById(formId) : null;
+        if (!liveForm) return;
+        var button = findCheckoutButton(liveForm, submitter);
+        if (!button) return;
+        bypassCheckoutGate = true;
+        try {
+          if (typeof liveForm.requestSubmit === "function") liveForm.requestSubmit(button);
+          else button.click();
+        } finally {
+          // requestSubmit dispatches submit synchronously; never let the
+          // bypass outlive this replay (e.g. when validation stops it).
+          bypassCheckoutGate = false;
+        }
+      });
+    },
+    true,
+  );
 
   /* Keep the buyer's intended code set while discount changes are queued.
      Both cart surfaces share this state: a second click must build on the
@@ -186,23 +487,98 @@
      the cart, so a 2xx or a decline (a 422 may still have changed it, e.g. a
      partial add) starts a new generation when the response arrives, inside
      the queue; otherwise the generation current at the start is used.
-     Rejects on a network error or a non-JSON body. */
+     init may be a function, called when the request's turn comes, that
+     returns the init (or a promise of it). It may instead give null (the
+     change can't be sent: a mutation counts as failed) or NOTHING_TO_SEND
+     (the change already holds); then nothing is sent and the result is
+     { ok: false, skipped: true, failed }. options.onResponse(result), if
+     given, runs inside the queue as soon as a response is parsed. Rejects
+     on a network error or a non-JSON body. */
+  var NOTHING_TO_SEND = {};
+
   function cartRequest(url, init, options) {
     var mutation = !!(options && options.mutation);
     return enqueueCartRequest(function () {
       var startGeneration = cartGeneration();
-      return fetch(url, init).then(function (r) {
-        return r.json().then(function (body) {
-          var changed = mutation && (r.ok || isDeclineStatus(r.status));
+      // A failed mutation is counted only once the whole response is in (or
+      // the request/body read failed), so a Check out tap that lands between
+      // the headers and the body still sees the failure (whenCartIdle).
+      var countFailure = function (error) {
+        if (mutation) failedCartMutations += 1;
+        throw error;
+      };
+      var send = function (requestInit) {
+        if (!requestInit || requestInit === NOTHING_TO_SEND) {
+          var failed = requestInit !== NOTHING_TO_SEND;
+          if (mutation && failed) failedCartMutations += 1;
+          return { ok: false, status: 0, body: null, skipped: true, failed: failed, generation: startGeneration };
+        }
+        return fetch(url, requestInit).then(function (r) {
+          return r.json().then(function (body) {
+            if (mutation && !r.ok) failedCartMutations += 1;
+            var changed = mutation && (r.ok || isDeclineStatus(r.status));
+            var generation = changed ? cartMutated() : startGeneration;
+            if (r.ok) rememberCart(body, generation);
+            var result = { ok: r.ok, status: r.status, body: body, generation: generation };
+            if (options && typeof options.onResponse === "function") options.onResponse(result);
+            return result;
+          }, countFailure);
+        }, countFailure);
+      };
+      if (typeof init !== "function") return send(init);
+      return Promise.resolve().then(init).then(send, countFailure);
+    });
+  }
+
+  /* POST /cart/change.js setting target's line (lineTarget) to quantity,
+     with the key settled when the request's turn in the queue comes
+     (resolveLine). Resolves like cartRequest; when nothing was sent,
+     result.skipped is set and result.failed says whether the change was
+     lost (false for a removal whose line is already gone). result.key (or
+     error.lineKey on a rejection) is the key the request was sent with,
+     which differs from target.key when the line was re-keyed. sections: the
+     section ids to render into the response. */
+  function changeLineRequest(target, quantity, sections) {
+    var sentKey = null;
+    var request = cartRequest(
+      cartUrl("cart/change.js"),
+      function () {
+        return resolveLine(target).then(function (line) {
+          if (!line.key) return quantity === 0 && line.gone ? NOTHING_TO_SEND : null;
+          sentKey = line.key;
           return {
-            ok: r.ok,
-            status: r.status,
-            body: body,
-            generation: changed ? cartMutated() : startGeneration,
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+              id: line.key,
+              quantity: quantity,
+              sections: sections,
+              sections_url: window.location.pathname,
+            }),
           };
         });
-      });
-    });
+      },
+      {
+        mutation: true,
+        // Recorded inside the queue, so the next request already knows,
+        // under the key the buyer saw as well as the key that was sent.
+        onResponse: function (result) {
+          if (!result.ok || quantity !== 0 || !sentKey) return;
+          removedLines[target.key] = result.generation;
+          removedLines[sentKey] = result.generation;
+        },
+      },
+    );
+    return request.then(
+      function (result) {
+        result.key = sentKey;
+        return result;
+      },
+      function (error) {
+        if (error && typeof error === "object") error.lineKey = sentKey;
+        throw error;
+      },
+    );
   }
 
   /* A section-rendering request through the queue. Resolves with
@@ -794,16 +1170,34 @@
           });
 
           // Direct input change (debounced) — snap to the nearest valid value.
+          // A waiting edit is registered so Check out can flush it, and
+          // Enter commits it at once. The edit remembers its line (lineTarget):
+          // an earlier save can re-render the drawer (detaching this input)
+          // before the debounce ends, and the buyer's value must still be sent
+          // for the same line, even when that save gave it a new key.
           this.querySelectorAll("[data-qty-input]").forEach(function (input) {
-            var t;
+            var timer = null;
+            var target = null;
+            var commit = function () {
+              if (timer === null) return;
+              clearTimeout(timer);
+              timer = null;
+              removePendingQuantityCommit(commit);
+              var line = parseInt(input.dataset.line, 10);
+              var raw = parseInt(input.value, 10);
+              if (isNaN(raw)) raw = 0;
+              self.changeLine(line, self.clampQuantity(input, raw), target);
+            };
             input.addEventListener("input", function () {
-              clearTimeout(t);
-              t = setTimeout(function () {
-                var line = parseInt(input.dataset.line, 10);
-                var raw = parseInt(input.value, 10);
-                if (isNaN(raw)) raw = 0;
-                self.changeLine(line, self.clampQuantity(input, raw));
-              }, 500);
+              target = lineTarget(input.closest("[data-key]"));
+              clearTimeout(timer);
+              timer = setTimeout(commit, 500);
+              addPendingQuantityCommit(commit);
+            });
+            input.addEventListener("keydown", function (event) {
+              if (event.key !== "Enter") return;
+              event.preventDefault();
+              commit();
             });
           });
 
@@ -827,43 +1221,46 @@
            in a single round trip. The three-fetch refresh()
            path remains the fallback when the response doesn't carry usable
            section HTML. */
-        changeLine(line, quantity) {
+        changeLine(line, quantity, knownTarget) {
           var self = this;
 
           // shopify:cart:lines-update. The line is identified by its AJAX
-          // key, which the Liquid row carries as data-key.
-          var row = this.querySelector('[data-line="' + line + '"][data-key]');
-          var lineKey = row && row.getAttribute("data-key");
+          // key, which the Liquid row carries as data-key, and by what still
+          // identifies it when that key changes (lineTarget). A debounced
+          // edit passes the target it was made on (its row may have been
+          // re-rendered since).
+          var target = knownTarget || lineTarget(this.querySelector('[data-line="' + line + '"][data-key]'));
           // Never retain a position across the queue: removing an earlier
           // row shifts every following line. A missing key requires a refresh.
-          if (!lineKey) return this.refresh();
+          if (!target) return this.refresh();
           this.setBusy(true);
           var ev = events();
           var linesOp = ev
             ? ev.cartLinesUpdate(this, {
                 action: quantity === 0 ? "remove" : "update",
                 context: "dialog",
-                lines: [{ id: lineKey, quantity: quantity }],
+                lines: [{ id: target.key, quantity: quantity }],
               })
             : null;
 
-          return cartRequest(
-            cartUrl("cart/change.js"),
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({
-                id: lineKey,
-                quantity: quantity,
-                sections: SECTION_ID,
-                sections_url: window.location.pathname,
-              }),
-            },
-            { mutation: true },
-          )
+          // The key is settled on the request's turn: an earlier change may
+          // have re-keyed or removed this line.
+          return changeLineRequest(target, quantity, SECTION_ID)
             .then(function (res) {
               var cart = res.body;
               var gen = res.generation;
+              if (res.skipped && !res.failed) {
+                // A removal whose line is already gone: nothing to do.
+                if (linesOp) linesOp.resolveFromServer();
+                self.setBusy(false);
+                return;
+              }
+              if (res.skipped) {
+                // The line is gone, or can't be told apart from another line
+                // any more: nothing was sent. Show the cart as it stands.
+                if (linesOp) linesOp.decline("The cart line changed before the update was sent.");
+                return self.refresh();
+              }
               if (linesOp) linesOp.settle(res.status, cart);
               // /cart/change.js returns the cart object directly. With
               // the sections parameter it also includes a sections key.
@@ -908,7 +1305,7 @@
           var code = input.value.trim();
           var self = this;
           var strAppliedTpl = this.dataset.stringsDiscountApplied || "Discount applied";
-          var strInvalid = this.dataset.stringsDiscountInvalid || "Invalid discount code";
+          var strInvalid = this.dataset.stringsDiscountInvalid || "This discount code can’t be applied to your cart.";
           msg.textContent = "";
           msg.removeAttribute("data-state");
           this.setBusy(true);
@@ -1438,7 +1835,10 @@
     updateCartBubble: updateCartBubble,
     publishCartState: publishCartState,
     cartRequest: cartRequest,
+    lineTarget: lineTarget,
+    changeLineRequest: changeLineRequest,
     beginDiscountChange: beginDiscountChange,
     cartSectionRequest: cartSectionRequest,
+    whenCartIdle: whenCartIdle,
   };
 })();

@@ -56,13 +56,13 @@
    description sit relative to the page width. Defaults to center to
    match the original collection page look. */
 .valor-collection__header--left {
-  text-align: left;
+  text-align: start;
 }
 .valor-collection__header--center {
   text-align: center;
 }
 .valor-collection__header--right {
-  text-align: right;
+  text-align: end;
 }
 .valor-collection__title {
   /* Font size and weight come from .valor-heading--{size} classes in
@@ -80,13 +80,13 @@
   line-height: 1.6;
 }
 .valor-collection__description--left {
-  text-align: left;
+  text-align: start;
 }
 .valor-collection__description--center {
   text-align: center;
 }
 .valor-collection__description--right {
-  text-align: right;
+  text-align: end;
 }
 /* Body size modifiers — affects the description's base font-size;
    rte child elements scale proportionally via em-based sizing. */
@@ -153,7 +153,8 @@
   display: block;
 }
 .valor-collection__sort {
-  padding: 0.5rem 1.75rem 0.5rem 0.75rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem 1.75rem;
   background: var(--color-background)
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")
     no-repeat right 0.5rem center;
@@ -164,6 +165,9 @@
   font-family: inherit;
   appearance: none;
   cursor: pointer;
+}
+[dir="rtl"] .valor-collection__sort {
+  background-position: left 0.5rem center;
 }
 
 /* Mobile toolbar layout:
@@ -194,7 +198,7 @@
     display: none;
   }
   .valor-collection__count {
-    margin-right: auto;
+    margin-inline-end: auto;
   }
   .valor-collection__filter-btn,
   .valor-collection__sort-wrap--mobile {
@@ -254,7 +258,8 @@
   }
   .valor-collection__sidebar {
     position: fixed;
-    inset: 0 0 0 auto;
+    inset-block: 0;
+    inset-inline: auto 0;
     width: min(85vw, 340px);
     background: var(--color-background);
     z-index: 60;
@@ -297,6 +302,17 @@
   valor-collection[data-drawer-skip-transition] .valor-collection__sidebar {
     transform: translateX(calc(100% + 24px)) !important;
     box-shadow: none !important;
+  }
+  /* Right-to-left: the drawer sits on the left edge and slides in from there. */
+  [dir="rtl"] .valor-collection__sidebar {
+    transform: translateX(calc(-100% - 24px));
+  }
+  [dir="rtl"] valor-collection[data-drawer-open] .valor-collection__sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 16px color-mix(in srgb, #000 10%, transparent);
+  }
+  [dir="rtl"] valor-collection[data-drawer-skip-transition] .valor-collection__sidebar {
+    transform: translateX(calc(-100% - 24px)) !important;
   }
   valor-collection[data-drawer-skip-transition] .valor-collection__overlay {
     opacity: 0 !important;
@@ -487,7 +503,8 @@
 .valor-facets__heading {
   font-size: var(--font-size-body-base);
   font-weight: 500;
-  margin: 0 auto 0 0;
+  margin-block: 0;
+  margin-inline: 0 auto;
 }
 .valor-facets__clear {
   font-size: var(--font-size-body-xs);
@@ -650,7 +667,7 @@
   opacity: 0.4;
 }
 .valor-facets__value-count {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
   font-size: var(--font-size-body-xs);
 }
@@ -684,7 +701,7 @@
 .valor-facets__price-currency {
   font-size: var(--font-size-body-sm);
   color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
-  margin-right: 0.25rem;
+  margin-inline-end: 0.25rem;
 }
 .valor-facets__price-input {
   flex: 1;

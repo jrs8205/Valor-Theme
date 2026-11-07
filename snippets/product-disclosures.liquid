@@ -11,7 +11,12 @@
       symbol               optional image (e.g. the Prop 65 triangle)
       display_preferences  JSON { "surfaces": ["product_page", "cart", …] }
   Only disclosures whose display_preferences list the requested surface
-  are shown, so the merchant controls where each one appears.
+  are shown, so the merchant controls where each one appears. The list is
+  first narrowed with the applicable_disclosures filter: a disclosure
+  scoped to a country or subdivision only shows to buyers in that
+  jurisdiction (and always shows when the jurisdiction is unknown).
+  Disclosures without a symbol get a neutral info icon so every item
+  lines up the same way.
 
   Layout:
     product_page  a bordered panel. The summary row names every
@@ -39,7 +44,7 @@
 
 {%- liquid
   assign surface = surface | default: 'product_page'
-  assign disclosures = product.metafields.shopify.disclosure.value
+  assign disclosures = product.metafields.shopify.disclosure.value | applicable_disclosures
 
   assign visible_count = 0
   for disclosure in disclosures
@@ -65,6 +70,23 @@
     <path d="M8 1.75 15 14.25H1L8 1.75Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>
     <path d="M8 6.25v3.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
     <circle cx="8" cy="11.75" r="0.75" fill="currentColor"/>
+  </svg>
+{%- endcapture -%}
+
+{%- capture info_icon -%}
+  <svg
+    class="valor-disclosures__symbol valor-disclosures__symbol--fallback"
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M10 9v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="10" cy="6.25" r="0.9" fill="currentColor"/>
   </svg>
 {%- endcapture -%}
 
@@ -104,6 +126,8 @@
                 width: disclosure_symbol.width,
                 height: disclosure_symbol.height
             -}}
+          {%- else -%}
+            {{- info_icon -}}
           {%- endif -%}
           <div class="valor-disclosures__item-body">
             <p class="valor-disclosures__item-title">{{ disclosure_title | escape }}</p>

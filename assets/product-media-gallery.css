@@ -81,7 +81,7 @@
 .valor-product-media__zoom-hint {
   position: absolute;
   bottom: 0.75rem;
-  right: 0.75rem;
+  inset-inline-end: 0.75rem;
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -138,10 +138,15 @@
   height: calc(var(--gallery-nav-size, 40px) * 0.5);
 }
 .valor-product-media__nav--prev {
-  left: 0.625rem;
+  inset-inline-start: 0.625rem;
 }
 .valor-product-media__nav--next {
-  right: 0.625rem;
+  inset-inline-end: 0.625rem;
+}
+/* Arrows point the reading direction's way in right-to-left stores. */
+[dir="rtl"] .valor-product-media__nav svg,
+[dir="rtl"] .valor-product-media__thumbs-nav svg {
+  transform: scaleX(-1);
 }
 
 @media (hover: hover) {
@@ -159,7 +164,7 @@
 .valor-product-media__counter {
   position: absolute;
   bottom: 0.75rem;
-  left: 0.75rem;
+  inset-inline-start: 0.75rem;
   background: rgba(0, 0, 0, 0.55);
   color: #fff;
   font-size: 0.75rem;
@@ -249,7 +254,7 @@
 }
 .valor-product-media__progress-indicator {
   position: absolute;
-  left: var(--gallery-progress-left, 0%);
+  inset-inline-start: var(--gallery-progress-left, 0%);
   top: 0;
   z-index: 1;
   display: block;
@@ -370,20 +375,20 @@
   height: 0.875rem;
 }
 .valor-product-media__thumbs-nav--prev {
-  left: -0.5rem;
+  inset-inline-start: -0.5rem;
 }
 .valor-product-media__thumbs-nav--next {
-  right: -0.5rem;
+  inset-inline-end: -0.5rem;
 }
 
 /* On mobile, sit the buttons fully inside the track edges so they don't
    peek beyond the section padding. */
 @media (max-width: 749px) {
   .valor-product-media__thumbs-nav--prev {
-    left: 0.25rem;
+    inset-inline-start: 0.25rem;
   }
   .valor-product-media__thumbs-nav--next {
-    right: 0.25rem;
+    inset-inline-end: 0.25rem;
   }
 }
 
@@ -425,10 +430,10 @@
 /* Mobile: nav buttons stay closer to the edges */
 @media (max-width: 749px) {
   .valor-product-media__nav--prev {
-    left: 0.375rem;
+    inset-inline-start: 0.375rem;
   }
   .valor-product-media__nav--next {
-    right: 0.375rem;
+    inset-inline-end: 0.375rem;
   }
 }
 

@@ -1,5 +1,8 @@
 # Valor Theme
 
+[![Latest release](https://img.shields.io/github/v/release/jrs8205/Valor-Theme?label=version)](https://github.com/jrs8205/Valor-Theme/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/jrs8205/Valor-Theme/total?label=downloads)](https://github.com/jrs8205/Valor-Theme/releases)
+
 Valor is a premium Shopify Online Store 2.0 theme for fashion, jewelry,
 accessories, and other visual product brands.
 
@@ -12,11 +15,18 @@ accessories, and other visual product brands.
 
 ## Current Version
 
-The current release is `2.1.0`.
+The current release is `2.2.0`.
 
-Downloadable release ZIPs are published from the official website. This
-repository contains the theme source so issues, fixes, and improvements can be
-reviewed transparently.
+Download the release ZIP from
+[GitHub Releases](https://github.com/jrs8205/Valor-Theme/releases/latest) or
+from the official website, [valortheme.com](https://valortheme.com). Both carry
+the same file; its SHA-256 checksum is listed with each release. Upload the ZIP
+in Shopify admin under Online Store > Themes > Add theme > Upload zip file.
+Downloading and using the theme means accepting the
+[Valor Free License](https://valortheme.com/license.html).
+
+This repository contains the theme source so issues, fixes, and improvements
+can be reviewed transparently.
 
 ## License
 
@@ -44,12 +54,21 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Product, collection, search, cart, blog, article, policy, password, and gift
   card templates.
 - Cart drawer with discounts and order notes.
+- Cart tax and shipping note that matches the store: VAT-inclusive stores say
+  taxes are included, and the note mentions duties, discounts, fees, and a link
+  to the shipping policy when they apply.
+- Checkout waits for quantity changes that are still saving, and Enter in a
+  cart quantity field saves the quantity instead of starting checkout.
 - AJAX collection filtering and sorting.
 - Predictive search.
 - Product cards with in-place colour swatch swap: click a swatch to update the
   card image and price without leaving the page.
 - Colour swatches in the product page variant picker and collection filters,
   with theme-wide picker and swatch defaults plus per-section overrides.
+- Custom swatch colours set in Theme settings, including two- and three-colour
+  swatches for multicolour products.
+- Combined listings: choosing a colour or other option that belongs to a sibling
+  product opens that product, on product pages and product cards.
 - Product media gallery with lightbox support.
 - Product page blocks for title, vendor, SKU, price, unit price, variant
   picker, quantity, buy buttons with gift card recipient fields, inventory
@@ -64,6 +83,9 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Video section with hero-style overlay content: heading, subheading, and
   buttons over the video, with position, text box, and darkening controls plus
   a one-click "Video hero" preset.
+- EU price and product information: an optional label for compare-at prices
+  (for example "Lowest price in the last 30 days") and a product safety block
+  for manufacturer, responsible person, identifiers, and warnings (GPSR).
 - EU legal guarantee notice: upload the official European Commission notice in
   Theme settings and Valor shows it in full from a "Your legal guarantee
   rights" link in the footer and on product pages, with a text version and a
@@ -80,6 +102,10 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Ordered cart updates: quantity, discount, and note changes are processed in
   sequence so the cart drawer, cart page, and header count always match the
   cart, including after returning with the browser Back button.
+- Right-to-left layout for Arabic, Hebrew, and Urdu storefronts: drawers,
+  arrows, sliders, and alignment mirror automatically.
+- Accessibility checked against WCAG 2.2 AA: Lighthouse accessibility 100 on the
+  home, product, and collection pages.
 - Theme Editor controls for typography, color schemes, buttons, sections, and
   custom CSS.
 
@@ -103,6 +129,10 @@ To check the event contract against a downloaded copy of Shopify's
 `https://cdn.shopify.com/storefront/standard-events.js` module, set
 `VALOR_STANDARD_EVENTS` to its local path before running `npm test`.
 The default event tests use an offline contract double.
+
+The tests run in Chromium by default. Set `VALOR_BROWSER=webkit` (Safari's
+engine) or `VALOR_BROWSER=firefox` to run the same suite in another engine;
+install it first with `npx playwright install webkit` (or `firefox`).
 
 Run formatting check:
 

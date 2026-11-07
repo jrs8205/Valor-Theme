@@ -98,13 +98,21 @@
       }
     }
 
+    isRtl() {
+      return getComputedStyle(this.viewport || this).direction === "rtl";
+    }
+
     onKeydown(event) {
-      if (event.key === "ArrowLeft") {
+      // Arrow keys follow the reading direction: in right-to-left stores
+      // ArrowLeft moves forward.
+      var forwardKey = this.isRtl() ? "ArrowLeft" : "ArrowRight";
+      var backKey = this.isRtl() ? "ArrowRight" : "ArrowLeft";
+      if (event.key === backKey) {
         event.preventDefault();
         this.previous();
       }
 
-      if (event.key === "ArrowRight") {
+      if (event.key === forwardKey) {
         event.preventDefault();
         this.next();
       }
@@ -127,10 +135,12 @@
 
       if (!isHorizontalSwipe) return;
 
-      if (this.touchStartIndex === this.slides.length - 1 && deltaX < 0) {
+      // A swipe toward the reading direction's end moves forward.
+      var forwardSwipe = this.isRtl() ? deltaX > 0 : deltaX < 0;
+      if (this.touchStartIndex === this.slides.length - 1 && forwardSwipe) {
         this.show(0);
         this.restartAutoplay();
-      } else if (this.touchStartIndex === 0 && deltaX > 0) {
+      } else if (this.touchStartIndex === 0 && !forwardSwipe) {
         this.show(this.slides.length - 1);
         this.restartAutoplay();
       }
@@ -161,6 +171,13 @@
 
     getSlideOffset(slide) {
       if (!slide) return 0;
+      if (this.isRtl()) {
+        // Right-to-left scrollers start at their right edge with scrollLeft 0
+        // and go negative, so measure each slide from the first slide's
+        // right edge.
+        var first = this.slides[0];
+        return slide.offsetLeft + slide.offsetWidth - (first.offsetLeft + first.offsetWidth);
+      }
       var base = this.track || this.slides[0];
       return slide.offsetLeft - base.offsetLeft;
     }

@@ -25,13 +25,13 @@
   padding: 0 clamp(1rem, 4vw, 3rem);
 }
 .valor-search__header--left {
-  text-align: left;
+  text-align: start;
 }
 .valor-search__header--center {
   text-align: center;
 }
 .valor-search__header--right {
-  text-align: right;
+  text-align: end;
 }
 
 .valor-search__title {

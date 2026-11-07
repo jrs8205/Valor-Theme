@@ -8,7 +8,14 @@
 <valor-cart-items class="valor-cart-items">
   <ul class="valor-cart-items__list" role="list">
     {%- for item in cart.items -%}
-      <li class="valor-cart-items__item" data-line="{{ forloop.index }}" data-key="{{ item.key }}">
+      <li
+        class="valor-cart-items__item"
+        data-line="{{ forloop.index }}"
+        data-key="{{ item.key }}"
+        data-variant-id="{{ item.variant_id }}"
+        data-selling-plan-id="{{ item.selling_plan_allocation.selling_plan.id }}"
+        data-properties="{{ item.properties | json | escape }}"
+      >
         <a href="{{ item.url }}" class="valor-cart-items__image" data-cart-drawer-close>
           {%- if item.image -%}
             {%- assign cart_drawer_image_alt = item.image.alt
@@ -199,7 +206,7 @@
   }
   .valor-cart-items__price-block {
     flex: 0 0 auto;
-    text-align: right;
+    text-align: end;
   }
   .valor-cart-items__price {
     display: block;
@@ -222,7 +229,7 @@
   }
   .valor-cart-items__variant span:not(:last-child)::after {
     content: ' / ';
-    margin-left: 0.5rem;
+    margin-inline-start: 0.5rem;
   }
   .valor-cart-items__discounts {
     list-style: none;
@@ -257,7 +264,7 @@
     min-width: 0;
   }
   .valor-cart-items__discount-amount {
-    margin-left: auto;
+    margin-inline-start: auto;
     font-weight: var(--font-body--weight-bold);
   }
   .valor-cart-items__compare-price {
@@ -302,8 +309,8 @@
     text-align: center;
     font: inherit;
     font-size: 0.875rem;
-    border-left: 1px solid var(--valor-border-strong);
-    border-right: 1px solid var(--valor-border-strong);
+    border-inline-start: 1px solid var(--valor-border-strong);
+    border-inline-end: 1px solid var(--valor-border-strong);
     -moz-appearance: textfield;
   }
   .valor-cart-items__qty-input::-webkit-outer-spin-button,

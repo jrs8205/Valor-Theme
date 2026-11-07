@@ -50,13 +50,13 @@
   margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
 }
 .valor-page__header--left {
-  text-align: left;
+  text-align: start;
 }
 .valor-page__header--center {
   text-align: center;
 }
 .valor-page__header--right {
-  text-align: right;
+  text-align: end;
 }
 
 /* Page content uses the global .rte rules from critical.css for
@@ -69,13 +69,13 @@
   margin-bottom: 0;
 }
 .valor-page__content--left {
-  text-align: left;
+  text-align: start;
 }
 .valor-page__content--center {
   text-align: center;
 }
 .valor-page__content--right {
-  text-align: right;
+  text-align: end;
 }
 
 /* Body size modifiers — sets the base font-size on the content
@@ -100,6 +100,6 @@
 /* When the body is centered, also center block-level images so they
    don't hang to the left edge against centered surrounding text. */
 .valor-page__content--center img {
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline-start: auto;
+  margin-inline-end: auto;
 }

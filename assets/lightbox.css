@@ -69,7 +69,7 @@ valor-lightbox {
 .valor-lightbox__close {
   position: absolute;
   top: clamp(0.75rem, 2vw, 1.5rem);
-  right: clamp(0.75rem, 2vw, 1.5rem);
+  inset-inline-end: clamp(0.75rem, 2vw, 1.5rem);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -121,10 +121,10 @@ valor-lightbox {
   outline: none;
 }
 .valor-lightbox__nav--prev {
-  left: clamp(0.5rem, 2vw, 1.5rem);
+  inset-inline-start: clamp(0.5rem, 2vw, 1.5rem);
 }
 .valor-lightbox__nav--next {
-  right: clamp(0.5rem, 2vw, 1.5rem);
+  inset-inline-end: clamp(0.5rem, 2vw, 1.5rem);
 }
 .valor-lightbox__nav svg {
   width: 24px;
@@ -176,10 +176,10 @@ valor-lightbox {
     background: #fff;
   }
   .valor-lightbox__nav--prev {
-    left: 0.5rem;
+    inset-inline-start: 0.5rem;
   }
   .valor-lightbox__nav--next {
-    right: 0.5rem;
+    inset-inline-end: 0.5rem;
   }
   .valor-lightbox__counter {
     bottom: auto;
@@ -187,7 +187,7 @@ valor-lightbox {
   }
   .valor-lightbox__close {
     top: 0.5rem;
-    right: 0.5rem;
+    inset-inline-end: 0.5rem;
     width: 38px;
     height: 38px;
   }
@@ -197,4 +197,9 @@ valor-lightbox {
   .valor-lightbox {
     transition: none;
   }
+}
+
+/* Right-to-left: previous sits on the right, so the arrows point the other way. */
+[dir="rtl"] .valor-lightbox__nav svg {
+  transform: scaleX(-1);
 }

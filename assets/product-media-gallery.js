@@ -270,9 +270,15 @@ class ValorProductMedia extends HTMLElement {
 
     if (fastFlick || longSwipe) {
       this._suppressClick = true;
-      if (dx > 0) this.prev();
+      // In right-to-left stores a swipe to the right moves forward.
+      const towardPrevious = this._isRtl() ? dx < 0 : dx > 0;
+      if (towardPrevious) this.prev();
       else this.next();
     }
+  }
+
+  _isRtl() {
+    return getComputedStyle(this).direction === "rtl";
   }
 
   /* Thumbnail strip nav buttons. They appear only when the track has
@@ -287,13 +293,14 @@ class ValorProductMedia extends HTMLElement {
   onThumbsPrevClick() {
     if (!this.thumbsTrack) return;
     const step = Math.max(this.thumbsTrack.clientWidth * 0.8, 80);
-    this.thumbsTrack.scrollBy({ left: -step, behavior: "smooth" });
+    // Toward the start: left in LTR, right (positive) in RTL.
+    this.thumbsTrack.scrollBy({ left: this._isRtl() ? step : -step, behavior: "smooth" });
   }
 
   onThumbsNextClick() {
     if (!this.thumbsTrack) return;
     const step = Math.max(this.thumbsTrack.clientWidth * 0.8, 80);
-    this.thumbsTrack.scrollBy({ left: step, behavior: "smooth" });
+    this.thumbsTrack.scrollBy({ left: this._isRtl() ? -step : step, behavior: "smooth" });
   }
 
   updateThumbsNavState() {
@@ -308,8 +315,10 @@ class ValorProductMedia extends HTMLElement {
     }
 
     // 2px tolerance for sub-pixel rounding at scroll extremes
-    const atStart = track.scrollLeft <= 2;
-    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+    // scrollLeft is 0 at the start and negative toward the end in RTL.
+    const offset = Math.abs(track.scrollLeft);
+    const atStart = offset <= 2;
+    const atEnd = offset + track.clientWidth >= track.scrollWidth - 2;
 
     if (this.thumbsPrev) this.thumbsPrev.hidden = atStart;
     if (this.thumbsNext) this.thumbsNext.hidden = atEnd;

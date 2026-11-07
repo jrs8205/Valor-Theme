@@ -1,6 +1,11 @@
 {%- liquid
   assign pick_up_availabilities = product_variant.store_availabilities | where: 'pick_up_enabled', true
-  assign closest_location = pick_up_availabilities.first
+  # Prefer the first location (nearest first) that has the variant in stock,
+  # so a sold-out nearest store doesn't hide pickup that another store offers.
+  assign closest_location = pick_up_availabilities | where: 'available', true | first
+  if closest_location == blank
+    assign closest_location = pick_up_availabilities.first
+  endif
 -%}
 
 {%- if pick_up_availabilities.size > 0 -%}

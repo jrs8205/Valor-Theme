@@ -35,7 +35,7 @@
     font-size: var(--font-size-body-sm);
     font-weight: 500;
     color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
-    margin-right: 0.25rem;
+    margin-inline-end: 0.25rem;
   }
 
   /* Filter list — natural inline-row of dropdown summaries. The wrap
@@ -57,7 +57,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .valor-facets-bar__count {
@@ -84,7 +84,8 @@
     background: transparent;
     border: 0;
     color: var(--color-foreground);
-    padding: 0.375rem 1.5rem 0.375rem 0.5rem;
+    padding-block: 0.375rem;
+    padding-inline: 0.5rem 1.5rem;
     cursor: pointer;
     /* Custom caret: SVG arrow, replaces the default OS dropdown affordance
        so the bar reads as a single visual unit. */
@@ -94,6 +95,9 @@
     background-repeat: no-repeat;
     background-position: right 0.25rem center;
     background-size: 0.75rem;
+  }
+  [dir="rtl"] .valor-facets-bar__sort {
+    background-position: left 0.25rem center;
   }
 
   .valor-facets-bar__sort:focus {
@@ -144,7 +148,7 @@
   .valor-facets-bar__summary-count {
     color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
     font-weight: var(--font-body--weight);
-    margin-left: 0.125rem;
+    margin-inline-start: 0.125rem;
   }
 
   .valor-facets-bar__summary-icon {
@@ -161,7 +165,7 @@
   .valor-facets-bar__panel {
     position: absolute;
     top: calc(100% + 0.25rem);
-    left: 0;
+    inset-inline-start: 0;
     z-index: 5;
     min-width: 14rem;
     max-width: 20rem;
@@ -180,8 +184,8 @@
      to any group whose default left position would clip — cleaner
      than guessing in CSS. */
   .valor-facets-bar__group--align-right .valor-facets-bar__panel {
-    left: auto;
-    right: 0;
+    inset-inline-start: auto;
+    inset-inline-end: 0;
   }
 
   /* ----- Inside the panel: same controls as the drawer facets ----- */
@@ -319,7 +323,7 @@
   .valor-facets-bar__price-currency {
     color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
     font-size: var(--font-size-body-sm);
-    margin-right: 0.25rem;
+    margin-inline-end: 0.25rem;
   }
 
   .valor-facets-bar__price-input {
@@ -365,7 +369,7 @@
     font-size: var(--font-size-body-xs);
     color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
     text-decoration: underline;
-    margin-left: 0.5rem;
+    margin-inline-start: 0.5rem;
     background: transparent;
     border: 0;
     cursor: pointer;

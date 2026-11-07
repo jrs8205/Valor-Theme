@@ -1,0 +1,150 @@
+{%- doc -%}
+  Renders the product page "Product safety" block: the details the EU
+  General Product Safety Regulation (GPSR) asks online listings to show —
+  manufacturer, EU responsible person, product identifiers and warnings.
+  Each text field can be connected to a product metafield in the theme
+  editor, so the details can differ per product. Identifiers (brand, SKU,
+  barcode) follow the selected variant: the list is a section-scoped
+  fragment that product-info.js swaps on variant change.
+
+  The shell (id ProductSafety-SID) is rendered whenever identifiers are on,
+  hidden while the selected variant has nothing to show, and product-info.js
+  mirrors its hidden state on variant change. With identifiers off and every
+  field empty nothing is rendered; the theme editor shows a helper card.
+
+  @param {block} block - The product_safety block.
+  @param {product} product - The product shown by the section.
+  @param {variant} variant - The selected or first available variant.
+  @param {string} section_id - The section id, used for the identifiers fragment.
+
+  @example
+  {% render 'product-safety', block: block, product: product, variant: current_variant, section_id: section.id %}
+{%- enddoc -%}
+{%- liquid
+  assign manufacturer = block.settings.manufacturer
+  assign responsible_person = block.settings.responsible_person
+  assign warnings = block.settings.warnings
+  assign show_identifiers = block.settings.show_identifiers
+
+  # Product-level content is the same for every variant; SKU and barcode
+  # change with the variant. Whenever identifiers are on, the block shell is
+  # rendered (hidden when the selected variant has nothing to show), so the
+  # variant re-render can show or hide it in both directions.
+  assign has_static_content = false
+  if manufacturer != blank or responsible_person != blank or warnings != blank
+    assign has_static_content = true
+  endif
+  if show_identifiers and product.vendor != blank
+    assign has_static_content = true
+  endif
+
+  assign has_identifiers = false
+  if show_identifiers
+    if product.vendor != blank or variant.sku != blank or variant.barcode != blank
+      assign has_identifiers = true
+    endif
+  endif
+
+  assign render_shell = false
+  if has_static_content or show_identifiers
+    assign render_shell = true
+  endif
+
+  assign has_content = false
+  if has_static_content or has_identifiers
+    assign has_content = true
+  endif
+-%}
+
+{%- if render_shell -%}
+  <details
+    class="valor-mp__collapsible valor-product-safety"
+    id="ProductSafety-{{ section_id }}"
+    {% if block.settings.open_by_default %}
+      open
+    {% endif %}
+    {% unless has_content %}
+      hidden
+    {% endunless %}
+    {% comment %} In the editor the helper card below carries the block attributes while the shell is hidden. {% endcomment %}
+    {% if has_content or request.design_mode == false %}
+      {{ block.shopify_attributes }}
+    {% endif %}
+  >
+    <summary class="valor-mp__collapsible-summary">
+      <span class="valor-mp__collapsible-heading">
+        {{- block.settings.heading | default: 'Product safety' | escape -}}
+      </span>
+      <svg
+        class="valor-mp__collapsible-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </summary>
+    <div class="valor-mp__collapsible-content valor-product-safety__content">
+      {%- if manufacturer != blank -%}
+        <div class="valor-product-safety__group">
+          <p class="valor-product-safety__label">{{ 'product.safety.manufacturer' | t }}</p>
+          <div class="valor-product-safety__value rte">{{ manufacturer }}</div>
+        </div>
+      {%- endif -%}
+      {%- if responsible_person != blank -%}
+        <div class="valor-product-safety__group">
+          <p class="valor-product-safety__label">{{ 'product.safety.responsible_person' | t }}</p>
+          <div class="valor-product-safety__value rte">{{ responsible_person }}</div>
+        </div>
+      {%- endif -%}
+      {%- if show_identifiers -%}
+        <div
+          class="valor-product-safety__group"
+          id="ProductSafetyIds-{{ section_id }}"
+          {% unless has_identifiers %}
+            hidden
+          {% endunless %}
+        >
+          <p class="valor-product-safety__label">{{ 'product.safety.identifiers' | t }}</p>
+          <dl class="valor-product-safety__ids">
+            {%- if product.vendor != blank -%}
+              <div class="valor-product-safety__id">
+                <dt>{{ 'product.safety.brand' | t }}</dt>
+                <dd>{{ product.vendor | escape }}</dd>
+              </div>
+            {%- endif -%}
+            {%- if variant.sku != blank -%}
+              <div class="valor-product-safety__id">
+                <dt>{{ 'product.safety.sku' | t }}</dt>
+                <dd>{{ variant.sku | escape }}</dd>
+              </div>
+            {%- endif -%}
+            {%- if variant.barcode != blank -%}
+              <div class="valor-product-safety__id">
+                <dt>{{ 'product.safety.barcode' | t }}</dt>
+                <dd>{{ variant.barcode | escape }}</dd>
+              </div>
+            {%- endif -%}
+          </dl>
+        </div>
+      {%- endif -%}
+      {%- if warnings != blank -%}
+        <div class="valor-product-safety__group">
+          <p class="valor-product-safety__label">{{ 'product.safety.warnings' | t }}</p>
+          <div class="valor-product-safety__value rte">{{ warnings }}</div>
+        </div>
+      {%- endif -%}
+    </div>
+  </details>
+{%- endif -%}
+{%- if has_content == false and request.design_mode -%}
+  <div class="valor-mp__collapsible-empty" {{ block.shopify_attributes }}>
+    <p class="valor-mp__collapsible-empty-heading">
+      {{- block.settings.heading | default: 'Product safety' | escape -}}
+    </p>
+    <p class="valor-mp__collapsible-empty-text">{{ 'product.safety.editor_empty' | t }}</p>
+  </div>
+{%- endif -%}

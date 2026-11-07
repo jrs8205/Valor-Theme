@@ -388,11 +388,18 @@
     calc(100% - 13px) calc(50% - 2px);
   background-size: 5px 5px;
   background-repeat: no-repeat;
-  padding-right: 2rem;
+  padding-inline-end: 2rem;
 }
 .valor-mp__option-select:focus {
   outline: none;
   border-color: var(--color-foreground);
+}
+
+/* Right-to-left: the arrow moves into the reserved start-side padding. */
+[dir="rtl"] .valor-mp__option-select {
+  background-position:
+    8px calc(50% - 2px),
+    13px calc(50% - 2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -410,7 +417,7 @@
   font-weight: 500;
 }
 .valor-mp__quantity-in-cart {
-  margin-left: 0.375rem;
+  margin-inline-start: 0.375rem;
   font-weight: var(--font-body--weight);
   color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
 }
@@ -440,8 +447,8 @@
   text-align: center;
   background: transparent;
   border: 0;
-  border-left: 1px solid var(--valor-border-strong);
-  border-right: 1px solid var(--valor-border-strong);
+  border-inline-start: 1px solid var(--valor-border-strong);
+  border-inline-end: 1px solid var(--valor-border-strong);
   color: var(--color-foreground);
   font-size: 0.9375rem;
   font-family: inherit;
@@ -493,6 +500,17 @@
   font-weight: var(--font-body--weight-bold) !important;
   line-height: 1.2 !important;
 }
+/* Unbranded "Buy it now" (shown when no express wallet applies) uses the
+   theme's primary button colors; Shopify's default blue fails text contrast. */
+.valor-mp__form .shopify-payment-button__button--unbranded {
+  background-color: var(--color-button-bg, var(--color-foreground)) !important;
+  color: var(--color-button-text, var(--color-background)) !important;
+}
+.valor-mp__form .shopify-payment-button__button--unbranded:hover:not([disabled]) {
+  background-color: var(--color-button-hover-bg, var(--color-button-bg, var(--color-foreground))) !important;
+  color: var(--color-button-hover-text, var(--color-button-text, var(--color-background))) !important;
+}
+
 .valor-mp__form .shopify-payment-button__more-options {
   margin-top: 0.5rem;
   font-size: 0.8125rem;
@@ -507,12 +525,15 @@
 .valor-mp__add-error {
   margin-top: 0.75rem;
   padding: 0.75rem 0.9rem;
-  border-left: 3px solid var(--valor-color-error);
+  border-inline-start: 3px solid var(--valor-color-error);
   background-color: color-mix(in srgb, var(--valor-color-error) 8%, transparent);
   color: var(--valor-color-error);
   font-size: 0.875rem;
   line-height: 1.4;
-  border-radius: 0 var(--style-border-radius-inputs, 4px) var(--style-border-radius-inputs, 4px) 0;
+  border-start-start-radius: 0;
+  border-start-end-radius: var(--style-border-radius-inputs, 4px);
+  border-end-end-radius: var(--style-border-radius-inputs, 4px);
+  border-end-start-radius: 0;
 }
 
 /* === Description === */
@@ -548,7 +569,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   padding: 0.375rem 0.5rem;
-  margin-left: -0.5rem;
+  margin-inline-start: -0.5rem;
   border-radius: var(--style-border-radius-inputs, 4px);
 }
 .valor-mp__share-btn:hover {
@@ -641,6 +662,46 @@
 .valor-mp__collapsible[open] .valor-mp__collapsible-icon {
   transform: rotate(180deg);
 }
+/* Product safety (GPSR) block — reuses the collapsible row look. */
+.valor-product-safety__content {
+  display: grid;
+  gap: 1rem;
+}
+.valor-product-safety[hidden],
+.valor-product-safety__group[hidden] {
+  display: none;
+}
+.valor-product-safety__label {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+.valor-product-safety__value > :first-child {
+  margin-top: 0;
+}
+.valor-product-safety__value > :last-child {
+  margin-bottom: 0;
+}
+.valor-product-safety__ids {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+.valor-product-safety__id {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.valor-product-safety__id dt {
+  color: color-mix(in srgb, var(--color-foreground) 72%, transparent);
+}
+.valor-product-safety__id dt::after {
+  content: ":";
+}
+.valor-product-safety__id dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .valor-mp__collapsible-content {
   padding: 0 0 1.25rem;
   font-size: 0.9375rem;
@@ -881,7 +942,7 @@
 .valor-mp__popup-dialog-content th,
 .valor-mp__popup-dialog-content td {
   padding: 0.5rem 0.75rem;
-  text-align: left;
+  text-align: start;
   border-bottom: 1px solid color-mix(in srgb, var(--color-foreground) 10%, transparent);
 }
 .valor-mp__popup-dialog-content th {
@@ -1055,8 +1116,8 @@
 }
 .qty-style--underline .valor-mp__quantity-input {
   width: 2.5rem;
-  border-left: 0;
-  border-right: 0;
+  border-inline-start: 0;
+  border-inline-end: 0;
   font-weight: var(--font-body--weight-bold);
 }
 
@@ -1082,8 +1143,8 @@
 .qty-style--pill .valor-mp__quantity-input {
   min-width: 2.625rem;
   width: auto;
-  border-left: 0;
-  border-right: 0;
+  border-inline-start: 0;
+  border-inline-end: 0;
   background: transparent;
   font-weight: var(--font-body--weight-bold);
 }
@@ -1108,8 +1169,8 @@
 .qty-style--fullwidth .valor-mp__quantity-input {
   flex: 1 1 auto;
   width: auto;
-  border-left: 0;
-  border-right: 0;
+  border-inline-start: 0;
+  border-inline-end: 0;
 }
 
 /* === Boxed (segmented) size selector — ADDITIVE =====================

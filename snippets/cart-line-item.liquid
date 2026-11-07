@@ -43,6 +43,9 @@
   class="valor-cart-item"
   data-line="{{ line_index }}"
   data-key="{{ item.key }}"
+  data-variant-id="{{ item.variant_id }}"
+  data-selling-plan-id="{{ item.selling_plan_allocation.selling_plan.id }}"
+  data-properties="{{ item.properties | json | escape }}"
   data-cart-item
 >
   <a

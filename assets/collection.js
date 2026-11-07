@@ -512,8 +512,11 @@
           const panel = group.querySelector(".valor-facets-bar__panel");
           if (panel) {
             const rect = panel.getBoundingClientRect();
-            const overflowRight = rect.right > document.documentElement.clientWidth - 8;
-            if (overflowRight) {
+            // The panel opens toward the reading direction's end, so it can
+            // clip on the right in LTR and on the left in RTL.
+            const rtl = getComputedStyle(panel).direction === "rtl";
+            const overflowEnd = rtl ? rect.left < 8 : rect.right > document.documentElement.clientWidth - 8;
+            if (overflowEnd) {
               group.classList.add("valor-facets-bar__group--align-right");
             }
           }

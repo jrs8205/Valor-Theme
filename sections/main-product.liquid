@@ -260,6 +260,14 @@
           {%- when 'legal_guarantee' -%}
             {%- render 'product-legal-guarantee', block: block, section_id: section.id -%}
 
+          {%- when 'product_safety' -%}
+            {%- render 'product-safety',
+              block: block,
+              product: product,
+              variant: current_variant,
+              section_id: section.id
+            -%}
+
           {%- when 'popup' -%}
             {%- liquid
               assign render_popup_block = true
@@ -324,6 +332,7 @@
           <div class="valor-mp__sticky-atc-price" id="StickyPrice-{{ section.id }}" data-sticky-price>
             <span class="valor-mp__sticky-atc-price-current">{{ current_variant.price | money }}</span>
             {%- if current_variant.compare_at_price > current_variant.price -%}
+              {%- render 'price-compare-label', visually_hidden: true -%}
               <s class="valor-mp__sticky-atc-price-compare">{{ current_variant.compare_at_price | money }}</s>
             {%- endif -%}
           </div>
@@ -429,7 +438,7 @@
      A negative margin alone can only compensate the section's own padding,
      not the grid's center column, so we first promote the section to
      span the full grid (grid-column: 1 / -1), then apply the classic
-     full-bleed trick (width: 100vw + margin-left: calc(50% - 50vw)) to
+     full-bleed trick (width: 100vw + margin-inline-start: calc(50% - 50vw)) to
      the main image element itself. Same approach as featured-product. */
   @media (max-width: 749px) {
     .shopify-section > .valor-mp--image-full-mobile {
@@ -438,14 +447,14 @@
     .valor-mp--image-full-mobile .valor-product-media__main {
       width: 100vw;
       max-width: 100vw;
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
+      margin-inline-start: calc(50% - 50vw);
+      margin-inline-end: calc(50% - 50vw);
     }
     .valor-mp--image-full-mobile .valor-product-media__progress {
       width: 100vw;
       max-width: 100vw;
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
+      margin-inline-start: calc(50% - 50vw);
+      margin-inline-end: calc(50% - 50vw);
     }
   }
 
@@ -573,12 +582,15 @@
     width: min(100%, 75rem);
     margin: 0.75rem auto 0;
     padding: 0.65rem 0.8rem;
-    border-left: 3px solid var(--valor-color-error);
+    border-inline-start: 3px solid var(--valor-color-error);
     background-color: color-mix(in srgb, var(--valor-color-error) 8%, transparent);
     color: var(--valor-color-error);
     font-size: 0.875rem;
     line-height: 1.4;
-    border-radius: 0 var(--style-border-radius-inputs, 4px) var(--style-border-radius-inputs, 4px) 0;
+    border-start-start-radius: 0;
+    border-start-end-radius: var(--style-border-radius-inputs, 4px);
+    border-end-end-radius: var(--style-border-radius-inputs, 4px);
+    border-end-start-radius: 0;
   }
   @media (max-width: 749px) {
     .valor-mp__sticky-atc {
@@ -1042,6 +1054,53 @@
           "type": "text",
           "id": "heading",
           "label": "Heading"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "default": false,
+          "label": "Open by default"
+        }
+      ]
+    },
+    {
+      "type": "product_safety",
+      "name": "Product safety",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Shows the product safety details EU sales need under the General Product Safety Regulation: manufacturer, EU responsible person, product identifiers and warnings. Connect a field to a product metafield to show different details per product."
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Product safety",
+          "label": "Heading"
+        },
+        {
+          "type": "richtext",
+          "id": "manufacturer",
+          "label": "Manufacturer",
+          "info": "Name or trademark, postal address, and an email address or website."
+        },
+        {
+          "type": "richtext",
+          "id": "responsible_person",
+          "label": "EU responsible person",
+          "info": "Needed when the manufacturer is outside the EU. Name, postal address, and an email address or website."
+        },
+        {
+          "type": "checkbox",
+          "id": "show_identifiers",
+          "default": true,
+          "label": "Show product identifiers",
+          "info": "Brand (vendor), SKU, and barcode of the selected variant."
+        },
+        {
+          "type": "richtext",
+          "id": "warnings",
+          "label": "Warnings and safety information"
         },
         {
           "type": "checkbox",

@@ -1,0 +1,54 @@
+{%- doc -%}
+  Looks up an option value in the "Custom swatch colors" theme setting and
+  outputs a CSS background for its swatch: a plain color for one color, or a
+  hard-split diagonal linear-gradient for two or three colors. Outputs nothing
+  when the value has no entry. Lines are "Name: color, color" and matched
+  case-insensitively; characters that could break out of a style attribute
+  are dropped, so colors must be hex codes or color names.
+
+  @param {string} value - The option value name to look up.
+
+  @example
+  {%- capture custom_swatch -%}{% render 'swatch-custom-background', value: value.name %}{%- endcapture -%}
+{%- enddoc -%}
+{%- liquid
+  assign swatch_custom_result = ''
+  assign swatch_custom_target = value | strip | downcase
+  if swatch_custom_target != blank and settings.swatch_custom_colors != blank
+    assign swatch_custom_lines = settings.swatch_custom_colors | newline_to_br | split: '<br />'
+    for swatch_custom_line in swatch_custom_lines
+      assign swatch_custom_parts = swatch_custom_line | split: ':'
+      if swatch_custom_parts.size < 2
+        continue
+      endif
+      assign swatch_custom_name = swatch_custom_parts.first | strip | downcase
+      if swatch_custom_name != swatch_custom_target
+        continue
+      endif
+
+      assign swatch_custom_clean = ''
+      assign swatch_custom_raw = swatch_custom_parts[1] | split: ','
+      for swatch_custom_entry in swatch_custom_raw
+        assign swatch_custom_color = swatch_custom_entry | remove: ';' | remove: '"' | remove: "'" | remove: '<' | remove: '>' | remove: '(' | remove: ')' | remove: '{' | remove: '}' | remove: '\' | remove: '|' | strip | split: ' ' | first
+        if swatch_custom_color == blank
+          continue
+        endif
+        if swatch_custom_clean != blank
+          assign swatch_custom_clean = swatch_custom_clean | append: '|'
+        endif
+        assign swatch_custom_clean = swatch_custom_clean | append: swatch_custom_color
+      endfor
+
+      assign swatch_custom_stops = swatch_custom_clean | split: '|'
+      if swatch_custom_stops.size == 1
+        assign swatch_custom_result = swatch_custom_stops[0]
+      elsif swatch_custom_stops.size == 2
+        assign swatch_custom_result = 'linear-gradient(135deg, ' | append: swatch_custom_stops[0] | append: ' 50%, ' | append: swatch_custom_stops[1] | append: ' 50%)'
+      elsif swatch_custom_stops.size > 2
+        assign swatch_custom_result = 'linear-gradient(135deg, ' | append: swatch_custom_stops[0] | append: ' 33.34%, ' | append: swatch_custom_stops[1] | append: ' 33.34% 66.67%, ' | append: swatch_custom_stops[2] | append: ' 66.67%)'
+      endif
+      break
+    endfor
+  endif
+-%}
+{{- swatch_custom_result -}}

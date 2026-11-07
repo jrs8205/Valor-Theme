@@ -137,7 +137,12 @@
           assign all_have_swatch = true
           for value in option.values
             assign has_swatch = false
-            if value.swatch.color or value.swatch.image
+            capture custom_swatch_check
+              render 'swatch-custom-background', value: value.name
+            endcapture
+            if custom_swatch_check != blank
+              assign has_swatch = true
+            elsif value.swatch.color or value.swatch.image
               assign has_swatch = true
             elsif is_color_option
               for variant in product.variants
@@ -195,6 +200,10 @@
             {%- for value in option.values -%}
               <option
                 value="{{ value | escape }}"
+                data-option-value-id="{{ value.id }}"
+                {% if value.product_url != blank and value.product_url != product.url %}
+                  data-product-url="{{ value.product_url }}"
+                {% endif %}
                 {% if option.selected_value == value %}
                   selected
                 {% endif %}
@@ -252,8 +261,16 @@
 
                 assign swatch_color = null
                 assign swatch_image_url = null
+                assign swatch_gradient = null
                 if render_swatches
-                  if value.swatch.color
+                  capture custom_swatch
+                    render 'swatch-custom-background', value: value.name
+                  endcapture
+                  if custom_swatch contains 'gradient'
+                    assign swatch_gradient = custom_swatch
+                  elsif custom_swatch != blank
+                    assign swatch_color = custom_swatch
+                  elsif value.swatch.color
                     assign swatch_color = 'rgb(' | append: value.swatch.color.rgb | append: ')'
                   elsif value.swatch.image
                     assign swatch_image_url = value.swatch.image | image_url: width: 100
@@ -279,6 +296,10 @@
                 {% endif %}
                 data-option-position="{{ option.position }}"
                 data-option-name="{{ option.name | escape }}"
+                data-option-value-id="{{ value.id }}"
+                {% if value.product_url != blank and value.product_url != product.url %}
+                  data-product-url="{{ value.product_url }}"
+                {% endif %}
                 data-option-display="option-{{ section_id }}-{{ option_index }}"
                 {% if is_color_option %}
                   data-option-color="true"
@@ -292,6 +313,8 @@
                 class="{{ value_label_class }}"
                 {% if render_swatches and swatch_color %}
                   style="--valor-swatch-color: {{ swatch_color }};"
+                {% elsif render_swatches and swatch_gradient %}
+                  style="--valor-swatch-image: {{ swatch_gradient }};"
                 {% elsif render_swatches and swatch_image_url %}
                   style="--valor-swatch-image: url('{{ swatch_image_url }}');"
                 {% endif %}

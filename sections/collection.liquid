@@ -250,6 +250,7 @@
           <div class="valor-collection__grid valor-collection__grid--cols-{{ cols_desktop }} valor-collection__grid--mobile-{{ cols_mobile }}">
             {%- for product in collection.products -%}
               {%- render 'product-card',
+                heading_tag: 'h2',
                 product: product,
                 image_ratio: image_ratio,
                 show_secondary_image: show_secondary,

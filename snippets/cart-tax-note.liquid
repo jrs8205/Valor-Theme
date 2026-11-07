@@ -1,0 +1,46 @@
+{%- doc -%}
+  Renders the cart's tax, duties, fees and shipping note for the buyer's market.
+  The lead sentence follows `cart.taxes_included` and `cart.duties_included`; the
+  "calculated at checkout" sentence lists only what checkout still adds. Fees are
+  mentioned when `cart.checkout_fees_enabled` is true. Shipping links to the
+  shipping policy when the store has one.
+
+  @param {boolean} [discounts_in_cart] - Whether this cart surface shows a discount code input. Defaults to false.
+  @param {string} [class] - CSS class for the paragraph.
+
+  @example
+  {% render 'cart-tax-note', discounts_in_cart: true, class: 'valor-cart__taxes-note' %}
+{%- enddoc -%}
+{%- liquid
+  assign lead_key = blank
+  if cart.duties_included and cart.taxes_included
+    assign lead_key = 'cart.tax_note.duties_and_taxes_included'
+  elsif cart.taxes_included
+    assign lead_key = 'cart.tax_note.taxes_included'
+  elsif cart.duties_included
+    assign lead_key = 'cart.tax_note.duties_included'
+  endif
+
+  assign tail_key = 'cart.tax_note.at_checkout.'
+  unless cart.taxes_included
+    assign tail_key = tail_key | append: 'taxes_'
+  endunless
+  unless discounts_in_cart
+    assign tail_key = tail_key | append: 'discounts_'
+  endunless
+  if cart.checkout_fees_enabled
+    assign tail_key = tail_key | append: 'fees_'
+  endif
+  assign tail_key = tail_key | append: 'shipping'
+-%}
+<p class="{{ class }}">
+  {%- if lead_key != blank -%}
+    {{- lead_key | t }}
+  {% endif -%}
+  {%- if shop.shipping_policy.body != blank -%}
+    {%- assign tail_key = tail_key | append: '_html' -%}
+    {{- tail_key | t: link: shop.shipping_policy.url -}}
+  {%- else -%}
+    {{- tail_key | t -}}
+  {%- endif -%}
+</p>

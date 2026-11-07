@@ -147,11 +147,17 @@ class ValorLightbox extends HTMLElement {
     if (e.target === this.dialog) this.closeDialog();
   }
 
+  _isRtl() {
+    return getComputedStyle(this.dialog || document.documentElement).direction === "rtl";
+  }
+
   onKey(e) {
-    if (e.key === "ArrowLeft") {
+    // Arrow keys follow the reading direction (ArrowLeft is "next" in RTL).
+    var rtl = this._isRtl();
+    if (e.key === (rtl ? "ArrowRight" : "ArrowLeft")) {
       e.preventDefault();
       this.prev();
-    } else if (e.key === "ArrowRight") {
+    } else if (e.key === (rtl ? "ArrowLeft" : "ArrowRight")) {
       e.preventDefault();
       this.next();
     }
@@ -171,7 +177,8 @@ class ValorLightbox extends HTMLElement {
     var dy = endY - this._touchStartY;
     // Only treat as swipe if horizontal motion is dominant and crosses threshold
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      if (dx > 0) this.prev();
+      var towardPrevious = this._isRtl() ? dx < 0 : dx > 0;
+      if (towardPrevious) this.prev();
       else this.next();
     }
     this._touchStartX = null;

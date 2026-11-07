@@ -38,8 +38,10 @@
 >
   {%- if variant.compare_at_price > variant.price -%}
     <span class="{{ prefix }}__price-current {{ prefix }}__price-current--sale">
+      <span class="visually-hidden">{{ 'product.sale_price' | t }}</span>
       {{- variant.price | money -}}
     </span>
+    {%- render 'price-compare-label' -%}
     <s class="{{ prefix }}__price-compare">
       {{- variant.compare_at_price | money -}}
     </s>

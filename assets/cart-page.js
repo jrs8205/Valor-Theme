@@ -168,6 +168,37 @@
     });
   }
 
+  /* The line a cart row shows, and the request that sets its quantity with
+     the key settled when the request's turn comes: an earlier change may
+     have re-keyed or removed the line (cart-drawer.js lineTarget,
+     changeLineRequest). Without the drawer's queue the row's key is current
+     when sent. */
+  function lineTarget(row) {
+    var api = sharedCartApi();
+    if (api && typeof api.lineTarget === "function") return api.lineTarget(row);
+    var key = row && row.getAttribute("data-key");
+    return key ? { key: key } : null;
+  }
+
+  function changeLineRequest(target, quantity, sections) {
+    var api = sharedCartApi();
+    if (api && typeof api.changeLineRequest === "function") return api.changeLineRequest(target, quantity, sections);
+    return cartRequest(
+      cartUrl("cart/change.js"),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          id: target.key,
+          quantity: quantity,
+          sections: sections,
+          sections_url: window.location.pathname,
+        }),
+      },
+      { mutation: true },
+    );
+  }
+
   /* Section request through the shared serial queue; resolves with
      { ok, status, html, generation }. */
   function cartSectionRequest(url, onStart) {
@@ -454,6 +485,19 @@
     });
   }
 
+  /* Shows message in an error element (its <small> holds the text), or
+     hides the element when message is empty. */
+  function setErrorMessage(el, message) {
+    if (!el) return;
+    var small = el.querySelector("small");
+    if (small) small.textContent = message;
+    if (message) {
+      el.setAttribute("data-has-error", "true");
+    } else {
+      el.removeAttribute("data-has-error");
+    }
+  }
+
   /* ----- <valor-cart-page> custom element ----- */
   if (!customElements.get("valor-cart-page")) {
     customElements.define(
@@ -568,8 +612,19 @@
           /* Pressing Enter in the discount input applies the code without
              relying on a nested form submit. */
           this.addEventListener("keydown", function (event) {
+            if (event.key !== "Enter") return;
+            /* Enter in a quantity field saves the quantity instead of
+               submitting the cart form (whose only submit is Check out).
+               Blurring commits the edit through the change event. */
+            var quantityField = event.target.closest("[data-quantity-field]");
+            if (quantityField) {
+              event.preventDefault();
+              quantityField.blur();
+              if (quantityField.isConnected) quantityField.focus();
+              return;
+            }
             var input = event.target.closest("[data-discount-input]");
-            if (!input || event.key !== "Enter") return;
+            if (!input) return;
             event.preventDefault();
             self.submitDiscount(input.closest("[data-discount-form]"));
           });
@@ -583,14 +638,13 @@
         changeLine(line, quantity, sourceInput) {
           var self = this;
           if (!this.sectionId) return;
+          this.clearChangeErrors();
 
-          var row = this.querySelector('[data-cart-item][data-line="' + line + '"]');
-          var lineKey = row && row.getAttribute("data-key");
-          if (!lineKey) return this.refreshSection();
+          var target = lineTarget(this.querySelector('[data-cart-item][data-line="' + line + '"]'));
+          if (!target) return this.refreshSection();
 
           this.setBusy(true);
           this.setLineBusy(line, true);
-          this.clearLineError(line);
 
           // shopify:cart:lines-update. The row carries the AJAX line key.
           var ev = events();
@@ -598,37 +652,51 @@
             ? ev.cartLinesUpdate(this, {
                 action: quantity === 0 ? "remove" : "update",
                 context: "cart",
-                lines: [{ id: lineKey, quantity: quantity }],
+                lines: [{ id: target.key, quantity: quantity }],
               })
             : null;
 
-          var body = {
-            id: lineKey,
-            quantity: quantity,
-            sections: this.getSectionsToRender(),
-            sections_url: window.location.pathname,
-          };
-
-          return cartRequest(
-            cartUrl("cart/change.js"),
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              body: JSON.stringify(body),
-            },
-            { mutation: true },
-          )
+          // The key the change was sent with (the line may have been
+          // re-keyed while it waited), so an error lands on the right row.
+          var sentKey = target.key;
+          return changeLineRequest(target, quantity, this.getSectionsToRender())
             .then(function (res) {
-              return { ok: res.ok, status: res.status, data: res.body, generation: res.generation };
+              if (res.key) sentKey = res.key;
+              return {
+                ok: res.ok,
+                status: res.status,
+                data: res.body,
+                generation: res.generation,
+                skipped: !!res.skipped,
+                failed: !!res.failed,
+              };
             })
             .then(function (result) {
               var gen = result.generation;
+              if (result.skipped && !result.failed) {
+                // A removal whose line is already gone: nothing to do.
+                if (linesOp) linesOp.resolveFromServer();
+                self.setLineBusy(line, false);
+                self.setBusy(false);
+                return;
+              }
+              if (result.skipped) {
+                // The line is gone, or can't be told apart from another line
+                // any more: nothing was sent. Say so above the lines (there is
+                // no line to point at) and show the cart as it stands.
+                if (linesOp) linesOp.decline("The cart line changed before the update was sent.");
+                self.showChangeError(
+                  null,
+                  self._getString("line_changed") ||
+                    "Your cart changed before this update was saved. Please check your cart and try again.",
+                );
+                self.setLineBusy(line, false);
+                self.setBusy(false);
+                return self.refreshSection();
+              }
               if (linesOp) linesOp.settle(result.status, result.data);
               if (!result.ok) {
-                self.handleLineError(line, result.data, sourceInput);
+                self.handleLineError(sentKey, result.data, sourceInput);
                 self.setLineBusy(line, false);
                 self.setBusy(false);
                 return;
@@ -644,7 +712,7 @@
             .catch(function (err) {
               console.error("[Valor cart] change failed:", err);
               if (linesOp) linesOp.fail(err);
-              self.handleLineError(line, null, sourceInput);
+              self.handleLineError((err && err.lineKey) || sentKey, null, sourceInput);
               self.setLineBusy(line, false);
               self.setBusy(false);
             });
@@ -691,6 +759,7 @@
           if (applyBtn) applyBtn.disabled = true;
           this.setBusy(true);
 
+          this.clearChangeErrors();
           var intent = beginDiscountChange(this.getExistingDiscountsFromDom(), code, false);
           var combined = intent.codes;
 
@@ -757,7 +826,8 @@
                 // Code didn't take. Cart hasn't actually changed in a way
                 // we need to render, but we still need to clear our busy
                 // state and show the inline error.
-                var invalidMsg = self._getString("discount_invalid") || "This discount code is not valid.";
+                var invalidMsg =
+                  self._getString("discount_invalid") || "This discount code can’t be applied to your cart.";
                 self.setDiscountMessage(messageEl, invalidMsg, "error");
                 self.announce(invalidMsg);
                 self.setBusy(false);
@@ -784,6 +854,7 @@
           var self = this;
           if (!this.sectionId || !codeToRemove) return;
 
+          this.clearChangeErrors();
           var intent = beginDiscountChange(this.getExistingDiscountsFromDom(), codeToRemove, true);
           var remaining = intent.codes;
 
@@ -934,6 +1005,7 @@
           this._renderedGeneration = gen;
           this.innerHTML = fresh.innerHTML;
           this.liveRegion = this.querySelector("[data-cart-live-region]");
+          this.renderChangeErrors();
 
           // The empty-cart recommendations block is rendered as a SIBLING
           // of <valor-cart-page>, not a child, so it would otherwise be
@@ -1042,36 +1114,59 @@
 
         /* ----- Error & message handling ----- */
 
-        handleLineError(line, errorData, sourceInput) {
+        /* key: the AJAX key of the line the failed change was for. */
+        handleLineError(key, errorData, sourceInput) {
           var message =
             (errorData && (errorData.description || errorData.message)) ||
             this._getString("error_generic") ||
             "Something went wrong. Please try again.";
 
-          this.showLineError(line, message);
-          this.announce(message);
+          this.showChangeError(key, message);
 
           // Re-fetch section so the quantity input value reflects the cart's
-          // authoritative state (Shopify doesn't roll back our optimistic value).
+          // authoritative state (Shopify doesn't roll back our optimistic
+          // value). The message is shown again on the re-rendered line.
           if (sourceInput) {
             this.refreshSection();
           }
         }
 
-        showLineError(line, message) {
-          var errorEl = this.querySelector('[data-line-error][data-line="' + line + '"]');
-          if (!errorEl) return;
-          var small = errorEl.querySelector("small");
-          if (small) small.textContent = message;
-          errorEl.setAttribute("data-has-error", "true");
+        /* Messages of the buyer's changes that did not go through, by line
+           key ("" for a change whose line can't be pointed at any more).
+           Each is shown on the row with its key (never by position, which
+           shifts); one whose line isn't on screen (key "", a key that changed
+           since, a line that is gone) is shown above the lines instead.
+           Drawn again after every re-render (a refresh must not take away why
+           a change didn't happen); all are cleared when the buyer next changes
+           the cart here. */
+        showChangeError(key, message) {
+          if (!this._changeErrors) this._changeErrors = Object.create(null);
+          this._changeErrors[key || ""] = message;
+          this.renderChangeErrors();
+          this.announce(message);
         }
 
-        clearLineError(line) {
-          var errorEl = this.querySelector('[data-line-error][data-line="' + line + '"]');
-          if (!errorEl) return;
-          var small = errorEl.querySelector("small");
-          if (small) small.textContent = "";
-          errorEl.removeAttribute("data-has-error");
+        clearChangeErrors() {
+          if (!this._changeErrors) return;
+          this._changeErrors = null;
+          this.renderChangeErrors();
+        }
+
+        renderChangeErrors() {
+          var errors = this._changeErrors || Object.create(null);
+          var placed = Object.create(null);
+          this.querySelectorAll("[data-cart-item]").forEach(function (row) {
+            var key = row.getAttribute("data-key");
+            var el = row.querySelector("[data-line-error]");
+            var message = (key && errors[key]) || "";
+            if (message && el) placed[key] = true;
+            setErrorMessage(el, message);
+          });
+          var notice = [];
+          Object.keys(errors).forEach(function (key) {
+            if (!placed[key] && notice.indexOf(errors[key]) === -1) notice.push(errors[key]);
+          });
+          setErrorMessage(this.querySelector("[data-cart-notice]"), notice.join(" "));
         }
 
         setDiscountMessage(messageEl, text, state) {

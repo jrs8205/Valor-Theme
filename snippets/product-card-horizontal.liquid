@@ -18,7 +18,7 @@
 
 {%- assign card_variant = product.selected_or_first_available_variant -%}
 
-<a href="{{ product.url }}" class="valor-card-horizontal" aria-label="{{ product.title | escape }}">
+<a href="{{ product.url }}" class="valor-card-horizontal">
   <div class="valor-card-horizontal__media">
     {%- if product.featured_media -%}
       <img
@@ -49,10 +49,11 @@
     <div class="valor-card-horizontal__price">
       {%- if product.compare_at_price > product.price -%}
         <span class="valor-card-horizontal__price-current valor-card-horizontal__price-current--sale">
+          <span class="visually-hidden">{{ 'product.sale_price' | t }}</span>
           {{- product.price | money -}}
         </span>
         <span class="valor-card-horizontal__price-compare"
-          ><s>{{ product.compare_at_price | money }}</s></span
+          >{%- render 'price-compare-label' -%}<s>{{ product.compare_at_price | money }}</s></span
         >
       {%- elsif product.price_varies -%}
         {%- assign from_price = product.price | money -%}

@@ -168,8 +168,16 @@
                 {%- liquid
                   assign facet_swatch_color = null
                   assign facet_swatch_image = null
-                  if filter.presentation == 'swatch' and value.swatch
-                    if value.swatch.color
+                  assign facet_swatch_gradient = null
+                  if filter.presentation == 'swatch'
+                    capture facet_custom_swatch
+                      render 'swatch-custom-background', value: value.label
+                    endcapture
+                    if facet_custom_swatch contains 'gradient'
+                      assign facet_swatch_gradient = facet_custom_swatch
+                    elsif facet_custom_swatch != blank
+                      assign facet_swatch_color = facet_custom_swatch
+                    elsif value.swatch.color
                       assign facet_swatch_color = 'rgb(' | append: value.swatch.color.rgb | append: ')'
                     elsif value.swatch.image
                       assign facet_swatch_image = value.swatch.image | image_url: width: 100
@@ -177,7 +185,7 @@
                   endif
                 -%}
                 <li class="valor-facets__value">
-                  <label class="valor-facets__label{% if facet_swatch_color or facet_swatch_image %} valor-facets__label--swatch{% endif %}">
+                  <label class="valor-facets__label{% if facet_swatch_color or facet_swatch_gradient or facet_swatch_image %} valor-facets__label--swatch{% endif %}">
                     <input
                       type="checkbox"
                       name="{{ value.param_name }}"
@@ -190,11 +198,11 @@
                         disabled
                       {% endif %}
                     >
-                    {%- if facet_swatch_color or facet_swatch_image -%}
+                    {%- if facet_swatch_color or facet_swatch_gradient or facet_swatch_image -%}
                       <span
                         class="valor-facets__swatch"
                         aria-hidden="true"
-                        style="{% if facet_swatch_color %}--valor-facets-swatch-color: {{ facet_swatch_color }};{% else %}--valor-facets-swatch-image: url('{{ facet_swatch_image }}');{% endif %}"
+                        style="{% if facet_swatch_color %}--valor-facets-swatch-color: {{ facet_swatch_color }};{% elsif facet_swatch_gradient %}--valor-facets-swatch-image: {{ facet_swatch_gradient }};{% else %}--valor-facets-swatch-image: url('{{ facet_swatch_image }}');{% endif %}"
                       ></span>
                     {%- else -%}
                       <span class="valor-facets__check-box" aria-hidden="true">

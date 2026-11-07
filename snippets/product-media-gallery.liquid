@@ -266,7 +266,7 @@
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
-        <div class="valor-product-media__thumbs" role="list" data-thumbs-track>
+        <div class="valor-product-media__thumbs" data-thumbs-track>
           {%- for media in product.media -%}
             {%- assign img = media.preview_image -%}
             {%- assign is_active = false -%}
@@ -277,7 +277,6 @@
             {%- endif -%}
             <button
               type="button"
-              role="listitem"
               class="valor-product-media__thumb{% if is_active %} is-active{% endif %}"
               data-thumb-for="{{ media.id }}"
               aria-label="{{ 'accessibility.show_image' | t | default: 'Show image' }} {{ forloop.index }}"

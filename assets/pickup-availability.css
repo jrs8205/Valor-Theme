@@ -94,7 +94,7 @@
 .valor-pickup-drawer__panel {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   bottom: 0;
   width: min(100%, 28rem);
   background: var(--color-background);
@@ -103,6 +103,9 @@
   flex-direction: column;
   box-shadow: -4px 0 24px color-mix(in srgb, #000 18%, transparent);
   overflow-y: auto;
+}
+[dir="rtl"] .valor-pickup-drawer__panel {
+  box-shadow: 4px 0 24px color-mix(in srgb, #000 18%, transparent);
 }
 
 .valor-pickup-drawer__header {

@@ -28,10 +28,10 @@
 }
 
 .valor-contact-form__heading--align-left {
-  text-align: left;
+  text-align: start;
 }
 .valor-contact-form__heading--align-right {
-  text-align: right;
+  text-align: end;
 }
 
 .valor-contact-form__form {
@@ -136,13 +136,13 @@
 .valor-contact-form__message--success {
   background-color: rgba(21, 128, 61, 0.08);
   color: var(--valor-color-success);
-  border-left: 3px solid var(--valor-color-success);
+  border-inline-start: 3px solid var(--valor-color-success);
 }
 
 .valor-contact-form__message--error {
   background-color: rgba(192, 0, 0, 0.06);
   color: var(--color-error, var(--valor-color-error));
-  border-left: 3px solid var(--color-error, var(--valor-color-error));
+  border-inline-start: 3px solid var(--color-error, var(--valor-color-error));
 }
 
 .valor-contact-form__message svg {

@@ -75,7 +75,8 @@
                         {%- assign from_price = product.price_min | money -%}
                         {{ 'general.search.from_price_html' | t: price: from_price }}
                       {%- elsif product.compare_at_price > product.price -%}
-                        <span class="valor-psearch__price-current">{{ product.price | money }}</span>
+                        <span class="valor-psearch__price-current"><span class="visually-hidden">{{ 'product.sale_price' | t }}</span>{{ product.price | money }}</span>
+                        {%- render 'price-compare-label', visually_hidden: true -%}
                         <s class="valor-psearch__price-compare">{{ product.compare_at_price | money }}</s>
                       {%- else -%}
                         {{ product.price | money }}
