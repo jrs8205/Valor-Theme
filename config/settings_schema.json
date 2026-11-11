@@ -2,10 +2,47 @@
   {
     "name": "theme_info",
     "theme_name": "Valor",
-    "theme_version": "2.2.1",
+    "theme_version": "2.2.2",
     "theme_author": "Valor",
-    "theme_documentation_url": "https://valortheme.com",
-    "theme_support_url": "https://valortheme.com"
+    "theme_documentation_url": "https://valortheme.com/docs",
+    "theme_support_url": "https://valortheme.com/feedback"
+  },
+  {
+    "name": "Help & feedback",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Valor 2.2.2"
+      },
+      {
+        "type": "paragraph",
+        "content": "See what's new in each version on the [changelog](https://valortheme.com/changelog)."
+      },
+      {
+        "type": "header",
+        "content": "Found a bug or have an idea?"
+      },
+      {
+        "type": "paragraph",
+        "content": "[Tell us on the feedback board](https://valortheme.com/feedback/new?v=2.2.2). No account needed, and others can add to it and vote."
+      },
+      {
+        "type": "header",
+        "content": "Documentation"
+      },
+      {
+        "type": "paragraph",
+        "content": "Setup guides and common questions: [valortheme.com/docs](https://valortheme.com/docs)"
+      },
+      {
+        "type": "header",
+        "content": "Private question?"
+      },
+      {
+        "type": "paragraph",
+        "content": "Use the [contact form](https://valortheme.com/#contact)."
+      }
+    ]
   },
   {
     "name": "t:general.typography",

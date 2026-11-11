@@ -1,7 +1,7 @@
 /* Valor — Shopify standard storefront events & actions
  *
- * Shopify's "standard storefront events and actions" give apps and AI
- * agents one shared vocabulary for every Liquid storefront:
+ * Shopify's "standard storefront events and actions" give apps and
+ * integrations one shared vocabulary for every Liquid storefront:
  *
  *   Events  — DOM events with a `shopify:` prefix (shopify:page:view,
  *             shopify:cart:lines-update, shopify:product:select, …) that

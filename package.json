@@ -1,6 +1,6 @@
 {
   "name": "valor-theme",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "private": true,
   "scripts": {
     "test": "node --test --test-force-exit tests/*.test.cjs",

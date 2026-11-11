@@ -11,11 +11,12 @@ accessories, and other visual product brands.
 - Documentation: [valortheme.com/docs.html](https://valortheme.com/docs.html)
 - Wiki: [github.com/jrs8205/Valor-Theme/wiki](https://github.com/jrs8205/Valor-Theme/wiki)
 - Changelog: [valortheme.com/changelog.html](https://valortheme.com/changelog.html)
+- Bug reports and ideas: [valortheme.com/feedback](https://valortheme.com/feedback)
 - License: [Valor Free License](https://valortheme.com/license.html)
 
 ## Current Version
 
-The current release is `2.2.1`.
+The current release is `2.2.2`.
 
 Download the release ZIP from
 [GitHub Releases](https://github.com/jrs8205/Valor-Theme/releases/latest) or
@@ -104,7 +105,7 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
   product in Shopify admin appear on the product page and, when enabled for
   the cart, under the cart line item.
 - Shopify standard storefront events and actions: page, product, collection,
-  search, and cart events for apps and AI agents, and `Shopify.actions`
+  search, and cart events for apps and integrations, and `Shopify.actions`
   configured so apps that change or open the cart update the cart drawer,
   header count, and cart page in place.
 - Shopify account sign-in in the header on desktop and mobile.
