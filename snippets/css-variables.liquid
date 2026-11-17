@@ -187,6 +187,11 @@
     --valor-color-warning: #d49000;
     --valor-color-success: #15803d;
 
+    /* Sale prices — the red above where it reads on the color scheme's
+       background, a lighter or darker red where it does not. The real
+       value is worked out per scheme below; this is the fallback. */
+    --valor-color-sale: var(--valor-color-error);
+
     /* Inputs */
     --style-border-radius-inputs: {{ settings.input_corner_radius }}px;
   }
@@ -203,9 +208,30 @@
      resolves var() references at the element that declares it, so a single
      :root declaration could not follow the enclosing scheme class. */
   {% for scheme in settings.color_schemes -%}
+  {%- liquid
+    # Sale prices: the theme's red (the same as --valor-color-error) where it
+    # reads on this scheme's background, otherwise mixed towards the scheme's
+    # text color, a tenth at a time, until it does. The last step is the
+    # text color itself: where nothing redder reads, the sale price is as
+    # legible as the text beside it. The target is 4.5:1; color_contrast
+    # rounds to one decimal, hence 4.6.
+    assign sale_color = '#b91c1c'
+    assign sale_contrast = sale_color | color_contrast: scheme.settings.background
+    if sale_contrast < 4.6
+      for step in (1..10)
+        assign red_share = 10 | minus: step | times: 10
+        assign sale_color = '#b91c1c' | color_mix: scheme.settings.text, red_share
+        assign sale_contrast = sale_color | color_contrast: scheme.settings.background
+        if sale_contrast >= 4.6
+          break
+        endif
+      endfor
+    endif
+  -%}
   {%- capture scheme_declarations -%}
     --color-background: {{ scheme.settings.background }};
     --color-foreground: {{ scheme.settings.text }};
+    --valor-color-sale: {{ sale_color }};
 
     --valor-border-subtle:  color-mix(in srgb, {{ scheme.settings.text }} 16%, transparent);
     --valor-border-default: color-mix(in srgb, {{ scheme.settings.text }} 24%, transparent);
@@ -219,6 +245,24 @@
     --color-button-outline-border:         {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
     --color-button-outline-hover-text:     {%- if button_outline_hover_text_is_set -%}{{ settings.button_outline_hover_text_color }}{%- elsif button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
     --color-button-outline-hover-border:   {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}{{ scheme.settings.text }}{%- endif -%};
+
+    {%- comment -%}
+      The same eight for a button that stands over a picture or a video
+      (.valor-buttons-on-media in assets/critical.css). The text there is not
+      in the scheme's text color (the Image banner and the Video draw it in
+      the background color, a Promo grid card in its own light or dark), so
+      where a line above ends on the scheme's text color, its twin ends on
+      currentColor: the colour of the text around the button. Every explicit
+      button color of Theme settings still comes first.
+    {%- endcomment -%}
+    --color-button-text-on-media: {%- if button_text_is_set -%}{{ settings.button_text_color }}{%- elsif button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}currentColor{%- endif -%};
+    --color-button-border-on-media: {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}currentColor{%- endif -%};
+    --color-button-hover-text-on-media: {%- if button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_text_is_set -%}{{ settings.button_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}currentColor{%- endif -%};
+    --color-button-hover-border-on-media: {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}currentColor{%- endif -%};
+    --color-button-outline-text-on-media: {%- if button_outline_text_is_set -%}{{ settings.button_outline_text_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}currentColor{%- endif -%};
+    --color-button-outline-border-on-media: {%- if button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}currentColor{%- endif -%};
+    --color-button-outline-hover-text-on-media: {%- if button_outline_hover_text_is_set -%}{{ settings.button_outline_hover_text_color }}{%- elsif button_hover_text_is_set -%}{{ settings.button_hover_text_color }}{%- elsif button_hover_bg_is_set or button_bg_is_set -%}{{ scheme.settings.background }}{%- else -%}currentColor{%- endif -%};
+    --color-button-outline-hover-border-on-media: {%- if button_hover_border_is_set -%}{{ settings.button_hover_border_color }}{%- elsif button_hover_bg_is_set -%}{{ settings.button_hover_background_color }}{%- elsif button_border_is_set -%}{{ settings.button_border_color }}{%- elsif button_bg_is_set -%}{{ settings.button_background_color }}{%- else -%}currentColor{%- endif -%};
   {%- endcapture %}
   {% if forloop.first %}:root,
   {% endif -%}

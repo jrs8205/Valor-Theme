@@ -1,0 +1,465 @@
+/* Lookbook section (sections/lookbook.liquid, snippets/lookbook-card.liquid).
+
+   A row of portrait images, each with an optional product card under it.
+   The row is a native sideways scroller that stops on the images, so touch
+   swiping and the row without JavaScript both work; assets/lookbook.js adds
+   the centred look's card, the arrows, mouse dragging and the loop.
+
+   How many images show (--lb-count) and how the row behaves (--lb-mode) are
+   decided here, and the script reads them from here:
+   - below 750px: 1.6 images, the middle one centred;
+   - from 750px: 3.6 images, the middle one centred;
+   - from 990px with the layout set to 4, 5 or 6: that many images across the
+     whole row, every one with its own card ("tiles").
+   An image is (row width - gap * (count - 1)) / count wide, at 313:389. */
+
+.valor-lookbook {
+  padding-top: var(--valor-section-padding-top, 56px);
+  padding-bottom: var(--valor-section-padding-bottom, 56px);
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* The heading block keeps the theme's page width and page margins; the image
+   row under it spans the screen. */
+.valor-lookbook__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: min(calc(var(--page-width, 75rem) - var(--page-margin, 20px) * 2), calc(100% - var(--page-margin, 20px) * 2));
+  margin-inline: auto;
+  margin-block-end: clamp(1.75rem, 3vw, 3rem);
+}
+.valor-lookbook__header > * {
+  max-width: 42rem;
+}
+.valor-lookbook--align-left .valor-lookbook__header {
+  align-items: flex-start;
+  text-align: start;
+}
+.valor-lookbook--align-center .valor-lookbook__header {
+  align-items: center;
+  text-align: center;
+}
+.valor-lookbook--align-right .valor-lookbook__header {
+  align-items: flex-end;
+  text-align: end;
+}
+.valor-lookbook__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+.valor-lookbook__heading {
+  margin: 0;
+}
+.valor-lookbook__text {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--color-foreground) 86%, transparent);
+}
+.valor-lookbook__text > *:first-child {
+  margin-top: 0;
+}
+.valor-lookbook__text > *:last-child {
+  margin-bottom: 0;
+}
+
+/* --- The row ---------------------------------------------------------------- */
+
+.valor-lookbook__carousel {
+  --lb-gap: 12px;
+  --lb-count: 1.6;
+  --lb-mode: centered;
+  /* 100cqi is the row's width: the carousel is the size container of
+     everything in it, and these two are worked out where they are used. */
+  --lb-slide: calc((100cqi - var(--lb-gap) * (var(--lb-count) - 1)) / var(--lb-count));
+  --lb-image-height: calc(var(--lb-slide) * 389 / 313);
+  /* Room between an image and its card; on phones the arrows sit in it. */
+  --lb-card-gap: 3.5rem;
+  display: block;
+  position: relative;
+  container-type: inline-size;
+}
+@media screen and (min-width: 750px) {
+  .valor-lookbook__carousel {
+    --lb-count: 3.6;
+    --lb-card-gap: 2rem;
+  }
+}
+@media screen and (min-width: 990px) {
+  .valor-lookbook__carousel[data-layout="4"] {
+    --lb-count: 4;
+    --lb-mode: tiles;
+    --lb-card-gap: 0.75rem;
+  }
+  .valor-lookbook__carousel[data-layout="5"] {
+    --lb-count: 5;
+    --lb-mode: tiles;
+    --lb-card-gap: 0.75rem;
+  }
+  .valor-lookbook__carousel[data-layout="6"] {
+    --lb-count: 6;
+    --lb-mode: tiles;
+    --lb-card-gap: 0.75rem;
+  }
+}
+
+.valor-lookbook__track {
+  display: flex;
+  gap: var(--lb-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+/* Centred row: room at both ends, so the first and the last image can stand
+   in the middle too. Real boxes rather than padding: Safari leaves a
+   scroller's end padding out of what can be scrolled to. Each is one gap
+   short, as the row's own gap follows it. */
+.valor-lookbook__track::before,
+.valor-lookbook__track::after {
+  content: "";
+  flex: 0 0 calc((100cqi - var(--lb-slide)) / 2 - var(--lb-gap));
+}
+.valor-lookbook__track::-webkit-scrollbar {
+  display: none;
+}
+/* While looks move from one end of the row to the other (lookbook.js) the row
+   must stay exactly where it is, and while the mouse drags it (and until it
+   has glided to rest) it follows the mouse: no snapping. */
+.valor-lookbook__track[data-shifting],
+.valor-lookbook__track[data-free] {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+/* With the script the row can be dragged with the mouse, unless it all fits. */
+.valor-lookbook__carousel[data-enhanced]:not([data-static]) .valor-lookbook__track {
+  cursor: grab;
+}
+.valor-lookbook__carousel[data-enhanced][data-dragging] .valor-lookbook__track,
+.valor-lookbook__carousel[data-enhanced][data-dragging] .valor-lookbook__track * {
+  cursor: grabbing;
+  user-select: none;
+}
+.valor-lookbook__track:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: -2px;
+}
+.valor-lookbook__slide {
+  /* Keeps what a card takes out of the flow (the screen-reader labels of its
+     prices) inside the look, and so inside the row's scrolling. Placed
+     against the carousel instead, they would widen the page. */
+  position: relative;
+  flex: 0 0 var(--lb-slide);
+  /* The row makes every look as tall as the tallest one; a column, so that
+     the card can take up what is left under the image. */
+  display: flex;
+  flex-direction: column;
+  /* A long product name must wrap in its card, not widen the image. */
+  min-width: 0;
+  scroll-snap-align: center;
+  /* One look per swipe, as the centred card follows the look. */
+  scroll-snap-stop: always;
+}
+@media screen and (min-width: 990px) {
+  .valor-lookbook__carousel:is([data-layout="4"], [data-layout="5"], [data-layout="6"]) .valor-lookbook__track::before,
+  .valor-lookbook__carousel:is([data-layout="4"], [data-layout="5"], [data-layout="6"]) .valor-lookbook__track::after {
+    content: none;
+  }
+  .valor-lookbook__carousel:is([data-layout="4"], [data-layout="5"], [data-layout="6"]) .valor-lookbook__slide {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+}
+
+.valor-lookbook__media {
+  position: relative;
+  flex: 0 0 auto;
+  aspect-ratio: 313 / 389;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-foreground) 6%, transparent);
+}
+.valor-lookbook__image,
+.valor-lookbook__placeholder {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  /* The image's focal point, where the merchant set one. */
+  object-position: var(--valor-lookbook-focus, center);
+}
+.valor-lookbook__image {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.valor-lookbook__placeholder {
+  fill: color-mix(in srgb, var(--color-foreground) 35%, transparent);
+}
+
+/* --- The product card --------------------------------------------------------- */
+
+/* Every card of a section is the same size, whatever it holds: as tall as the
+   tallest one (a long name, a sale price with its label, a message from the
+   cart), so nothing in a card is cut off. */
+.valor-lookbook__card-slot {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  margin-block-start: var(--lb-card-gap);
+  /* The card asks how wide it is itself (below), whatever the layout. */
+  container-type: inline-size;
+}
+.valor-lookbook__card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 5.125rem;
+  padding: 0.5rem;
+  padding-inline-end: 0.75rem;
+  border: 1px solid var(--valor-border-default);
+  border-radius: var(--style-border-radius-inputs, 0px);
+  background: var(--color-background);
+  text-align: start;
+}
+.valor-lookbook__card-thumb {
+  flex: 0 0 4rem;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.valor-lookbook__card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.valor-lookbook__card-info {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* The product name reads like the theme's product card titles. */
+.valor-lookbook__card-title {
+  color: inherit;
+  font-family: var(--font-heading--family);
+  font-style: var(--font-heading--style);
+  font-size: calc(var(--font-heading-scale, 1) * 0.9375rem);
+  font-weight: var(--font-heading--weight);
+  line-height: 1.4;
+  text-decoration: none;
+}
+a.valor-lookbook__card-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.valor-lookbook__card-title:focus-visible,
+.valor-lookbook__card-button:focus-visible,
+.valor-lookbook__arrow:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 3px;
+}
+.valor-lookbook__card-variant,
+.valor-lookbook__unit-price,
+.valor-lookbook__card-status,
+.valor-lookbook__card-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--color-foreground) 72%, transparent);
+}
+.valor-lookbook__unit-price {
+  font-size: 0.75rem;
+}
+.valor-lookbook__card-note,
+.valor-lookbook__card-error {
+  color: var(--valor-color-error);
+}
+/* The price reads like the theme's product card prices. */
+.valor-lookbook__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+}
+.valor-lookbook__price-current {
+  font-weight: 500;
+}
+.valor-lookbook__price-current--sale {
+  color: var(--valor-color-sale);
+}
+.valor-lookbook__price-compare {
+  color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
+  font-size: 0.875rem;
+}
+/* The form is only a wrapper: its button sits in the card's row and a failed
+   add writes its message on a line of its own under it. */
+.valor-lookbook__card-form {
+  display: contents;
+}
+.valor-lookbook__card-error {
+  flex: 0 0 100%;
+  font-size: 0.8125rem;
+}
+.valor-lookbook__card-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  /* The theme's button settings: colors, border width and hover. */
+  border: var(--style-button-border-width, 1px) solid var(--color-button-border, var(--color-button-bg));
+  border-radius: 50%;
+  background: var(--color-button-bg);
+  color: var(--color-button-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+.valor-lookbook__card-button:hover:not(:disabled) {
+  opacity: var(--button-hover-opacity, 0.85);
+  border-color: var(--color-button-hover-border, var(--color-button-border, var(--color-button-bg)));
+  background: var(--color-button-hover-bg, var(--color-button-bg));
+  color: var(--color-button-hover-text, var(--color-button-text));
+}
+.valor-lookbook__card-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.valor-lookbook__card-button svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.valor-lookbook__card-button--link svg {
+  transform: rotate(-90deg);
+}
+[dir="rtl"] .valor-lookbook__card-button--link svg {
+  transform: rotate(90deg);
+}
+@media screen and (min-width: 990px) {
+  /* Six across leaves a narrow card: the look's image is right above it. */
+  .valor-lookbook__carousel[data-layout="6"] .valor-lookbook__card-thumb {
+    display: none;
+  }
+  .valor-lookbook__carousel[data-layout="6"] .valor-lookbook__card {
+    padding-inline-start: 0.75rem;
+  }
+}
+/* The same in any layout when the card is too narrow to hold the thumbnail
+   and still leave the name and the price their room (a small tablet's
+   centred row, five across on a small desktop, a narrow phone). */
+@container (max-width: 14rem) {
+  .valor-lookbook__card-thumb {
+    display: none;
+  }
+  .valor-lookbook__card {
+    padding-inline-start: 0.75rem;
+  }
+}
+
+/* --- The arrows ----------------------------------------------------------------
+   Only with the product card, only in the centred row and only with the
+   script: they sit beside the centred look's card (on phones in the gap
+   above it, at the row's edges). */
+
+.valor-lookbook__nav {
+  display: none;
+}
+.valor-lookbook__carousel[data-enhanced] .valor-lookbook__nav {
+  display: block;
+}
+/* With the script the centred row shows one card, the centred look's. The
+   others keep their place (the row's height does not change) but are out of
+   sight, out of the tab order and unannounced. */
+.valor-lookbook__carousel[data-enhanced] .valor-lookbook__slide:not(.is-active) .valor-lookbook__card-slot {
+  visibility: hidden;
+}
+@media screen and (min-width: 990px) {
+  .valor-lookbook__carousel:is([data-layout="4"], [data-layout="5"], [data-layout="6"])[data-enhanced]
+    .valor-lookbook__slide
+    .valor-lookbook__card-slot {
+    visibility: visible;
+  }
+  .valor-lookbook__carousel:is([data-layout="4"], [data-layout="5"], [data-layout="6"])[data-enhanced]
+    .valor-lookbook__nav {
+    display: none;
+  }
+}
+/* Fewer images than the row holds: nothing to scroll, so centre them. */
+.valor-lookbook__carousel[data-static] .valor-lookbook__track {
+  justify-content: center;
+}
+.valor-lookbook__arrow {
+  position: absolute;
+  top: calc(var(--lb-image-height) + (var(--lb-card-gap) - 2rem) / 2);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--valor-border-default);
+  border-radius: 50%;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+.valor-lookbook__arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.valor-lookbook__arrow svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+.valor-lookbook__arrow--prev {
+  inset-inline-start: 0.75rem;
+}
+.valor-lookbook__arrow--next {
+  inset-inline-end: 0.75rem;
+}
+.valor-lookbook__arrow--prev svg {
+  transform: rotate(90deg);
+}
+.valor-lookbook__arrow--next svg {
+  transform: rotate(-90deg);
+}
+[dir="rtl"] .valor-lookbook__arrow--prev svg {
+  transform: rotate(-90deg);
+}
+[dir="rtl"] .valor-lookbook__arrow--next svg {
+  transform: rotate(90deg);
+}
+@media screen and (min-width: 750px) {
+  /* Beside the card, level with its middle: the card reaches from under the
+     image to the bottom of the row, and the arrow is centred in that. */
+  .valor-lookbook__arrow {
+    top: calc(var(--lb-image-height) + var(--lb-card-gap));
+    bottom: 0;
+    margin-block: auto;
+  }
+  .valor-lookbook__arrow--prev {
+    inset-inline-start: calc(50% - var(--lb-slide) / 2 - 2.625rem);
+  }
+  .valor-lookbook__arrow--next {
+    inset-inline-end: calc(50% - var(--lb-slide) / 2 - 2.625rem);
+  }
+}

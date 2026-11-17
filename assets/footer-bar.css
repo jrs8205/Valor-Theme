@@ -1,0 +1,313 @@
+/* Footer bar section (sections/footer-bar.liquid).
+
+   A bar is built from blocks. On a desktop (750px and up) it has up to three
+   rows, each with a left, a centre and a right zone; the centre zone is in
+   the exact middle of the bar whatever stands beside it. On a phone the rows
+   and zones dissolve and the items stack in the order they have in the theme
+   editor (--fb-order), so a merchant can order them for phones without
+   changing where they sit on a desktop.
+
+   Fonts, sizes, colours and the page column all come from the theme's
+   variables. The side inset is the footer's own, so a bar lines up with the
+   footer's columns. */
+.valor-footer-bar {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-size: var(--font-size-body-xs);
+}
+.valor-footer-bar--text-normal {
+  font-size: var(--font-size-body-md);
+}
+
+.valor-footer-bar__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fb-row-gap, 12px);
+  width: 100%;
+  max-width: var(--page-width, 75rem);
+  margin-inline: auto;
+  padding: var(--fb-padding-top, 20px) clamp(1rem, 4vw, 3rem) var(--fb-padding-bottom, 20px);
+  line-height: 1.5;
+}
+/* Full width: the bar spans the screen (valor-full-width) and its content
+   keeps the theme's page margin. */
+.valor-footer-bar.valor-full-width .valor-footer-bar__inner {
+  max-width: none;
+  padding-inline: var(--page-margin);
+}
+/* The lines are the inner element's: the section's root paints its colour
+   out to the screen edges with a border image, which draws no border. */
+.valor-footer-bar--line-above .valor-footer-bar__inner {
+  border-block-start: 1px solid var(--valor-border-default);
+}
+.valor-footer-bar--line-below .valor-footer-bar__inner {
+  border-block-end: 1px solid var(--valor-border-default);
+}
+
+/* Equal side columns keep the centre zone in the middle; a zone that is too
+   narrow for its items wraps them. The centre takes at most half the row,
+   so a long centre cannot squeeze the sides to nothing; in a row whose
+   sides hold nothing on a desktop (--center-only) it has the whole row. */
+.valor-footer-bar__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(50%) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1.5rem;
+}
+.valor-footer-bar__zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  min-width: 0;
+}
+.valor-footer-bar__zone--left {
+  justify-content: flex-start;
+}
+.valor-footer-bar__zone--center {
+  justify-content: center;
+  text-align: center;
+}
+.valor-footer-bar__zone--right {
+  justify-content: flex-end;
+  text-align: end;
+}
+.valor-footer-bar__item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 750px) {
+  .valor-footer-bar__item--phone-only,
+  .valor-footer-bar__row--no-desktop,
+  .valor-footer-bar--no-desktop {
+    display: none;
+  }
+  .valor-footer-bar__row--center-only {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .valor-footer-bar__row--center-only .valor-footer-bar__zone:not(.valor-footer-bar__zone--center) {
+    display: none;
+  }
+}
+
+@media not all and (min-width: 750px) {
+  .valor-footer-bar__row,
+  .valor-footer-bar__zone {
+    display: contents;
+  }
+  /* A zone without a box still hands its text alignment on: on a phone
+     every item follows the bar's alignment instead. */
+  .valor-footer-bar__zone {
+    text-align: inherit;
+  }
+  .valor-footer-bar__inner {
+    align-items: center;
+    text-align: center;
+  }
+  .valor-footer-bar--phone-left .valor-footer-bar__inner {
+    align-items: flex-start;
+    text-align: start;
+  }
+  .valor-footer-bar__item {
+    order: var(--fb-order, 0);
+  }
+  .valor-footer-bar__item--desktop-only,
+  .valor-footer-bar--no-phone {
+    display: none;
+  }
+}
+
+/* Text, links and lists */
+.valor-footer-bar__text,
+.valor-footer-bar__links {
+  color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+}
+.valor-footer-bar__text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.valor-footer-bar__links,
+.valor-footer-bar__payment {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: inherit;
+}
+/* Lines of wrapped links are far enough apart to be tapped one by one. */
+.valor-footer-bar__links {
+  gap: 0.5rem 1.5rem;
+}
+.valor-footer-bar__links a,
+.valor-footer-bar__text a {
+  color: inherit;
+  text-decoration: none;
+}
+.valor-footer-bar__text a {
+  text-decoration: underline;
+}
+.valor-footer-bar__links a:hover,
+.valor-footer-bar__text a:hover {
+  color: var(--color-foreground);
+  text-decoration: underline;
+}
+.valor-footer-bar__zone--center :is(.valor-footer-bar__links, .valor-footer-bar__payment) {
+  justify-content: center;
+}
+.valor-footer-bar__zone--right :is(.valor-footer-bar__links, .valor-footer-bar__payment) {
+  justify-content: flex-end;
+}
+@media not all and (min-width: 750px) {
+  .valor-footer-bar :is(.valor-footer-bar__links, .valor-footer-bar__payment) {
+    justify-content: center;
+  }
+  .valor-footer-bar--phone-left :is(.valor-footer-bar__links, .valor-footer-bar__payment) {
+    justify-content: flex-start;
+  }
+}
+
+/* Payment icons */
+.valor-footer-bar__payment {
+  gap: 0.375rem;
+}
+.valor-footer-bar__payment-item {
+  display: flex;
+}
+.valor-footer-bar__payment-item svg {
+  height: 1.5rem;
+  width: auto;
+}
+
+/* Logo: at the theme's logo heights (Theme settings > Brand), which change
+   at 990px as they do in the header, or at a width of its own. Without a
+   logo the shop's name stands in, in the heading font. */
+.valor-footer-bar__logo {
+  display: inline-flex;
+  max-width: 100%;
+  color: var(--color-foreground);
+  text-decoration: none;
+}
+.valor-footer-bar__logo-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--fb-logo-height-phone, 2rem);
+}
+@media (min-width: 990px) {
+  .valor-footer-bar__logo-image {
+    max-height: var(--fb-logo-height, 2.5rem);
+  }
+}
+.valor-footer-bar__logo--custom .valor-footer-bar__logo-image {
+  width: var(--fb-logo-width, 150px);
+  max-height: none;
+}
+.valor-footer-bar__logo--text {
+  font-family: var(--font-heading--family);
+  font-style: var(--font-heading--style);
+  font-weight: var(--font-heading--weight);
+  font-size: var(--font-size-heading-sm);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* Social icons: the theme's own list (snippets/social-icons.liquid), sized
+   by the item's --valor-footer-social-size. The bar styles the list in full,
+   as the header's menu drawer does: the Footer section's rules for it are
+   only on a page that has that section. */
+.valor-footer-bar .valor-social-icons {
+  --valor-social-size: var(--valor-footer-social-size, 1);
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.valor-footer-bar .valor-social-icons__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(2.25rem * var(--valor-social-size));
+  height: calc(2.25rem * var(--valor-social-size));
+  border-radius: 50%;
+  color: var(--color-foreground);
+  transition: background-color 0.12s ease;
+}
+.valor-footer-bar .valor-social-icons__link:hover {
+  background-color: color-mix(in srgb, var(--color-foreground) 8%, transparent);
+}
+.valor-footer-bar .valor-social-icons__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.valor-footer-bar .valor-social-icons__icon svg {
+  width: calc(1.125rem * var(--valor-social-size));
+  height: calc(1.125rem * var(--valor-social-size));
+}
+@media (min-width: 750px) {
+  .valor-footer-bar .valor-social-icons {
+    gap: 0.5rem;
+  }
+  .valor-footer-bar .valor-social-icons__link {
+    width: calc(2.5rem * var(--valor-social-size));
+    height: calc(2.5rem * var(--valor-social-size));
+  }
+  .valor-footer-bar .valor-social-icons__icon svg {
+    width: calc(1.25rem * var(--valor-social-size));
+    height: calc(1.25rem * var(--valor-social-size));
+  }
+}
+.valor-footer-bar .valor-footer-bar__social {
+  justify-content: flex-start;
+}
+.valor-footer-bar .valor-footer-bar__zone--center .valor-footer-bar__social {
+  justify-content: center;
+}
+.valor-footer-bar .valor-footer-bar__zone--right .valor-footer-bar__social {
+  justify-content: flex-end;
+}
+@media not all and (min-width: 750px) {
+  .valor-footer-bar .valor-footer-bar__social {
+    justify-content: center;
+  }
+  .valor-footer-bar.valor-footer-bar--phone-left .valor-footer-bar__social {
+    justify-content: flex-start;
+  }
+}
+
+/* The EU legal guarantee link (a button that opens the notice). */
+.valor-footer-bar__legal {
+  color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+  text-decoration: none;
+}
+.valor-footer-bar__legal:hover {
+  color: var(--color-foreground);
+  text-decoration: underline;
+}
+
+/* Country and language selectors: the theme's own selector (styled in
+   sections/header.liquid), at the bar's text size and colour. Its list is
+   read from the start whatever zone the selector is in. */
+.valor-footer-bar .valor-localization__select {
+  flex-wrap: wrap;
+  justify-content: inherit;
+  max-width: 100%;
+  white-space: normal;
+  text-align: inherit;
+  font-size: inherit;
+  color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+}
+.valor-footer-bar .valor-localization__select:hover,
+.valor-footer-bar .valor-localization__select[aria-expanded="true"] {
+  color: var(--color-foreground);
+}
+.valor-footer-bar .valor-localization__panel {
+  text-align: start;
+}

@@ -122,7 +122,7 @@
   data-template="search"
   data-search-query="{{ search.terms | escape }}"
   data-results-count="{{ search.results_count }}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-filter-bar-border-width: {{ section.settings.filter_bar_border_width }}px;{% if section.settings.filter_bar_border_color != blank %} --valor-filter-bar-border-color: {{ section.settings.filter_bar_border_color }};{% endif %}"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-filter-bar-border-width: {{ section.settings.filter_bar_border_width }}px;{% if section.settings.filter_bar_border_color != blank %} --valor-filter-bar-border-color: {{ section.settings.filter_bar_border_color }};{% endif %}{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
 >
   <header class="valor-search__header valor-search__header--{{ heading_align }}">
     <h1 class="valor-search__title valor-heading valor-heading--{{ heading_size }}">
@@ -547,6 +547,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "header",

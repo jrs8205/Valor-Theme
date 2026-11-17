@@ -12,7 +12,9 @@ UndefinedObject:
   ignore:
     - sections/main-policy.liquid
 
-# Localization classes are shared between header snippets and footer markup.
+# Localization classes are shared between header snippets and footer markup
+# (the Footer section and the Footer bar section).
 ValidScopedCSSClass:
   ignore:
     - sections/footer.liquid
+    - sections/footer-bar.liquid

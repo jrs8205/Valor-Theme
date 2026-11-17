@@ -85,7 +85,7 @@
 
 <section
   class="color-{{ section.settings.color_scheme }} valor-fp valor-fp--media-{{ media_position }} valor-fp--media-{{ media_width }}{% if section.settings.image_size_mobile == 'full' %} valor-fp--image-full-mobile{% endif %}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
 >
   {%- if product != blank -%}
     {%- comment -%}
@@ -487,7 +487,7 @@
     font-weight: 500;
   }
   .valor-fp__price-current--sale {
-    color: var(--valor-color-error);
+    color: var(--valor-color-sale);
   }
   .valor-fp__price-compare {
     color: color-mix(in srgb, var(--color-foreground) 60%, transparent);
@@ -939,6 +939,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "product",

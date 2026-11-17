@@ -88,6 +88,12 @@
             aria-label="{{ forloop.index }} / {{ forloop.length }}"
             aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}"
             tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
+            {% render 'button-colors',
+              background: block.settings.button_background_color,
+              text: block.settings.button_text_color,
+              border: block.settings.button_border_color,
+              attribute: true
+            %}
             {{ block.shopify_attributes }}
           >
             <div class="valor-slideshow__media">
@@ -868,6 +874,22 @@
             { "value": "link", "label": "Text link" }
           ],
           "default": "secondary"
+        },
+        {
+          "type": "color",
+          "id": "button_background_color",
+          "label": "t:labels.button_background",
+          "info": "t:labels.button_colors_info"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color",
+          "label": "t:labels.button_text"
+        },
+        {
+          "type": "color",
+          "id": "button_border_color",
+          "label": "t:labels.button_border"
         }
       ]
     }

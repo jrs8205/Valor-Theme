@@ -26,7 +26,7 @@
 -%}
 <section
   class="color-{{ section.settings.color_scheme }} valor-hero valor-hero--{{ image_height }}{% if section.settings.show_text_below %} valor-hero--text-below-mobile{% endif %}{% if section.settings.full_width_desktop or use_transparent_header_trigger %} valor-hero--full-desktop{% endif %}{% if section.settings.full_width_mobile or use_transparent_header_trigger %} valor-hero--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}"
-  style="--valor-hero-overlay: {{ section.settings.image_overlay_opacity | times: 0.01 }};"
+  style="--valor-hero-overlay: {{ section.settings.image_overlay_opacity | times: 0.01 }};{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
   {% if use_transparent_header_trigger %}
     data-transparent-header-behavior="{{ section.settings.transparent_header_behavior | default: 'always' }}"
   {% endif %}
@@ -94,7 +94,7 @@
   </div>
 
   <div class="valor-hero__content-wrapper valor-hero__content-wrapper--pos-{{ content_position }} valor-hero__content-wrapper--align-{{ content_alignment }} valor-hero__content-wrapper--mobile-{{ mobile_alignment }}">
-    <div class="valor-hero__content{% if section.settings.show_text_box %} valor-hero__content--box{% endif %}">
+    <div class="valor-hero__content{% if section.settings.show_text_box %} valor-hero__content--box{% else %} valor-buttons-on-media{% endif %}">
       {%- for block in section.blocks -%}
         {%- case block.type -%}
           {%- when 'heading' -%}
@@ -443,6 +443,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "image_picker",

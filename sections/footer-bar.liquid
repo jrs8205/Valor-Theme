@@ -1,0 +1,859 @@
+{{ 'footer-bar.css' | asset_url | stylesheet_tag }}
+
+{%- comment -%}
+  Footer bar: a bar built from blocks, for the footer group. A merchant adds
+  it above or below the Footer section, as many as are needed.
+
+  On a desktop every block sits in a row (1 to 3) and a zone (left, center,
+  right); on phones the blocks stack in the order they have in the editor
+  (assets/footer-bar.css). The markup is grouped by row and zone, so the
+  rows are captured first: a block that has nothing to show prints no item,
+  a row without items is not printed, and the classes that hide a row or
+  the whole bar on one device are known before the root element is written.
+{%- endcomment -%}
+
+{%- liquid
+  assign bar_year = 'now' | date: '%Y'
+  assign bar_shop_name = shop.name | escape
+  assign bar_zones = 'left,center,right' | split: ','
+  assign bar_desktop = false
+  assign bar_phone = false
+  # Does the bar hold an item that one device does not show?
+  assign bar_devices = false
+-%}
+
+{%- capture bar_rows -%}
+  {%- for row in (1..3) -%}
+    {%- liquid
+      assign row_key = row | append: ''
+      assign row_filled = false
+      assign row_desktop = false
+      assign row_sides = false
+    -%}
+    {%- capture row_zones -%}
+      {%- for zone in bar_zones -%}
+        <div class="valor-footer-bar__zone valor-footer-bar__zone--{{ zone }}">
+          {%- for block in section.blocks -%}
+            {%- if block.settings.row != row_key or block.settings.position != zone -%}
+              {%- continue -%}
+            {%- endif -%}
+
+            {%- assign item_style = '' -%}
+            {%- capture item_content -%}
+              {%- case block.type -%}
+                {%- when 'text' -%}
+                  {%- if block.settings.text != blank -%}
+                    <p class="valor-footer-bar__text">
+                      {{- block.settings.text
+                        | replace: '[year]', bar_year
+                        | replace: '[shop_name]', bar_shop_name
+                      -}}
+                    </p>
+                  {%- endif -%}
+
+                {%- when 'menu' -%}
+                  {%- if block.settings.menu != blank and block.settings.menu.links.size > 0 -%}
+                    <nav class="valor-footer-bar__menu" aria-label="{{ block.settings.menu.title | escape }}">
+                      <ul class="valor-footer-bar__links" role="list">
+                        {%- for link in block.settings.menu.links -%}
+                          <li>
+                            <a
+                              href="{{ link.url }}"
+                              {% if link.current %}
+                                aria-current="page"
+                              {% endif %}
+                            >
+                              {{- link.title | escape -}}
+                            </a>
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    </nav>
+                  {%- endif -%}
+
+                {%- when 'policies' -%}
+                  {%- capture policy_links -%}
+                    {%- for policy in shop.policies -%}
+                      {%- if policy != blank -%}
+                        <li>
+                          <a href="{{ policy.url }}">{{ policy.title | escape }}</a>
+                        </li>
+                      {%- endif -%}
+                    {%- endfor -%}
+                  {%- endcapture -%}
+                  {%- assign policy_links = policy_links | strip -%}
+                  {%- if policy_links != blank -%}
+                    <ul class="valor-footer-bar__links valor-footer-bar__links--policies" role="list">
+                      {{ policy_links }}
+                    </ul>
+                  {%- endif -%}
+
+                {%- when 'payment' -%}
+                  {%- if shop.enabled_payment_types.size > 0 -%}
+                    <ul class="valor-footer-bar__payment" role="list">
+                      {%- for type in shop.enabled_payment_types -%}
+                        <li class="valor-footer-bar__payment-item">
+                          {{ type | payment_type_svg_tag: class: 'valor-footer-bar__payment-icon' }}
+                        </li>
+                      {%- endfor -%}
+                    </ul>
+                  {%- endif -%}
+
+                {%- when 'logo' -%}
+                  {%- assign logo_image = block.settings.image | default: settings.logo -%}
+                  {%- if logo_image != blank -%}
+                    {%- assign logo_alt = logo_image.alt | default: shop.name -%}
+                    <a
+                      href="{{ routes.root_url }}"
+                      class="valor-footer-bar__logo valor-footer-bar__logo--{{ block.settings.size }}"
+                      style="--fb-logo-height: {{ settings.logo_height }}px; --fb-logo-height-phone: {{ settings.logo_height_mobile | default: 32 }}px; --fb-logo-width: {{ block.settings.width }}px;"
+                    >
+                      {{
+                        logo_image
+                        | image_url: width: 800
+                        | image_tag:
+                          loading: 'lazy',
+                          width: logo_image.width,
+                          height: logo_image.height,
+                          class: 'valor-footer-bar__logo-image',
+                          alt: logo_alt
+                      }}
+                    </a>
+                  {%- else -%}
+                    <a href="{{ routes.root_url }}" class="valor-footer-bar__logo valor-footer-bar__logo--text">
+                      {{- shop.name | escape -}}
+                    </a>
+                  {%- endif -%}
+
+                {%- when 'social' -%}
+                  {%- capture social_icons -%}
+                    {%- render 'social-icons', class: 'valor-footer-bar__social' -%}
+                  {%- endcapture -%}
+                  {%- if social_icons contains 'valor-social-icons__item' -%}
+                    {%- liquid
+                      assign item_style = ' --valor-footer-social-size: 1;'
+                      if block.settings.size == 'small'
+                        assign item_style = ' --valor-footer-social-size: 0.8;'
+                      elsif block.settings.size == 'large'
+                        assign item_style = ' --valor-footer-social-size: 1.25;'
+                      endif
+                    -%}
+                    {{ social_icons }}
+                  {%- endif -%}
+
+                {%- when 'legal_guarantee' -%}
+                  {%- render 'legal-guarantee-notice', mode: 'trigger', class: 'valor-footer-bar__legal' -%}
+
+                {%- when 'country' -%}
+                  {%- if localization.available_countries.size > 1 -%}
+                    {%- liquid
+                      assign selector_position = 'FooterBarCountry-' | append: block.id
+                      assign selector_form = selector_position | append: 'Form'
+                    -%}
+                    <valor-localization-form class="valor-localization valor-localization--align-up valor-localization--sheet{% if zone == 'left' %} valor-localization--align-left{% endif %}">
+                      {%- form 'localization', id: selector_form, class: 'valor-localization__form' -%}
+                        <h2 class="visually-hidden" id="{{ selector_position }}Label">
+                          {{- 'localization.country_label' | t -}}
+                        </h2>
+                        {%- render 'country-localization',
+                          localPosition: selector_position,
+                          label: block.settings.label,
+                          show_flag: block.settings.show_flag,
+                          show_currency: block.settings.show_currency,
+                          show_arrow: block.settings.show_arrow
+                        -%}
+                      {%- endform -%}
+                    </valor-localization-form>
+                  {%- endif -%}
+
+                {%- when 'language' -%}
+                  {%- if localization.available_languages.size > 1 -%}
+                    {%- liquid
+                      assign selector_position = 'FooterBarLanguage-' | append: block.id
+                      assign selector_form = selector_position | append: 'Form'
+                    -%}
+                    <valor-localization-form class="valor-localization valor-localization--align-up valor-localization--sheet{% if zone == 'left' %} valor-localization--align-left{% endif %}">
+                      {%- form 'localization', id: selector_form, class: 'valor-localization__form' -%}
+                        <h2 class="visually-hidden" id="{{ selector_position }}Label">
+                          {{- 'localization.language_label' | t -}}
+                        </h2>
+                        {%- render 'language-localization',
+                          localPosition: selector_position,
+                          show_arrow: block.settings.show_arrow
+                        -%}
+                      {%- endform -%}
+                    </valor-localization-form>
+                  {%- endif -%}
+              {%- endcase -%}
+            {%- endcapture -%}
+            {%- assign item_content = item_content | strip -%}
+
+            {%- if item_content != blank -%}
+              {%- liquid
+                assign row_filled = true
+                assign item_device = ''
+                if block.settings.visibility == 'desktop'
+                  assign item_device = ' valor-footer-bar__item--desktop-only'
+                  assign bar_devices = true
+                  assign bar_desktop = true
+                  assign row_desktop = true
+                elsif block.settings.visibility == 'phone'
+                  assign item_device = ' valor-footer-bar__item--phone-only'
+                  assign bar_devices = true
+                  assign bar_phone = true
+                else
+                  assign bar_desktop = true
+                  assign bar_phone = true
+                  assign row_desktop = true
+                endif
+                # Does a side zone of this row hold something on a desktop?
+                if zone != 'center' and block.settings.visibility != 'phone'
+                  assign row_sides = true
+                endif
+              -%}
+              <div
+                class="valor-footer-bar__item valor-footer-bar__item--{{ block.type }}{{ item_device }}"
+                style="--fb-order: {{ forloop.index }};{{ item_style }}"
+                {{ block.shopify_attributes }}
+              >
+                {{ item_content }}
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endfor -%}
+    {%- endcapture -%}
+
+    {%- if row_filled -%}
+      <div class="valor-footer-bar__row{% unless row_desktop %} valor-footer-bar__row--no-desktop{% endunless %}{% unless row_sides %} valor-footer-bar__row--center-only{% endunless %}">
+        {{ row_zones }}
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+<div
+  class="color-{{ section.settings.color_scheme }} valor-footer-bar valor-footer-bar--text-{{ section.settings.text_size }} valor-footer-bar--phone-{{ section.settings.phone_alignment }}{% if section.settings.width == 'full' %} valor-full-width{% endif %}{% if section.settings.line_above %} valor-footer-bar--line-above{% endif %}{% if section.settings.line_below %} valor-footer-bar--line-below{% endif %}{% unless bar_desktop %} valor-footer-bar--no-desktop{% endunless %}{% unless bar_phone %} valor-footer-bar--no-phone{% endunless %}"
+  style="--fb-padding-top: {{ section.settings.padding_top }}px; --fb-padding-bottom: {{ section.settings.padding_bottom }}px; --fb-row-gap: {{ section.settings.row_gap }}px;"
+>
+  <div class="valor-footer-bar__inner">
+    {{ bar_rows }}
+  </div>
+</div>
+
+{%- comment -%}
+  The bar is laid out by its stylesheet alone. This script is only for a bar
+  with an item that one device does not show: when a change of layout hides
+  such an item while a control in it has the keyboard focus, the focus goes
+  to the next control of the footer that shows (the next Tab stop), or to
+  the one before it, instead of being left on nothing.
+{%- endcomment -%}
+{%- if bar_devices -%}
+  <script>
+    (function () {
+      // Several bars, and the theme editor rendering one again: one listener.
+      if (window.valorFooterBarFocus) return;
+      window.valorFooterBarFocus = true;
+
+      var CONTROLS = 'a[href], button, input, select, textarea, [tabindex]';
+      var focused = null; // the bar's control a new layout took the focus from
+
+      function shows(element) {
+        return element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+      }
+
+      function inBar(element) {
+        return element && element.closest ? element.closest('.valor-footer-bar') : null;
+      }
+
+      document.addEventListener('focusin', function (event) {
+        focused = inBar(event.target) ? event.target : null;
+      });
+
+      // The focus that goes on to something else, or leaves a control that is
+      // still there (a click on the page), is the visitor's doing.
+      document.addEventListener('focusout', function (event) {
+        var target = event.target;
+        if (event.relatedTarget || !target.getClientRects || shows(target)) focused = null;
+      });
+
+      window.addEventListener('resize', function () {
+        var active = document.activeElement;
+        var nowhere = !active || active === document.body;
+        var held = inBar(active) ? active : nowhere && focused && focused.isConnected ? focused : null;
+        if (!held || shows(held)) return;
+
+        var group = held.closest('.valor-footer-group') || document;
+        var controls = Array.prototype.filter.call(group.querySelectorAll(CONTROLS), function (control) {
+          return control === held || (control.tabIndex >= 0 && !control.disabled && shows(control));
+        });
+        var at = controls.indexOf(held);
+        var place = controls[at + 1] || controls[at - 1];
+        if (place) place.focus({ preventScroll: true });
+      });
+    })();
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.footer_bar.name",
+  "enabled_on": {
+    "groups": ["footer"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.footer_bar.settings.layout_info.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:sections.footer_bar.settings.width.label",
+      "options": [
+        { "value": "page", "label": "t:sections.footer_bar.settings.width.options.page" },
+        { "value": "full", "label": "t:sections.footer_bar.settings.width.options.full" }
+      ],
+      "default": "page"
+    },
+    {
+      "type": "checkbox",
+      "id": "line_above",
+      "label": "t:sections.footer_bar.settings.line_above.label",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "line_below",
+      "label": "t:sections.footer_bar.settings.line_below.label",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "text_size",
+      "label": "t:sections.footer_bar.settings.text_size.label",
+      "options": [
+        { "value": "small", "label": "t:sections.footer_bar.settings.text_size.options.small" },
+        { "value": "normal", "label": "t:sections.footer_bar.settings.text_size.options.normal" }
+      ],
+      "default": "small"
+    },
+    {
+      "type": "select",
+      "id": "phone_alignment",
+      "label": "t:sections.footer_bar.settings.phone_alignment.label",
+      "options": [
+        { "value": "center", "label": "t:sections.footer_bar.settings.phone_alignment.options.center" },
+        { "value": "left", "label": "t:sections.footer_bar.settings.phone_alignment.options.left" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer_bar.settings.spacing_header.content"
+    },
+    {
+      "type": "range",
+      "id": "row_gap",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.footer_bar.settings.row_gap.label",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.footer_bar.settings.padding_top.label",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.footer_bar.settings.padding_bottom.label",
+      "default": 20
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo",
+      "name": "t:sections.footer_bar.blocks.logo.name",
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer_bar.blocks.logo.settings.info.content"
+        },
+        {
+          "type": "select",
+          "id": "size",
+          "label": "t:sections.footer_bar.blocks.logo.settings.size.label",
+          "info": "t:sections.footer_bar.blocks.logo.settings.size.info",
+          "options": [
+            { "value": "theme", "label": "t:sections.footer_bar.blocks.logo.settings.size.options.theme" },
+            { "value": "custom", "label": "t:sections.footer_bar.blocks.logo.settings.size.options.custom" }
+          ],
+          "default": "theme"
+        },
+        {
+          "type": "range",
+          "id": "width",
+          "min": 40,
+          "max": 400,
+          "step": 10,
+          "unit": "px",
+          "label": "t:sections.footer_bar.blocks.logo.settings.width.label",
+          "default": 150
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.footer_bar.blocks.logo.settings.image.label",
+          "info": "t:sections.footer_bar.blocks.logo.settings.image.info"
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "t:sections.footer_bar.blocks.text.name",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "label": "t:sections.footer_bar.blocks.text.settings.text.label",
+          "info": "t:sections.footer_bar.blocks.text.settings.text.info",
+          "default": "© [year] [shop_name]"
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "menu",
+      "name": "t:sections.footer_bar.blocks.menu.name",
+      "settings": [
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "t:sections.footer_bar.blocks.menu.settings.menu.label",
+          "info": "t:sections.footer_bar.blocks.menu.settings.menu.info",
+          "default": "footer"
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "policies",
+      "name": "t:sections.footer_bar.blocks.policies.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "country",
+      "name": "t:sections.footer_bar.blocks.country.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer_bar.blocks.country.settings.info.content"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "t:sections.footer_bar.blocks.country.settings.label.label",
+          "info": "t:sections.footer_bar.blocks.country.settings.label.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_flag",
+          "label": "t:sections.footer_bar.blocks.country.settings.show_flag.label",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "show_currency",
+          "label": "t:sections.footer_bar.blocks.country.settings.show_currency.label",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_arrow",
+          "label": "t:sections.footer_bar.blocks.country.settings.show_arrow.label",
+          "default": true
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "language",
+      "name": "t:sections.footer_bar.blocks.language.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer_bar.blocks.language.settings.info.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_arrow",
+          "label": "t:sections.footer_bar.blocks.language.settings.show_arrow.label",
+          "default": true
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "payment",
+      "name": "t:sections.footer_bar.blocks.payment.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "social",
+      "name": "t:sections.footer_bar.blocks.social.name",
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer_bar.blocks.social.settings.info.content"
+        },
+        {
+          "type": "select",
+          "id": "size",
+          "label": "t:sections.footer_bar.blocks.social.settings.size.label",
+          "options": [
+            { "value": "small", "label": "t:sections.footer_bar.blocks.social.settings.size.options.small" },
+            { "value": "medium", "label": "t:sections.footer_bar.blocks.social.settings.size.options.medium" },
+            { "value": "large", "label": "t:sections.footer_bar.blocks.social.settings.size.options.large" }
+          ],
+          "default": "medium"
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    },
+    {
+      "type": "legal_guarantee",
+      "name": "t:sections.footer_bar.blocks.legal_guarantee.name",
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer_bar.blocks.legal_guarantee.settings.info.content"
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.footer_bar.placement.position.label",
+          "options": [
+            { "value": "left", "label": "t:sections.footer_bar.placement.position.options.left" },
+            { "value": "center", "label": "t:sections.footer_bar.placement.position.options.center" },
+            { "value": "right", "label": "t:sections.footer_bar.placement.position.options.right" }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "row",
+          "label": "t:sections.footer_bar.placement.row.label",
+          "options": [
+            { "value": "1", "label": "t:sections.footer_bar.placement.row.options.first" },
+            { "value": "2", "label": "t:sections.footer_bar.placement.row.options.second" },
+            { "value": "3", "label": "t:sections.footer_bar.placement.row.options.third" }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "select",
+          "id": "visibility",
+          "label": "t:sections.footer_bar.placement.visibility.label",
+          "options": [
+            { "value": "all", "label": "t:sections.footer_bar.placement.visibility.options.all" },
+            { "value": "desktop", "label": "t:sections.footer_bar.placement.visibility.options.desktop" },
+            { "value": "phone", "label": "t:sections.footer_bar.placement.visibility.options.phone" }
+          ],
+          "default": "all"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.footer_bar.presets.name",
+      "blocks": [
+        { "type": "text", "settings": { "position": "left" } },
+        { "type": "payment", "settings": { "position": "right" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

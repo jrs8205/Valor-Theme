@@ -221,7 +221,7 @@ valor-product-card {
   font-weight: 500;
 }
 .valor-card__price-current--sale {
-  color: var(--valor-color-error);
+  color: var(--valor-color-sale);
 }
 .valor-card__price-compare {
   color: color-mix(in srgb, var(--color-foreground) 70%, transparent);

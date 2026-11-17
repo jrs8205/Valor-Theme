@@ -200,6 +200,9 @@ html {
   align-items: center;
   justify-content: center;
   padding: 0.875rem 1.75rem;
+  /* A <button> has a font of its own in every browser: without this a
+     shared button that is not a link ignores the theme's font setting. */
+  font-family: inherit;
   font-size: 0.9375rem;
   font-weight: var(--font-body--weight-bold);
   letter-spacing: 0.02em;
@@ -262,6 +265,9 @@ html {
   border-color: var(--color-button-outline-border, var(--color-foreground));
 }
 .valor-button--secondary:hover {
+  /* 1 unless a section has button colours of its own: it then keeps them
+     under the pointer and dims instead (snippets/button-colors.liquid). */
+  opacity: var(--button-outline-hover-opacity, 1);
   background-color: var(--color-button-outline-hover-bg, var(--color-foreground));
   color: var(--color-button-outline-hover-text, var(--color-background));
   border-color: var(--color-button-outline-hover-border, var(--color-button-outline-hover-bg, var(--color-foreground)));
@@ -286,6 +292,23 @@ html {
   background-color: transparent;
   border-color: transparent;
   text-decoration-thickness: 2.5px;
+}
+/* Buttons that stand over a picture or a video (Image banner, Video, a
+   Promo grid card). The text there is not in the color scheme's text color,
+   so a button whose colour comes from the scheme takes the colour of the
+   text around it: every scheme has a second set of its button tokens for
+   this, where the last fallback is currentColor instead of the scheme's
+   text color (snippets/css-variables.liquid). An explicit button colour, of
+   Theme settings > Buttons or of the section, is the same in both sets. */
+.valor-buttons-on-media {
+  --color-button-text: var(--color-button-text-on-media);
+  --color-button-border: var(--color-button-border-on-media);
+  --color-button-hover-text: var(--color-button-hover-text-on-media);
+  --color-button-hover-border: var(--color-button-hover-border-on-media);
+  --color-button-outline-text: var(--color-button-outline-text-on-media);
+  --color-button-outline-border: var(--color-button-outline-border-on-media);
+  --color-button-outline-hover-text: var(--color-button-outline-hover-text-on-media);
+  --color-button-outline-hover-border: var(--color-button-outline-hover-border-on-media);
 }
 
 /* Rich-text content (.rte)
@@ -798,9 +821,51 @@ html {
 [dir="rtl"] .valor-legal-popover__frame[data-more]::after {
   background: linear-gradient(to right, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0));
 }
+/* Zoom buttons (legal-guarantee.js unhides them): minus, plus and the way to
+   the whole notice or back to the readable size. The bar sticks below the
+   title bar, so it stays in reach while an enlarged notice scrolls. */
+.valor-legal-popover__zoom:not([hidden]) {
+  position: sticky;
+  top: var(--valor-legal-header-height, 3.3125rem);
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-start: -1rem;
+  margin-inline: -1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--valor-border-subtle);
+  background-color: var(--color-background);
+}
+.valor-legal-popover__zoom-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--valor-border-default);
+  border-radius: var(--style-border-radius-inputs, 0px);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 1.375rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.valor-legal-popover__zoom-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.valor-legal-popover__zoom-button:focus-visible,
+.valor-legal-popover__fit:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
 .valor-legal-popover__fit {
   display: none;
-  justify-self: start;
+  margin-inline-start: 0.5rem;
   min-height: 1.5rem;
   padding: 0;
   border: 0;
@@ -824,8 +889,21 @@ html {
   width: 100%;
   height: auto;
 }
+/* --valor-legal-zoom: 1 is the size the notice opens at (the pop-up's width,
+   never under the legible 36rem); the zoom buttons step it up. */
 .valor-legal-popover__artwork--notice .valor-legal-popover__image {
-  min-width: 36rem;
+  width: calc(100% * var(--valor-legal-zoom, 1));
+  max-width: none;
+  min-width: calc(36rem * var(--valor-legal-zoom, 1));
+}
+.valor-legal-popover__artwork--notice[data-zoom="1.5"] {
+  --valor-legal-zoom: 1.5;
+}
+.valor-legal-popover__artwork--notice[data-zoom="2"] {
+  --valor-legal-zoom: 2;
+}
+.valor-legal-popover__artwork--notice[data-zoom="3"] {
+  --valor-legal-zoom: 3;
 }
 /* Without legal-guarantee.js: the hint on screens narrower than the legible
    size at the default text scale. */
@@ -841,7 +919,10 @@ html {
 .valor-legal-popover__body[data-needs-fit] .valor-legal-popover__hint {
   display: block;
 }
-.valor-legal-popover__body[data-needs-fit] .valor-legal-popover__fit:not([hidden]) {
+.valor-legal-popover__body:has([data-zoom]) .valor-legal-popover__hint {
+  display: block;
+}
+.valor-legal-popover__fit:not([hidden]) {
   display: inline-block;
 }
 .valor-legal-popover__body[data-needs-fit] .valor-legal-popover__artwork--notice .valor-legal-popover__image {
@@ -850,6 +931,9 @@ html {
 .valor-legal-popover__artwork--notice[data-fit] .valor-legal-popover__image {
   min-width: 0;
   cursor: zoom-in;
+}
+.valor-legal-popover__artwork--notice[data-zoom] .valor-legal-popover__image {
+  cursor: auto;
 }
 .valor-legal-popover__body:has([data-fit]) .valor-legal-popover__hint {
   display: none;

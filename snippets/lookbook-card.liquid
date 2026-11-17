@@ -1,0 +1,188 @@
+{%- doc -%}
+  The product card under a lookbook image (sections/lookbook.liquid).
+
+  With a variant the card names it, shows its price and adds exactly that
+  variant to the cart. Without one, a product with a single variant is added
+  straight away (and named, if its option has a name), any other links to
+  its page.
+  The price always shows next to the buy button, with the theme's own price
+  pieces (sale and compare-at price with its label, "From", unit price).
+
+  The buy button is the card's own: the theme-wide quick add setting does not
+  turn it off (the section's "Show product card" does).
+
+  @param {object} [product] - The look's product.
+  @param {object} [variant] - The exact variant the look shows, if the merchant gave one.
+  @param {boolean} [variant_missing] - The merchant gave a variant that is not one of this product's. The theme editor says so.
+  @param {number} [pending_variant_id] - The ID the merchant gave, when it is not among the variants Shopify handed over with the product (the first 250) and may still be one of its variants. The card is the product's own, linked to that variant, until the script has fetched the variant's card.
+  @param {boolean} [example] - Theme editor only: a sample card for a look that has no product yet.
+
+  @example
+  {% render 'lookbook-card', product: block.settings.product, variant: look_variant %}
+{%- enddoc -%}
+
+{%- if example -%}
+  <div class="valor-lookbook__card valor-lookbook__card--example">
+    <div class="valor-lookbook__card-info">
+      <span class="valor-lookbook__card-title">{{ 'sections.lookbook.example_product' | t }}</span>
+      <div class="valor-lookbook__price">
+        <span class="valor-lookbook__price-current">{{ 1999 | money }}</span>
+      </div>
+    </div>
+    <button type="button" class="valor-lookbook__card-button" aria-label="{{ 'product.add_to_cart' | t }}" disabled>
+      {{- 'icon-cart.svg' | inline_asset_content -}}
+    </button>
+  </div>
+{%- elsif product != blank -%}
+  {%- liquid
+    assign card_variant = variant | default: product.selected_or_first_available_variant
+
+    # One variant to buy, whatever its option is called: counted, because
+    # has_only_default_variant is only true for a product with no options
+    # at all (a single "Size: M" has one).
+    assign single_variant = false
+    if product.variants.size == 1
+      assign single_variant = true
+    endif
+
+    # An exact variant: the one given, or the only one the product has.
+    assign exact_variant = false
+    if variant != blank or single_variant
+      assign exact_variant = true
+    endif
+
+    assign card_url = product.url
+    assign card_image = product.featured_media.preview_image
+    if variant != blank
+      assign card_url = variant.url
+      if variant.featured_media != blank
+        assign card_image = variant.featured_media.preview_image
+      endif
+    elsif pending_variant_id != blank
+      assign card_url = product.url | append: '?variant=' | append: pending_variant_id
+    endif
+
+    # The card names the exact variant it adds, when there is an option to name.
+    assign variant_text = ''
+    if exact_variant and product.has_only_default_variant == false
+      assign variant_text = card_variant.options | join: ' · '
+    endif
+
+    # What the button does: add this variant, link to the product page, or
+    # nothing when sold out. Subscription-only products and variants with
+    # quantity rules need the product page, as on the theme's product cards.
+    assign card_action = 'link'
+    assign sold_out = false
+    if variant != blank
+      if variant.available
+        assign card_action = 'add'
+      else
+        assign sold_out = true
+      endif
+    elsif product.available == false
+      assign sold_out = true
+    elsif single_variant
+      assign card_action = 'add'
+    endif
+    if card_action == 'add'
+      if product.requires_selling_plan
+        assign card_action = 'link'
+      elsif card_variant.quantity_rule.min > 1 or card_variant.quantity_rule.increment > 1 or card_variant.quantity_rule.max != null
+        assign card_action = 'link'
+      endif
+    endif
+
+    assign product_on_sale = false
+    if product.compare_at_price > product.price and product.compare_at_price > 0
+      assign product_on_sale = true
+    endif
+  -%}
+  <div class="valor-lookbook__card">
+    {%- if card_image != blank -%}
+      <a class="valor-lookbook__card-thumb" href="{{ card_url }}" tabindex="-1" aria-hidden="true">
+        {{-
+          card_image
+          | image_url: width: 160
+          | image_tag: class: 'valor-lookbook__card-image', loading: 'lazy', widths: '80, 160', sizes: '4rem', alt: ''
+        -}}
+      </a>
+    {%- endif -%}
+    <div class="valor-lookbook__card-info">
+      <a class="valor-lookbook__card-title" href="{{ card_url }}">{{ product.title | escape }}</a>
+      {%- if variant_text != blank -%}
+        <p class="valor-lookbook__card-variant">{{ variant_text | escape }}</p>
+      {%- endif -%}
+      <div class="valor-lookbook__price">
+        {%- if exact_variant -%}
+          {%- if card_variant.compare_at_price > card_variant.price -%}
+            <span class="valor-lookbook__price-current valor-lookbook__price-current--sale"
+              ><span class="visually-hidden">{{ 'product.sale_price' | t }}</span>{{ card_variant.price | money -}}
+            </span>
+            <span class="valor-lookbook__price-compare">
+              {%- render 'price-compare-label' -%}
+              <s>{{ card_variant.compare_at_price | money }}</s></span
+            >
+          {%- else -%}
+            <span class="valor-lookbook__price-current">{{ card_variant.price | money }}</span>
+          {%- endif -%}
+        {%- elsif product_on_sale -%}
+          <span class="valor-lookbook__price-current valor-lookbook__price-current--sale"
+            ><span class="visually-hidden">{{ 'product.sale_price' | t }}</span>{{ product.price | money -}}
+          </span>
+          {%- comment -%}
+            As on the product card: no struck price when every variant costs
+            the same but only some carry a compare-at price.
+          {%- endcomment -%}
+          {%- unless product.price_varies == false and product.compare_at_price_varies -%}
+            <span class="valor-lookbook__price-compare">
+              {%- render 'price-compare-label' -%}
+              <s>{{ product.compare_at_price | money }}</s></span
+            >
+          {%- endunless -%}
+        {%- elsif product.price_varies -%}
+          {%- assign from_price = product.price | money -%}
+          <span class="valor-lookbook__price-current">{{ 'product.from_price' | t: price: from_price }}</span>
+        {%- else -%}
+          <span class="valor-lookbook__price-current">{{ product.price | money }}</span>
+        {%- endif -%}
+      </div>
+      {%- render 'product-unit-price', variant: card_variant, class_name: 'valor-lookbook__unit-price' -%}
+      {%- if sold_out -%}
+        <p class="valor-lookbook__card-status">{{ 'product.sold_out' | t }}</p>
+      {%- endif -%}
+      {%- if variant_missing and request.design_mode -%}
+        <p class="valor-lookbook__card-note">{{ 'sections.lookbook.variant_missing' | t }}</p>
+      {%- elsif pending_variant_id != blank and request.design_mode -%}
+        <p class="valor-lookbook__card-note" data-lookbook-variant-note hidden>
+          {{- 'sections.lookbook.variant_missing' | t -}}
+        </p>
+      {%- endif -%}
+    </div>
+    {%- if sold_out -%}
+      <button type="button" class="valor-lookbook__card-button" aria-label="{{ 'product.sold_out' | t }}" disabled>
+        {{- 'icon-cart.svg' | inline_asset_content -}}
+      </button>
+    {%- elsif card_action == 'add' -%}
+      <form method="post" action="{{ routes.cart_add_url }}" class="valor-lookbook__card-form">
+        <input type="hidden" name="id" value="{{ card_variant.id }}">
+        <button
+          type="submit"
+          name="add"
+          class="valor-lookbook__card-button"
+          aria-label="{{ 'sections.lookbook.add_to_cart' | t: title: product.title }}"
+        >
+          {{- 'icon-cart.svg' | inline_asset_content -}}
+        </button>
+        <div class="valor-lookbook__card-error" data-cart-error role="alert" hidden></div>
+      </form>
+    {%- else -%}
+      <a
+        class="valor-lookbook__card-button valor-lookbook__card-button--link"
+        href="{{ card_url }}"
+        aria-label="{{ 'sections.lookbook.choose_options' | t: title: product.title }}"
+      >
+        {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+      </a>
+    {%- endif -%}
+  </div>
+{%- endif -%}

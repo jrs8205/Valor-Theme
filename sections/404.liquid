@@ -20,7 +20,7 @@
 
 <div
   class="color-{{ section.settings.color_scheme }} valor-page valor-page--{{ container }} valor-404"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
 >
   <div class="valor-page__inner">
     <header class="valor-page__header valor-page__header--{{ heading_align }}">
@@ -63,6 +63,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "select",

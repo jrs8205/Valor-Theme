@@ -15,11 +15,50 @@
     when 'large'
       assign social_icon_scale = '1.25'
   endcase
+
+  assign footer_year = 'now' | date: '%Y'
+  assign footer_shop_name = shop.name | escape
+
+  # The lower part: the selectors, the payment icons and the copyright row.
+  # Each can be switched off, and with all of them off the part is not
+  # printed at all (no line, no gap).
+  assign show_country = false
+  if section.settings.enable_country_selector and localization.available_countries.size > 1
+    assign show_country = true
+  endif
+  assign show_language = false
+  if section.settings.enable_language_selector and localization.available_languages.size > 1
+    assign show_language = true
+  endif
+  assign show_payment = false
+  if section.settings.payment_enable and shop.enabled_payment_types.size > 0
+    assign show_payment = true
+  endif
+  assign show_policies = false
+  if section.settings.show_policy
+    for policy in shop.policies
+      if policy != blank
+        assign show_policies = true
+      endif
+    endfor
+  endif
+  assign show_legal = false
+  if settings.legal_guarantee_show_in_footer and settings.legal_guarantee_notice != blank
+    assign show_legal = true
+  endif
+  assign show_copyright_row = false
+  if section.settings.show_copyright or show_policies or show_legal
+    assign show_copyright_row = true
+  endif
+  assign show_bottom = false
+  if show_copyright_row or show_country or show_language or show_payment
+    assign show_bottom = true
+  endif
 -%}
 
-<footer
-  class="color-{{ section.settings.color_scheme }} valor-footer"
-  style="--valor-footer-padding-top: {{ section.settings.padding_top }}px; --valor-footer-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-footer-margin-top: {{ section.settings.margin_top }}px; --valor-footer-social-size: {{ social_icon_scale }};"
+<div
+  class="color-{{ section.settings.color_scheme }} valor-footer{% if section.settings.heading_style == 'uppercase' %} valor-footer--headings-uppercase{% endif %}{% if section.settings.mobile_columns == 'all' %} valor-footer--fold-all{% endif %}"
+  style="--valor-footer-padding-top: {{ section.settings.padding_top }}px; --valor-footer-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-footer-margin-top: {{ section.settings.margin_top }}px; --valor-footer-social-size: {{ social_icon_scale }};{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
 >
   {%- if section.blocks.size > 0
     or section.settings.newsletter_enable
@@ -30,17 +69,79 @@
       {%- if section.blocks.size > 0 -%}
         <div class="valor-footer__blocks valor-footer__blocks--cols-{{ section.blocks.size | at_most: 4 }}">
           {%- for block in section.blocks -%}
-            <div class="valor-footer__block valor-footer__block--{{ block.type }}" {{ block.shopify_attributes }}>
+            {%- liquid
+              # Does this column fold on phones? A menu folds unless nothing
+              # does; any other column that has a heading folds when all do.
+              assign column_folds = false
+              if section.settings.mobile_columns != 'none'
+                if block.type == 'link_list'
+                  if block.settings.menu != blank
+                    assign column_folds = true
+                  endif
+                elsif section.settings.mobile_columns == 'all' and block.settings.heading != blank
+                  assign column_folds = true
+                endif
+              endif
+              if block.type == 'social' and has_social_icons == false
+                assign column_folds = false
+              endif
+              assign column_id = 'FooterColumn-' | append: block.id
+            -%}
+
+            {%- comment -%}
+              The heading of a folding column holds its text twice: as plain
+              text, shown on desktops, and inside a button that opens and
+              closes the column, shown on phones (the stylesheet shows one).
+            {%- endcomment -%}
+            {%- capture folding_heading -%}
+              {%- if column_folds -%}
+                <h3 class="valor-footer__heading">
+                  {%- if block.settings.heading != blank -%}
+                    <span class="valor-footer__heading-text">{{ block.settings.heading }}</span>
+                  {%- endif -%}
+                  <button
+                    type="button"
+                    class="valor-footer__heading-button"
+                    aria-expanded="false"
+                    aria-controls="{{ column_id }}"
+                    {% if block.settings.heading == blank and block.type == 'link_list' %}
+                      aria-label="{{ block.settings.menu.title | escape }}"
+                    {% endif %}
+                  >
+                    {%- comment -%}
+                      The heading is rich text and may hold a link, which
+                      cannot stand inside a button: the button has the text.
+                    {%- endcomment -%}
+                    {%- if block.settings.heading != blank -%}
+                      <span>{{ block.settings.heading | strip_html }}</span>
+                    {%- endif -%}
+                    <span class="valor-footer__heading-toggle" aria-hidden="true"></span>
+                  </button>
+                </h3>
+              {%- endif -%}
+            {%- endcapture -%}
+
+            <div
+              class="valor-footer__block valor-footer__block--{{ block.type }}{% if column_folds %} valor-footer__block--foldable{% endif %}"
+              {{ block.shopify_attributes }}
+            >
               {%- case block.type -%}
                 {%- when 'link_list' -%}
                   {%- if block.settings.menu != blank -%}
-                    <h3 class="valor-footer__heading" onclick="valorToggleFooterColumn(this)">
-                      {%- if block.settings.heading != blank -%}
-                        <span>{{ block.settings.heading }}</span>
-                      {%- endif -%}
-                      <span class="valor-footer__heading-toggle" aria-hidden="true"></span>
-                    </h3>
-                    <ul class="valor-footer__menu" role="list">
+                    {%- if column_folds -%}
+                      {{ folding_heading }}
+                    {%- else -%}
+                      <h3 class="valor-footer__heading">
+                        {%- if block.settings.heading != blank -%}
+                          <span class="valor-footer__heading-text">{{ block.settings.heading }}</span>
+                        {%- endif -%}
+                      </h3>
+                    {%- endif -%}
+                    <ul
+                      class="valor-footer__menu{% if column_folds %} valor-footer__panel{% endif %}"
+                      id="{{ column_id }}"
+                      role="list"
+                    >
                       {%- for link in block.settings.menu.links -%}
                         <li>
                           <a
@@ -55,12 +156,36 @@
                   {%- endif -%}
 
                 {%- when 'text' -%}
-                  {%- if block.settings.heading != blank -%}
-                    <h3 class="valor-footer__block-heading">{{- block.settings.heading -}}</h3>
+                  {%- if column_folds -%}
+                    {{ folding_heading }}
+                    <div class="valor-footer__panel" id="{{ column_id }}">
+                      <div class="valor-footer__text rte">
+                        {{ block.settings.subtext }}
+                      </div>
+                    </div>
+                  {%- else -%}
+                    {%- if block.settings.heading != blank -%}
+                      <h3 class="valor-footer__block-heading">{{- block.settings.heading -}}</h3>
+                    {%- endif -%}
+                    <div class="valor-footer__text rte">
+                      {{ block.settings.subtext }}
+                    </div>
                   {%- endif -%}
-                  <div class="valor-footer__text rte">
-                    {{ block.settings.subtext }}
-                  </div>
+
+                {%- when 'social' -%}
+                  {%- if has_social_icons -%}
+                    {%- if column_folds -%}
+                      {{ folding_heading }}
+                      <div class="valor-footer__panel" id="{{ column_id }}">
+                        {%- render 'social-icons', class: 'valor-footer__social valor-footer__social--column' -%}
+                      </div>
+                    {%- else -%}
+                      {%- if block.settings.heading != blank -%}
+                        <h3 class="valor-footer__block-heading">{{- block.settings.heading -}}</h3>
+                      {%- endif -%}
+                      {%- render 'social-icons', class: 'valor-footer__social valor-footer__social--column' -%}
+                    {%- endif -%}
+                  {%- endif -%}
 
                 {%- when 'brand_information' -%}
                   {%- if block.settings.heading != blank -%}
@@ -163,7 +288,7 @@
                 >
                 <button
                   type="submit"
-                  class="valor-footer__newsletter-button"
+                  class="valor-button valor-button--primary valor-footer__newsletter-button"
                   name="commit"
                   id="Subscribe"
                   aria-label="{{ 'newsletter.button_label' | t }}"
@@ -210,60 +335,74 @@
     </div>
   {%- endif -%}
 
-  <div class="valor-footer__bottom">
-    <div class="valor-footer__bottom-row">
-      <div class="valor-footer__localization">
-        {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
-          <valor-localization-form class="valor-localization valor-localization--align-left valor-localization--align-up">
-            {%- form 'localization', id: 'FooterCountryForm', class: 'valor-localization__form' -%}
-              <h2 class="visually-hidden" id="FooterCountryLabel">{{ 'localization.country_label' | t }}</h2>
-              {%- render 'country-localization', localPosition: 'FooterCountry' -%}
-            {%- endform -%}
-          </valor-localization-form>
-        {%- endif -%}
+  {%- if show_bottom -%}
+    <div class="valor-footer__bottom">
+      <div class="valor-footer__bottom-row">
+        <div class="valor-footer__localization">
+          {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
+            <valor-localization-form class="valor-localization valor-localization--align-left valor-localization--align-up">
+              {%- form 'localization', id: 'FooterCountryForm', class: 'valor-localization__form' -%}
+                <h2 class="visually-hidden" id="FooterCountryLabel">{{ 'localization.country_label' | t }}</h2>
+                {%- render 'country-localization', localPosition: 'FooterCountry' -%}
+              {%- endform -%}
+            </valor-localization-form>
+          {%- endif -%}
 
-        {%- if section.settings.enable_language_selector and localization.available_languages.size > 1 -%}
-          <valor-localization-form class="valor-localization valor-localization--align-left valor-localization--align-up">
-            {%- form 'localization', id: 'FooterLanguageForm', class: 'valor-localization__form' -%}
-              <h2 class="visually-hidden" id="FooterLanguageLabel">{{ 'localization.language_label' | t }}</h2>
-              {%- render 'language-localization', localPosition: 'FooterLanguage' -%}
-            {%- endform -%}
-          </valor-localization-form>
+          {%- if section.settings.enable_language_selector and localization.available_languages.size > 1 -%}
+            <valor-localization-form class="valor-localization valor-localization--align-left valor-localization--align-up">
+              {%- form 'localization', id: 'FooterLanguageForm', class: 'valor-localization__form' -%}
+                <h2 class="visually-hidden" id="FooterLanguageLabel">{{ 'localization.language_label' | t }}</h2>
+                {%- render 'language-localization', localPosition: 'FooterLanguage' -%}
+              {%- endform -%}
+            </valor-localization-form>
+          {%- endif -%}
+        </div>
+
+        {%- if section.settings.payment_enable and shop.enabled_payment_types.size > 0 -%}
+          <ul class="valor-footer__payment" role="list">
+            {%- for type in shop.enabled_payment_types -%}
+              <li class="valor-footer__payment-item">
+                {{ type | payment_type_svg_tag: class: 'valor-footer__payment-icon' }}
+              </li>
+            {%- endfor -%}
+          </ul>
         {%- endif -%}
       </div>
 
-      {%- if section.settings.payment_enable and shop.enabled_payment_types.size > 0 -%}
-        <ul class="valor-footer__payment" role="list">
-          {%- for type in shop.enabled_payment_types -%}
-            <li class="valor-footer__payment-item">
-              {{ type | payment_type_svg_tag: class: 'valor-footer__payment-icon' }}
-            </li>
-          {%- endfor -%}
-        </ul>
+      {%- if show_copyright_row -%}
+        <div class="valor-footer__copyright">
+          {%- if section.settings.show_copyright -%}
+            <span class="valor-footer__copyright-text">
+              {%- if section.settings.copyright_text != blank -%}
+                {{-
+                  section.settings.copyright_text
+                  | replace: '[year]', footer_year
+                  | replace: '[shop_name]', footer_shop_name
+                -}}
+              {%- else -%}
+                &copy; {{ 'now' | date: '%Y' }}, {{ shop.name | link_to: routes.root_url -}}
+              {%- endif -%}
+            </span>
+          {%- endif -%}
+          {%- if section.settings.show_policy -%}
+            <ul class="valor-footer__policies" role="list">
+              {%- for policy in shop.policies -%}
+                {%- if policy != blank -%}
+                  <li>
+                    <a href="{{ policy.url }}">{{ policy.title | escape }}</a>
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+          {%- if settings.legal_guarantee_show_in_footer -%}
+            {%- render 'legal-guarantee-notice', mode: 'trigger', class: 'valor-footer__legal-guarantee' -%}
+          {%- endif -%}
+        </div>
       {%- endif -%}
     </div>
-
-    <div class="valor-footer__copyright">
-      <span class="valor-footer__copyright-text"
-        >&copy; {{ 'now' | date: '%Y' }}, {{ shop.name | link_to: routes.root_url -}}
-      </span>
-      {%- if section.settings.show_policy -%}
-        <ul class="valor-footer__policies" role="list">
-          {%- for policy in shop.policies -%}
-            {%- if policy != blank -%}
-              <li>
-                <a href="{{ policy.url }}">{{ policy.title | escape }}</a>
-              </li>
-            {%- endif -%}
-          {%- endfor -%}
-        </ul>
-      {%- endif -%}
-      {%- if settings.legal_guarantee_show_in_footer -%}
-        {%- render 'legal-guarantee-notice', mode: 'trigger', class: 'valor-footer__legal-guarantee' -%}
-      {%- endif -%}
-    </div>
-  </div>
-</footer>
+  {%- endif -%}
+</div>
 
 {% stylesheet %}
   .valor-footer {
@@ -324,17 +463,17 @@
 
   .valor-footer__block-heading {
     margin: 0 0 1rem;
-    font-size: calc(var(--font-heading-scale, 1) * 0.9375rem);
+    font-size: calc(var(--font-heading-scale, 1) * var(--font-size-body-md));
     font-family: var(--font-heading--family);
     font-style: var(--font-heading--style);
     font-weight: var(--font-heading--weight);
     letter-spacing: 0.02em;
   }
 
-  /* Link-list heading — clickable on mobile, always-visible heading on desktop */
+  /* The heading of a menu column, and of any column that folds on phones. */
   .valor-footer__heading {
     margin: 0;
-    font-size: calc(var(--font-heading-scale, 1) * 0.9375rem);
+    font-size: calc(var(--font-heading-scale, 1) * var(--font-size-body-md));
     font-family: var(--font-heading--family);
     font-style: var(--font-heading--style);
     font-weight: var(--font-heading--weight);
@@ -374,54 +513,103 @@
     opacity: 0;
   }
 
-  /* Mobile (< 750px): h2 acts as accordion header, ul collapses with max-height */
+  /* A heading that folds its column holds its text twice: as plain text for
+     desktops, and inside a button for phones. Only one of them is shown. */
+  .valor-footer__heading-button {
+    display: none;
+  }
+
+  /* Mobile (< 750px): a folding column's heading is a button, and its panel
+     collapses with max-height. Folded, the panel is hidden as well, so its
+     links cannot be reached with the keyboard or read out. */
   @media (max-width: 749px) {
-    .valor-footer__block--link_list {
+    .valor-footer__block--foldable {
       border-bottom: 1px solid var(--valor-border-strong);
     }
-    .valor-footer__heading {
-      cursor: pointer;
+    .valor-footer__block--foldable .valor-footer__heading-text {
+      display: none;
+    }
+    .valor-footer__heading-button {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      width: 100%;
+      margin: 0;
       padding: 0.875rem 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+      text-align: start;
+      cursor: pointer;
       user-select: none;
     }
-    .valor-footer__block--link_list .valor-footer__menu {
+    .valor-footer__block--foldable .valor-footer__panel {
       max-height: 0;
       overflow: hidden;
       opacity: 0;
+      visibility: hidden;
       transform: translateY(-4px);
       padding: 0;
       transition:
         max-height 0.46s cubic-bezier(0.25, 0.46, 0.45, 0.94),
         padding 0.46s cubic-bezier(0.25, 0.46, 0.45, 0.94),
         opacity 0.22s ease,
-        transform 0.46s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transform 0.46s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        visibility 0s linear 0.46s;
       will-change: max-height;
     }
-    .valor-footer__block--link_list.is-active .valor-footer__menu {
+    .valor-footer__block--foldable.is-active .valor-footer__panel {
       max-height: var(--valor-footer-menu-height, 300px);
       opacity: 1;
+      visibility: visible;
       transform: translateY(0);
       padding: 0 0 0.875rem 0;
+      transition-delay: 0s;
+    }
+  }
+
+  /* "Fold all columns": on a narrow phone, where the columns stand one
+     below the other, the folding columns are one list of rows without the
+     gap that stands between columns. A column that does not fold keeps it. */
+  @media (max-width: 549px) {
+    .valor-footer--fold-all .valor-footer__blocks {
+      row-gap: 0;
+    }
+    .valor-footer--fold-all .valor-footer__block:not(.valor-footer__block--foldable):not(:first-child),
+    .valor-footer--fold-all .valor-footer__block:not(.valor-footer__block--foldable) + .valor-footer__block--foldable {
+      margin-top: 2.5rem;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .valor-footer__block--link_list .valor-footer__menu {
+    .valor-footer__block--foldable .valor-footer__panel {
       transition: none;
       transform: none;
     }
   }
 
-  /* Desktop: heading is plain, menu always visible */
+  /* A heading that does not fold (every heading on a desktop) is plain, with
+     the gap below it that the other column headings have. */
+  .valor-footer__block:not(.valor-footer__block--foldable) .valor-footer__heading {
+    margin: 0 0 1rem;
+  }
   @media (min-width: 750px) {
-    .valor-footer__block--link_list .valor-footer__heading {
+    .valor-footer__heading {
       margin: 0 0 1rem;
     }
-    .valor-footer__heading-toggle {
-      display: none;
+  }
+
+  /* Small uppercase column headings (section setting), on desktops: the
+     heading font at the heading scale, at the theme's smallest text size.
+     The headings of the email signup and of the social icons below the
+     columns keep the theme's style. */
+  @media (min-width: 750px) {
+    .valor-footer--headings-uppercase .valor-footer__blocks :is(.valor-footer__heading, .valor-footer__block-heading) {
+      font-size: calc(var(--font-heading-scale, 1) * var(--font-size-body-2xs));
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
   }
 
@@ -437,7 +625,7 @@
   .valor-footer__menu-link {
     color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
     text-decoration: none;
-    font-size: 0.9375rem;
+    font-size: var(--font-size-body-md);
     transition: color 0.12s ease;
   }
   .valor-footer__menu-link:hover,
@@ -447,7 +635,7 @@
 
   /* Text block */
   .valor-footer__text {
-    font-size: 0.9375rem;
+    font-size: var(--font-size-body-md);
     color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
     line-height: 1.5;
   }
@@ -472,13 +660,13 @@
   }
   .valor-footer__brand-heading {
     margin: 0;
-    font-size: calc(var(--font-heading-scale, 1) * 1rem);
+    font-size: calc(var(--font-heading-scale, 1) * var(--font-size-body-base));
     font-family: var(--font-heading--family);
     font-style: var(--font-heading--style);
     font-weight: var(--font-heading--weight);
   }
   .valor-footer__brand-description {
-    font-size: 0.9375rem;
+    font-size: var(--font-size-body-md);
     color: color-mix(in srgb, var(--color-foreground) 85%, transparent);
     line-height: 1.5;
   }
@@ -532,42 +720,23 @@
     border: 1px solid var(--valor-border-strong);
     border-radius: var(--style-border-radius-inputs, 4px);
     font: inherit;
-    font-size: 0.9375rem;
+    font-size: var(--font-size-body-md);
     min-width: 0;
   }
   .valor-footer__newsletter-input:focus {
     outline: none;
     border-color: var(--color-foreground);
   }
-  .valor-footer__newsletter-button {
+  /* The button is the theme's shared button (valor-button, critical.css);
+     only its size inside the field is its own. */
+  .valor-footer__newsletter-field .valor-footer__newsletter-button {
     flex: 0 0 auto;
     padding: 0 1rem;
-    background: var(--color-button-bg, var(--color-foreground));
-    color: var(--color-button-text, var(--color-background));
-    border: var(--style-button-border-width, 1.5px) solid var(--color-button-border, var(--color-foreground));
-    border-radius: var(--style-border-radius-buttons, var(--style-border-radius-inputs, 4px));
-    font: inherit;
-    font-size: 0.875rem;
-    font-weight: var(--font-body--weight-bold);
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    transition:
-      opacity 0.15s ease,
-      background-color 0.15s ease,
-      color 0.15s ease,
-      border-color 0.15s ease;
-  }
-  .valor-footer__newsletter-button:hover {
-    opacity: var(--button-hover-opacity, 0.85);
-    background: var(--color-button-hover-bg, var(--color-button-bg, var(--color-foreground)));
-    color: var(--color-button-hover-text, var(--color-button-text, var(--color-background)));
-    border-color: var(--color-button-hover-border, var(--color-button-border, var(--color-foreground)));
   }
   .valor-footer__newsletter-message {
     display: block;
     margin: 0;
-    font-size: 0.8125rem;
+    font-size: var(--font-size-body-xs);
   }
   .valor-footer__newsletter-message--error {
     color: var(--valor-color-error);
@@ -610,6 +779,11 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.25rem;
+  }
+
+  /* In a column of its own the icons start where the column starts. */
+  .valor-social-icons.valor-footer__social--column {
+    justify-content: flex-start;
   }
 
   .valor-social-icons__link {
@@ -717,7 +891,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    font-size: 0.8125rem;
+    font-size: var(--font-size-body-xs);
     line-height: 1.5;
     color: color-mix(in srgb, var(--color-foreground) 80%, transparent);
     text-align: center;
@@ -751,6 +925,11 @@
 
 <script>
   (function () {
+    // The theme editor renders the section again, and with it this script:
+    // one listener answers however often it is loaded.
+    if (window.valorFooterColumns) return;
+    window.valorFooterColumns = true;
+
     function getMain() {
       return document.getElementById('MainContent') || document.querySelector('main');
     }
@@ -764,11 +943,11 @@
       main.style.setProperty('--valor-main-locked-height', Math.ceil(main.getBoundingClientRect().height) + 'px');
     }
 
-    function setFooterMenuHeight(block) {
-      var menu = block.querySelector('.valor-footer__menu');
-      if (!menu) return;
+    function setPanelHeight(block) {
+      var panel = block.querySelector('.valor-footer__panel');
+      if (!panel) return;
 
-      menu.style.setProperty('--valor-footer-menu-height', Math.ceil(menu.scrollHeight + 24) + 'px');
+      panel.style.setProperty('--valor-footer-menu-height', Math.ceil(panel.scrollHeight + 24) + 'px');
     }
 
     function unlockMainHeightIfClosed() {
@@ -784,19 +963,100 @@
       }
     }
 
-    window.valorToggleFooterColumn = function (headingEl) {
+    // A folding column's heading button (phones only: on desktops it is not shown).
+    function toggleColumn(button) {
       if (window.innerWidth >= 750) return;
 
-      var block = headingEl.closest('.valor-footer__block');
+      var block = button.closest('.valor-footer__block');
       if (!block) return;
 
       lockMainHeight();
-      setFooterMenuHeight(block);
+      setPanelHeight(block);
 
-      block.classList.toggle('is-active');
+      var open = block.classList.toggle('is-active');
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
 
       unlockMainHeightIfClosed();
-    };
+    }
+
+    document.addEventListener('click', function (event) {
+      var button = event.target.closest ? event.target.closest('.valor-footer__heading-button') : null;
+      if (button) toggleColumn(button);
+    });
+
+    /* The focus across a change of layout. Each layout hides what the other
+       shows: below 750px a folded column's links, from 750px the headings'
+       buttons. A control that is hidden with the focus on it would leave the
+       focus on nothing. */
+    var FOLDABLE = '.valor-footer__block--foldable';
+    var focused = null; // the control a new layout took the focus from
+
+    function shows(element) {
+      return element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+    }
+
+    document.addEventListener('focusin', function (event) {
+      var target = event.target;
+      focused = target.closest && target.closest(FOLDABLE) ? target : null;
+    });
+
+    // The focus that goes on to something else, or leaves a control that is
+    // still there (a click on the page), is the visitor's doing.
+    document.addEventListener('focusout', function (event) {
+      var target = event.target;
+      if (event.relatedTarget || !target.getClientRects || shows(target)) focused = null;
+    });
+
+    // The control of a folding column that has the focus, or had it until the
+    // new layout hid it.
+    function heldFocus() {
+      var active = document.activeElement;
+      if (active && active.closest && active.closest(FOLDABLE)) return active;
+      var nowhere = !active || active === document.body;
+      return nowhere && focused && focused.isConnected ? focused : null;
+    }
+
+    /* A folded column whose link has the focus opens, so the link stays in
+       sight. A heading's button and its plain text stand for each other: the
+       one that is hidden hands the focus to the one that shows (a link in
+       the text counts as the text; a column without a heading text hands it
+       to its first link). */
+    function keepFocus() {
+      var held = heldFocus();
+      if (!held) return;
+
+      var block = held.closest(FOLDABLE);
+      var button = block.querySelector('.valor-footer__heading-button');
+      var text = block.querySelector('.valor-footer__heading-text');
+      var panel = block.querySelector('.valor-footer__panel');
+      var place = held;
+
+      if (window.matchMedia('(max-width: 749px)').matches) {
+        // The heading's text, or a link in it (the heading is rich text).
+        if (text && text.contains(held)) {
+          place = button;
+        } else if (panel && panel.contains(held) && !block.classList.contains('is-active')) {
+          setPanelHeight(block);
+          block.classList.add('is-active');
+          if (button) button.setAttribute('aria-expanded', 'true');
+        }
+      } else if (held === button) {
+        place = text || (panel ? panel.querySelector('a[href]') : null);
+        // The heading is no Tab stop: it holds the focus this once.
+        if (text) {
+          text.setAttribute('tabindex', '-1');
+          text.addEventListener(
+            'blur',
+            function () {
+              text.removeAttribute('tabindex');
+            },
+            { once: true },
+          );
+        }
+      }
+
+      if (place && document.activeElement !== place) place.focus({ preventScroll: true });
+    }
 
     window.addEventListener('resize', function () {
       var main = getMain();
@@ -805,9 +1065,11 @@
         main.style.removeProperty('--valor-main-locked-height');
       }
 
-      document.querySelectorAll('.valor-footer__block--link_list').forEach(function (block) {
-        setFooterMenuHeight(block);
+      document.querySelectorAll('.valor-footer__block--foldable').forEach(function (block) {
+        setPanelHeight(block);
       });
+
+      keepFocus();
     });
   })();
 </script>
@@ -901,6 +1163,23 @@
           "default": "center"
         }
       ]
+    },
+    {
+      "type": "social",
+      "name": "Social icons",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "heading",
+          "default": "Follow us",
+          "label": "Heading"
+        },
+        {
+          "type": "paragraph",
+          "content": "Manage social account URLs in Theme settings > Social media."
+        }
+      ]
     }
   ],
   "settings": [
@@ -909,6 +1188,49 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
+    },
+    {
+      "type": "header",
+      "content": "Columns"
+    },
+    {
+      "type": "select",
+      "id": "heading_style",
+      "label": "Column heading style",
+      "info": "Small uppercase applies on desktop.",
+      "options": [
+        { "value": "theme", "label": "Theme heading" },
+        { "value": "uppercase", "label": "Small uppercase" }
+      ],
+      "default": "theme"
+    },
+    {
+      "type": "select",
+      "id": "mobile_columns",
+      "label": "Columns on phones",
+      "info": "A column folds behind its heading and opens with a tap.",
+      "options": [
+        { "value": "menus", "label": "Fold menus" },
+        { "value": "all", "label": "Fold all columns with a heading" },
+        { "value": "none", "label": "Keep all open" }
+      ],
+      "default": "menus"
     },
     {
       "type": "header",
@@ -987,6 +1309,18 @@
       "default": true,
       "label": "Show store policy links",
       "info": "Manage policies in Settings → Policies."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_copyright",
+      "default": true,
+      "label": "Show copyright line"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "copyright_text",
+      "label": "Copyright text",
+      "info": "Optional. Replaces the default line. [year] shows the current year and [shop_name] the name of the store."
     },
     {
       "type": "header",

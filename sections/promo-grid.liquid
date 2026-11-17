@@ -49,8 +49,8 @@
           endif
         -%}
         <article
-          class="valor-promo-card valor-promo-card--size-{{ block.settings.card_size }} valor-promo-card--ratio-{{ section.settings.image_ratio }} valor-promo-card--content-{{ block.settings.content_position }} valor-promo-card--align-{{ block.settings.content_alignment }} valor-promo-card--text-{{ block.settings.text_color }}"
-          style="--valor-promo-overlay: {{ block.settings.overlay_opacity | times: 0.01 }};"
+          class="valor-promo-card valor-promo-card--size-{{ block.settings.card_size }} valor-promo-card--ratio-{{ section.settings.image_ratio }} valor-promo-card--content-{{ block.settings.content_position }} valor-promo-card--align-{{ block.settings.content_alignment }} valor-promo-card--text-{{ block.settings.text_color }} valor-buttons-on-media"
+          style="--valor-promo-overlay: {{ block.settings.overlay_opacity | times: 0.01 }};{% render 'button-colors', background: block.settings.button_background_color, text: block.settings.button_text_color, border: block.settings.button_border_color %}"
           {{ block.shopify_attributes }}
         >
           {%- if has_link -%}
@@ -445,6 +445,22 @@
             { "value": "link", "label": "Text link" }
           ],
           "default": "primary"
+        },
+        {
+          "type": "color",
+          "id": "button_background_color",
+          "label": "t:labels.button_background",
+          "info": "t:labels.button_colors_info"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color",
+          "label": "t:labels.button_text"
+        },
+        {
+          "type": "color",
+          "id": "button_border_color",
+          "label": "t:labels.button_border"
         },
         {
           "type": "select",

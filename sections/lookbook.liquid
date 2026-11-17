@@ -1,0 +1,335 @@
+{{ 'lookbook.css' | asset_url | stylesheet_tag }}
+
+{%- comment -%}
+  Lookbook: a row of portrait images, each with an optional product (and an
+  exact variant of it) shown in a small card under the image.
+
+  The row is a native sideways scroller, so it works by touch and without
+  JavaScript; assets/lookbook.js adds the centred look's card and arrows, mouse
+  dragging, the keyboard and the endless loop. assets/lookbook.css sets how
+  many images show: 1.6 on phones, 3.6 from 750px, and 4, 5 or 6 from 990px
+  when the merchant picks one of those layouts.
+
+  The large images are never links. With the product card off the section is
+  a plain image row: no cards and no arrows.
+{%- endcomment -%}
+{%- liquid
+  assign show_cards = section.settings.show_product_card
+  assign desktop_layout = section.settings.desktop_layout | default: 'centered'
+  assign content_alignment = section.settings.content_alignment | default: 'center'
+  assign heading_size = section.settings.heading_size | default: 'medium'
+
+  assign section_priority = false
+  if section.location == 'template' and section.index == 1
+    assign section_priority = true
+  endif
+
+  assign row_label = section.settings.heading | strip_html | strip
+  if row_label == blank
+    assign row_label = 'sections.lookbook.label' | t
+  endif
+
+  # How wide an image is on screen, for the browser's choice of file.
+  case desktop_layout
+    when '4'
+      assign desktop_image_size = '25vw'
+    when '5'
+      assign desktop_image_size = '20vw'
+    when '6'
+      assign desktop_image_size = '17vw'
+    else
+      assign desktop_image_size = '28vw'
+  endcase
+  assign image_sizes = '(min-width: 990px) ' | append: desktop_image_size | append: ', (min-width: 750px) 28vw, 63vw'
+-%}
+
+<section
+  class="color-{{ section.settings.color_scheme }} valor-lookbook valor-full-width valor-lookbook--align-{{ content_alignment }}"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
+>
+  {%- if section.settings.eyebrow != blank or section.settings.heading != blank or section.settings.text != blank -%}
+    <div class="valor-lookbook__header">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="valor-lookbook__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="valor-lookbook__heading valor-heading valor-heading--{{ heading_size }}">
+          {{ section.settings.heading }}
+        </h2>
+      {%- endif -%}
+      {%- if section.settings.text != blank -%}
+        <div class="valor-lookbook__text rte">{{ section.settings.text }}</div>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if section.blocks.size > 0 -%}
+    <valor-lookbook
+      class="valor-lookbook__carousel"
+      data-layout="{{ desktop_layout }}"
+      data-cards="{{ show_cards }}"
+      data-root-url="{{ routes.root_url }}"
+    >
+      <ul class="valor-lookbook__track" role="list" tabindex="0" aria-label="{{ row_label | escape_once }}">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign look_image = block.settings.image
+            assign look_product = block.settings.product
+
+            # The variant field takes a variant ID, or a product link that
+            # has ?variant= in it. Anything that is not a variant of this
+            # product counts as empty; the theme editor says so in the card.
+            assign look_variant = null
+            assign variant_missing = false
+            assign pending_variant_id = null
+            assign variant_input = block.settings.variant | strip
+            if look_product != blank and variant_input != blank
+              if variant_input contains 'variant='
+                assign variant_input = variant_input | split: 'variant=' | last | split: '&' | first | split: '#' | first
+              endif
+              assign variant_id = variant_input | plus: 0
+              for candidate in look_product.variants
+                if candidate.id == variant_id
+                  assign look_variant = candidate
+                  break
+                endif
+              endfor
+              if look_variant == null
+                # Shopify hands a theme at most 250 of a product's variants.
+                # When the list is that long, an ID that is not in it may
+                # still be a variant of this product: the look gets the
+                # product's card and carries the ID, and the script asks for
+                # that variant's card (sections/lookbook-variant.liquid).
+                if variant_id > 0 and look_product.variants.size >= 250
+                  assign pending_variant_id = variant_id
+                else
+                  assign variant_missing = true
+                endif
+              endif
+            endif
+
+            assign image_loading = 'lazy'
+            if section_priority and forloop.index <= 4
+              assign image_loading = 'eager'
+            endif
+            assign placeholder_number = forloop.index0 | modulo: 2 | plus: 1
+
+            # Without alt text the image still needs the attribute, empty:
+            # a nil value would leave it out of the tag.
+            assign look_alt = look_image.alt | default: ''
+          -%}
+          <li class="valor-lookbook__slide" data-look {{ block.shopify_attributes }}>
+            <div
+              class="valor-lookbook__media"
+              {%- if look_image.presentation.focal_point != blank %}
+                style="--valor-lookbook-focus: {{ look_image.presentation.focal_point }};"
+              {%- endif -%}
+            >
+              {%- if look_image != blank -%}
+                {{-
+                  look_image
+                  | image_url: width: 1100
+                  | image_tag:
+                    class: 'valor-lookbook__image',
+                    loading: image_loading,
+                    widths: '300, 450, 600, 800, 1100',
+                    sizes: image_sizes,
+                    alt: look_alt,
+                    draggable: 'false'
+                -}}
+              {%- else -%}
+                {{- 'lifestyle-' | append: placeholder_number | placeholder_svg_tag: 'valor-lookbook__placeholder' -}}
+              {%- endif -%}
+            </div>
+            {%- if show_cards -%}
+              <div
+                class="valor-lookbook__card-slot"
+                {%- if pending_variant_id %}
+                  data-lookbook-variant="{{ pending_variant_id }}"
+                  data-lookbook-product="{{ look_product.id }}"
+                {%- endif -%}
+              >
+                {%- if look_product != blank -%}
+                  {%- render 'lookbook-card',
+                    product: look_product,
+                    variant: look_variant,
+                    variant_missing: variant_missing,
+                    pending_variant_id: pending_variant_id
+                  -%}
+                {%- elsif request.design_mode -%}
+                  {%- render 'lookbook-card', example: true -%}
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+      </ul>
+      {%- if show_cards -%}
+        <div class="valor-lookbook__nav">
+          <button
+            type="button"
+            class="valor-lookbook__arrow valor-lookbook__arrow--prev"
+            aria-label="{{ 'sections.lookbook.previous' | t }}"
+            data-lookbook-prev
+          >
+            {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+          </button>
+          <button
+            type="button"
+            class="valor-lookbook__arrow valor-lookbook__arrow--next"
+            aria-label="{{ 'sections.lookbook.next' | t }}"
+            data-lookbook-next
+          >
+            {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+          </button>
+        </div>
+      {%- endif -%}
+    </valor-lookbook>
+    <script src="{{ 'lookbook.js' | asset_url }}" defer></script>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "t:sections.lookbook.name",
+  "tag": "section",
+  "class": "valor-section-lookbook",
+  "max_blocks": 50,
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:labels.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
+    },
+    { "type": "text", "id": "eyebrow", "label": "t:sections.lookbook.settings.eyebrow.label" },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "t:sections.lookbook.settings.heading.label",
+      "default": "Lookbook"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:sections.lookbook.settings.heading_size.label",
+      "options": [
+        { "value": "small", "label": "t:sections.lookbook.settings.heading_size.options.small" },
+        { "value": "medium", "label": "t:sections.lookbook.settings.heading_size.options.medium" },
+        { "value": "large", "label": "t:sections.lookbook.settings.heading_size.options.large" }
+      ],
+      "default": "medium"
+    },
+    { "type": "richtext", "id": "text", "label": "t:sections.lookbook.settings.text.label" },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "label": "t:sections.lookbook.settings.content_alignment.label",
+      "options": [
+        { "value": "left", "label": "t:sections.lookbook.settings.content_alignment.options.left" },
+        { "value": "center", "label": "t:sections.lookbook.settings.content_alignment.options.center" },
+        { "value": "right", "label": "t:sections.lookbook.settings.content_alignment.options.right" }
+      ],
+      "default": "center"
+    },
+    { "type": "header", "content": "t:sections.lookbook.settings.layout_header.content" },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "label": "t:sections.lookbook.settings.desktop_layout.label",
+      "info": "t:sections.lookbook.settings.desktop_layout.info",
+      "options": [
+        { "value": "centered", "label": "t:sections.lookbook.settings.desktop_layout.options.centered" },
+        { "value": "4", "label": "t:sections.lookbook.settings.desktop_layout.options.four" },
+        { "value": "5", "label": "t:sections.lookbook.settings.desktop_layout.options.five" },
+        { "value": "6", "label": "t:sections.lookbook.settings.desktop_layout.options.six" }
+      ],
+      "default": "centered"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_card",
+      "label": "t:sections.lookbook.settings.show_product_card.label",
+      "info": "t:sections.lookbook.settings.show_product_card.info",
+      "default": true
+    },
+    { "type": "header", "content": "t:sections.lookbook.settings.section_padding.content" },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "t:sections.lookbook.settings.padding_top.label",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "t:sections.lookbook.settings.padding_bottom.label",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 56
+    }
+  ],
+  "blocks": [
+    {
+      "type": "look",
+      "name": "t:sections.lookbook.blocks.look.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.lookbook.blocks.look.settings.image.label",
+          "info": "t:sections.lookbook.blocks.look.settings.image.info"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:sections.lookbook.blocks.look.settings.product.label"
+        },
+        {
+          "type": "text",
+          "id": "variant",
+          "label": "t:sections.lookbook.blocks.look.settings.variant.label",
+          "info": "t:sections.lookbook.blocks.look.settings.variant.info"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.lookbook.presets.name",
+      "blocks": [
+        { "type": "look" },
+        { "type": "look" },
+        { "type": "look" },
+        { "type": "look" },
+        { "type": "look" },
+        { "type": "look" },
+        { "type": "look" },
+        { "type": "look" }
+      ]
+    }
+  ]
+}
+{% endschema %}

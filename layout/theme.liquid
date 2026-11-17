@@ -95,7 +95,13 @@
       {{ content_for_layout }}
     </main>
 
-    {% sections 'footer-group' %}
+    {%- comment -%}
+      The one footer landmark: the Footer section and any Footer bar sections
+      around it all belong to it.
+    {%- endcomment -%}
+    <footer class="valor-footer-group">
+      {% sections 'footer-group' %}
+    </footer>
 
     {%- if settings.enable_cart_drawer -%}
       {% section 'cart-drawer' %}

@@ -16,7 +16,7 @@ accessories, and other visual product brands.
 
 ## Current Version
 
-The current release is `2.2.2`.
+The current release is `2.3.0`.
 
 Download the release ZIP from
 [GitHub Releases](https://github.com/jrs8205/Valor-Theme/releases/latest) or
@@ -87,8 +87,18 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - Homepage sections including image banner, slideshow, featured collection,
   featured product, collection list, image with text, icon columns, rich text,
   newsletter, collapsible content, marquee, testimonials, logo list, countdown
-  timer, video, promo grid, shop the look, contact form, recently viewed
-  products, and custom Liquid.
+  timer, video, promo grid, shop the look, lookbook, contact form, recently
+  viewed products, and custom Liquid.
+- Lookbook section: a sideways row of looks, each with the product, or the
+  exact variant, shown in a card under it that adds to the cart.
+- Footer built to your layout: the Footer section's columns plus Footer bar
+  sections above or below it, made of blocks (logo, text, menu, policy links,
+  country and language selectors, payment icons, social icons, legal guarantee
+  link) placed left, centre or right in up to three rows, each for all devices,
+  desktop only or phones only.
+- Button colours per section: optional background, text and border colours in
+  every section with a button, per slide in the slideshow and per card in the
+  promo grid, on top of the theme-wide button settings.
 - Video section with hero-style overlay content: heading, subheading, and
   buttons over the video, with position, text box, and darkening controls plus
   a one-click "Video hero" preset.
@@ -98,8 +108,9 @@ See [LICENSE.md](LICENSE.md) and the canonical license page:
 - EU legal guarantee notice: upload the official European Commission notice in
   Theme settings and Valor shows it in full from a "Your legal guarantee
   rights" link in the footer and on product pages, with a text version and a
-  link to the Your Europe page in the shopper's language. On phones the notice
-  opens at a legible size, with an overview of the whole notice one tap away. Product pages can
+  link to the Your Europe page in the shopper's language. The notice opens at a
+  legible size and has zoom buttons, with an overview of the whole notice one
+  tap away. Product pages can
   also show a producer's GARAN durability guarantee label per product.
 - Product disclosures: safety warnings and regulatory notices added to a
   product in Shopify admin appear on the product page and, when enabled for

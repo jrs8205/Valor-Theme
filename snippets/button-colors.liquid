@@ -1,0 +1,81 @@
+{%- comment -%}
+  Button colours of one section, one slide or one card, for the inside of a
+  style attribute. Every button of the theme reads the --color-button-*
+  properties (assets/critical.css); Theme settings > Buttons and the color
+  scheme give them their values (snippets/css-variables.liquid). The three
+  colours here are optional and win over both, on the element that carries
+  them and everything in it. With all three empty nothing is printed.
+
+  - A background fills the solid button. Its border is then the border
+    colour or, without one, the background, and an outline button or a text
+    link is drawn in that same colour: the text colour is the label on the
+    fill.
+  - Without a background the text colour is every button's label, and the
+    border colour every button's border.
+  - The colours stay while the pointer is on a button; the button dims
+    instead, whatever hover colours the theme has.
+  - The -on-media twins are what a button over a picture or a video reads
+    (.valor-buttons-on-media in assets/critical.css).
+
+  Accepts:
+  - background, text, border: {Color} any of them may be empty
+  - attribute: {Boolean} print a whole style attribute, for an element that has none
+
+  Usage:
+  style="…;{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
+{%- endcomment -%}
+{%- liquid
+  assign fill = ''
+  assign label = ''
+  assign edge = ''
+  assign plain = background | downcase | strip | remove: ' '
+  if background != blank and plain != 'transparent' and plain != 'rgba(0,0,0,0)'
+    assign fill = background
+  endif
+  assign plain = text | downcase | strip | remove: ' '
+  if text != blank and plain != 'transparent' and plain != 'rgba(0,0,0,0)'
+    assign label = text
+  endif
+  assign plain = border | downcase | strip | remove: ' '
+  if border != blank and plain != 'transparent' and plain != 'rgba(0,0,0,0)'
+    assign edge = border
+  endif
+
+  assign line = edge | default: fill
+  assign outline = line
+  if fill == ''
+    assign outline = label | default: edge
+  endif
+
+  assign css = ''
+  if fill != ''
+    assign css = css | append: ' --color-button-bg: ' | append: fill | append: ';'
+  endif
+  if label != ''
+    assign css = css | append: ' --color-button-text: ' | append: label | append: '; --color-button-text-on-media: ' | append: label | append: ';'
+  endif
+  if line != ''
+    assign css = css | append: ' --color-button-border: ' | append: line | append: '; --color-button-border-on-media: ' | append: line | append: ';'
+    assign css = css | append: ' --color-button-outline-border: ' | append: line | append: '; --color-button-outline-border-on-media: ' | append: line | append: ';'
+  endif
+  if outline != ''
+    assign css = css | append: ' --color-button-outline-text: ' | append: outline | append: '; --color-button-outline-text-on-media: ' | append: outline | append: ';'
+  endif
+
+  if css != ''
+    assign css = css | append: ' --color-button-hover-bg: var(--color-button-bg); --color-button-outline-hover-bg: transparent;'
+    assign css = css | append: ' --color-button-hover-text: var(--color-button-text); --color-button-hover-text-on-media: var(--color-button-text-on-media);'
+    assign css = css | append: ' --color-button-hover-border: var(--color-button-border); --color-button-hover-border-on-media: var(--color-button-border-on-media);'
+    assign css = css | append: ' --color-button-outline-hover-text: var(--color-button-outline-text); --color-button-outline-hover-text-on-media: var(--color-button-outline-text-on-media);'
+    assign css = css | append: ' --color-button-outline-hover-border: var(--color-button-outline-border); --color-button-outline-hover-border-on-media: var(--color-button-outline-border-on-media);'
+    assign css = css | append: ' --button-hover-opacity: 0.85; --button-outline-hover-opacity: 0.85;'
+    if attribute
+      assign css = css | strip
+      echo ' style="'
+      echo css
+      echo '"'
+    else
+      echo css
+    endif
+  endif
+-%}

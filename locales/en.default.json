@@ -185,6 +185,8 @@
       "scroll_hint": "Scroll sideways to read the whole notice.",
       "show_whole": "Show the whole notice",
       "show_readable": "Show at readable size",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
       "open_garan_label": "Open the commercial guarantee of durability label",
       "garan_label_title": "Commercial guarantee of durability",
       "editor_heading": "EU legal guarantee",
@@ -384,6 +386,15 @@
       "view_product": "View product",
       "products_heading": "Products in this look",
       "placeholder_product": "Select a product"
+    },
+    "lookbook": {
+      "label": "Lookbook",
+      "previous": "Previous look",
+      "next": "Next look",
+      "add_to_cart": "Add to cart: {{ title }}",
+      "choose_options": "Choose options: {{ title }}",
+      "example_product": "Example product title",
+      "variant_missing": "Variant not found. Check the variant ID."
     }
   },
   "video": {

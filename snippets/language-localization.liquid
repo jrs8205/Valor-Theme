@@ -3,7 +3,10 @@
 
   Accepts:
     - localPosition: pass in the position in which the form is coming up to create specific IDs
+    - show_arrow: {Boolean} the arrow at the end of the button (optional, default true)
 {%- endcomment -%}
+
+{%- assign selector_show_arrow = show_arrow | default: true, allow_false: true -%}
 
 <div class="valor-localization__disclosure">
   <button
@@ -14,9 +17,11 @@
     aria-describedby="{{ localPosition }}Label"
   >
     <span>{{ localization.language.endonym_name | capitalize }}</span>
-    <span class="valor-localization__chevron" aria-hidden="true">
-      {{ 'icon-chevron-down.svg' | inline_asset_content }}
-    </span>
+    {%- if selector_show_arrow -%}
+      <span class="valor-localization__chevron" aria-hidden="true">
+        {{ 'icon-chevron-down.svg' | inline_asset_content }}
+      </span>
+    {%- endif -%}
   </button>
 
   <div class="valor-localization__panel valor-localization__panel--language" hidden>

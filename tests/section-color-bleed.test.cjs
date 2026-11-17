@@ -128,7 +128,7 @@ test("the footer keeps its top line across the content width, and its row is pai
     ${criticalCss}${footerCss} body { margin: 0; background: #ffffff; }
   </style></head><body>
     <div class="shopify-section"><div class="color-scheme-1" style="height: 100px">Page</div></div>
-    <div class="shopify-section"><footer class="color-scheme-3 valor-footer" style="--valor-footer-margin-top: 30px;"><p style="margin: 0; padding: 40px 0">Footer</p></footer></div>
+    <div class="shopify-section"><div class="color-scheme-3 valor-footer" style="--valor-footer-margin-top: 30px;"><p style="margin: 0; padding: 40px 0">Footer</p></div></div>
   </body></html>`);
   const box = await page.$eval(".valor-footer", (el) => el.getBoundingClientRect());
   assert.equal(

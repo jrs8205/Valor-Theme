@@ -40,6 +40,11 @@
         <div class="valor-header-promo__feature">
       {%- endif -%}
       {%- if block_settings.promo_image != blank -%}
+        {%- comment -%}
+          Without alt text the image still needs the attribute, empty: a nil
+          value would leave it out of the tag.
+        {%- endcomment -%}
+        {%- assign promo_image_alt = block_settings.promo_image.alt | default: '' -%}
         {{
           block_settings.promo_image
           | image_url: width: 700
@@ -48,7 +53,7 @@
             widths: '240, 360, 520, 700',
             sizes: '(min-width: 990px) 22rem, 80vw',
             class: 'valor-header-promo__image',
-            alt: block_settings.promo_image.alt
+            alt: promo_image_alt
         }}
       {%- endif -%}
       <div class="valor-header-promo__copy">

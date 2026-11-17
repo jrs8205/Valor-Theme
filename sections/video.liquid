@@ -150,7 +150,7 @@
 
 <div
   class="color-{{ section.settings.color_scheme }} valor-video valor-video--{{ width }}{% if use_full_width_desktop %} valor-video--full{% endif %}{% if use_full_width_mobile %} valor-video--full-mobile{% endif %}{% if use_transparent_header_trigger %} valor-transparent-header-trigger{% endif %}{% if has_mobile_video %} valor-video--has-mobile{% endif %}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-video-dim: {{ section.settings.overlay_opacity | times: 0.01 }};"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px; --valor-video-dim: {{ section.settings.overlay_opacity | times: 0.01 }};{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
   {% if use_transparent_header_trigger %}
     data-transparent-header-behavior="{{ section.settings.transparent_header_behavior | default: 'always' }}"
   {% endif %}
@@ -460,7 +460,7 @@
 
       {%- if section.blocks.size > 0 -%}
         <div class="valor-video__content-wrapper valor-video__content-wrapper--pos-{{ section.settings.desktop_content_position }} valor-video__content-wrapper--align-{{ section.settings.desktop_content_alignment }} valor-video__content-wrapper--mobile-{{ section.settings.mobile_content_alignment }}">
-          <div class="valor-video__content{% if section.settings.show_text_box %} valor-video__content--box{% endif %}">
+          <div class="valor-video__content{% if section.settings.show_text_box %} valor-video__content--box{% else %} valor-buttons-on-media{% endif %}">
             {%- for block in section.blocks -%}
               {%- case block.type -%}
                 {%- when 'heading' -%}
@@ -914,6 +914,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "text",

@@ -1,0 +1,26 @@
+{%- comment -%}
+  One lookbook card, for one exact variant.
+
+  Shopify hands a theme at most 250 of a product's variants, so the Lookbook
+  section cannot find a variant beyond those in the product it was given.
+  For such a look assets/lookbook.js asks for this section at
+  /variants/<id>/?section_id=lookbook-variant, where the variant comes by
+  its ID, whatever its place in the product, and puts the card in the look.
+  The product's ID lets the script check that the variant belongs to the
+  look's product.
+
+  Not for the theme editor: it has no presets and cannot be added.
+{%- endcomment -%}
+
+{%- if product_variant != blank -%}
+  <div data-lookbook-variant-card data-product-id="{{ product_variant.product.id }}">
+    {%- render 'lookbook-card', product: product_variant.product, variant: product_variant -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Lookbook variant card",
+  "settings": []
+}
+{% endschema %}

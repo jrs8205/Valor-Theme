@@ -42,6 +42,7 @@
     "button_background": "Button background",
     "button_text": "Button text",
     "button_border": "Button border",
+    "button_colors_info": "Optional. The three button colors here apply to this part only. Leave them empty to use Theme settings > Buttons and the color scheme.",
     "button_hover_background": "Button background on hover",
     "button_hover_text": "Button text on hover",
     "button_hover_border": "Button border on hover",
@@ -590,6 +591,264 @@
       },
       "presets": {
         "name": "Shop the look"
+      }
+    },
+    "lookbook": {
+      "name": "Lookbook",
+      "settings": {
+        "eyebrow": {
+          "label": "Eyebrow"
+        },
+        "heading": {
+          "label": "Heading"
+        },
+        "heading_size": {
+          "label": "Heading size",
+          "options": {
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large"
+          }
+        },
+        "text": {
+          "label": "Text"
+        },
+        "content_alignment": {
+          "label": "Text alignment",
+          "options": {
+            "left": "Left",
+            "center": "Center",
+            "right": "Right"
+          }
+        },
+        "layout_header": {
+          "content": "Layout"
+        },
+        "desktop_layout": {
+          "label": "Desktop layout",
+          "info": "How many images show side by side on screens 990px and wider. This is not the number of looks: add one block for each look, and the row scrolls through them all. Phones and tablets always show the centered row.",
+          "options": {
+            "centered": "Centered: 3 images and the edges of the next two",
+            "four": "4 images side by side",
+            "five": "5 images side by side",
+            "six": "6 images side by side"
+          }
+        },
+        "show_product_card": {
+          "label": "Show product card",
+          "info": "Shows each look's product with its price and a buy button. Turn off to show the images only."
+        },
+        "section_padding": {
+          "content": "Section padding"
+        },
+        "padding_top": {
+          "label": "Top padding"
+        },
+        "padding_bottom": {
+          "label": "Bottom padding"
+        }
+      },
+      "blocks": {
+        "look": {
+          "name": "Look",
+          "settings": {
+            "image": {
+              "label": "Image",
+              "info": "Portrait images work best. Images are cropped to 4:5 around the focal point."
+            },
+            "product": {
+              "label": "Product"
+            },
+            "variant": {
+              "label": "Variant",
+              "info": "Optional. Paste a variant ID, or a product link that contains ?variant=. The card then shows and adds that exact variant."
+            }
+          }
+        }
+      },
+      "presets": {
+        "name": "Lookbook"
+      }
+    },
+    "footer_bar": {
+      "name": "Footer bar",
+      "settings": {
+        "layout_info": {
+          "content": "On a desktop each block sits on the left, in the center or on the right of its row. On phones the blocks stack in the order they have here."
+        },
+        "width": {
+          "label": "Width",
+          "options": {
+            "page": "Page width",
+            "full": "Full width"
+          }
+        },
+        "line_above": {
+          "label": "Divider line above"
+        },
+        "line_below": {
+          "label": "Divider line below"
+        },
+        "text_size": {
+          "label": "Text size",
+          "options": {
+            "small": "Small",
+            "normal": "Normal"
+          }
+        },
+        "phone_alignment": {
+          "label": "Alignment on phones",
+          "options": {
+            "center": "Center",
+            "left": "Left"
+          }
+        },
+        "spacing_header": {
+          "content": "Spacing"
+        },
+        "row_gap": {
+          "label": "Gap between rows"
+        },
+        "padding_top": {
+          "label": "Top padding"
+        },
+        "padding_bottom": {
+          "label": "Bottom padding"
+        }
+      },
+      "placement": {
+        "position": {
+          "label": "Position on desktop",
+          "options": {
+            "left": "Left",
+            "center": "Center",
+            "right": "Right"
+          }
+        },
+        "row": {
+          "label": "Row on desktop",
+          "options": {
+            "first": "1",
+            "second": "2",
+            "third": "3"
+          }
+        },
+        "visibility": {
+          "label": "Show on",
+          "options": {
+            "all": "All devices",
+            "desktop": "Desktop only",
+            "phone": "Phones only"
+          }
+        }
+      },
+      "blocks": {
+        "text": {
+          "name": "Text",
+          "settings": {
+            "text": {
+              "label": "Text",
+              "info": "[year] shows the current year and [shop_name] the name of the store."
+            }
+          }
+        },
+        "menu": {
+          "name": "Menu",
+          "settings": {
+            "menu": {
+              "label": "Menu",
+              "info": "Displays only top-level menu items."
+            }
+          }
+        },
+        "policies": {
+          "name": "Policy links"
+        },
+        "payment": {
+          "name": "Payment icons"
+        },
+        "logo": {
+          "name": "Logo",
+          "settings": {
+            "info": {
+              "content": "Shows the logo from Theme settings > Brand, or the name of the store when there is none."
+            },
+            "image": {
+              "label": "Own image",
+              "info": "Optional. For example a light logo for a dark color scheme."
+            },
+            "size": {
+              "label": "Size",
+              "options": {
+                "theme": "Theme logo height",
+                "custom": "Custom width"
+              },
+              "info": "Theme logo height follows Theme settings > Brand, on desktop and on phones."
+            },
+            "width": {
+              "label": "Custom width"
+            }
+          }
+        },
+        "social": {
+          "name": "Social icons",
+          "settings": {
+            "info": {
+              "content": "Manage social account URLs in Theme settings > Social media."
+            },
+            "size": {
+              "label": "Icon size",
+              "options": {
+                "small": "Small",
+                "medium": "Medium",
+                "large": "Large"
+              }
+            }
+          }
+        },
+        "legal_guarantee": {
+          "name": "Legal guarantee link",
+          "settings": {
+            "info": {
+              "content": "Opens the EU legal guarantee notice. Shows when a notice image is uploaded in Theme settings > EU legal guarantee."
+            }
+          }
+        },
+        "country": {
+          "name": "Country selector",
+          "settings": {
+            "info": {
+              "content": "Shows when the store sells to more than one country or region. Manage them in Markets settings."
+            },
+            "label": {
+              "label": "Label",
+              "info": "Optional text before the country, for example Ship to:"
+            },
+            "show_flag": {
+              "label": "Show flag"
+            },
+            "show_currency": {
+              "label": "Show currency"
+            },
+            "show_arrow": {
+              "label": "Show arrow"
+            }
+          }
+        },
+        "language": {
+          "name": "Language selector",
+          "settings": {
+            "info": {
+              "content": "Shows when the store has more than one language. Manage them in Languages settings."
+            },
+            "show_arrow": {
+              "label": "Show arrow"
+            }
+          }
+        }
+      },
+      "presets": {
+        "name": "Footer bar"
       }
     }
   }

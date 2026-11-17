@@ -50,6 +50,7 @@
 <valor-cart-drawer
   id="ValorCartDrawer"
   class="color-{{ section.settings.color_scheme }} valor-cart-drawer{% if cart == empty %} valor-cart-drawer--empty{% endif %}"
+  {% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color, attribute: true %}
   role="dialog"
   aria-modal="true"
   aria-labelledby="ValorCartDrawerTitle"
@@ -669,6 +670,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "paragraph",

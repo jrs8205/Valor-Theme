@@ -4,7 +4,7 @@
 -%}
 <section
   class="color-{{ section.settings.color_scheme }} valor-rich-text valor-rich-text--pos-{{ desktop_position }} valor-rich-text--align-{{ content_alignment }}{% if section.settings.full_width %} valor-rich-text--full-width{% endif %}"
-  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;"
+  style="--valor-section-padding-top: {{ section.settings.padding_top }}px; --valor-section-padding-bottom: {{ section.settings.padding_bottom }}px;{% render 'button-colors', background: section.settings.button_background_color, text: section.settings.button_text_color, border: section.settings.button_border_color %}"
 >
   <div class="valor-rich-text__inner">
     <div class="valor-rich-text__content">
@@ -155,6 +155,22 @@
       "id": "color_scheme",
       "label": "t:labels.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "t:labels.button_background",
+      "info": "t:labels.button_colors_info"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "t:labels.button_text"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "t:labels.button_border"
     },
     {
       "type": "header",

@@ -3,6 +3,13 @@
 
   Accepts:
     - localPosition: pass in the position in which the form is coming up to create specific IDs
+    - label: {String} text before the country, e.g. "Ship to:" (optional)
+    - show_flag: {Boolean} the country's flag before its name (optional, default false)
+    - show_currency: {Boolean} the currency after the name (optional, default true)
+    - show_arrow: {Boolean} the arrow at the end of the button (optional, default true)
+
+  Without the optional parameters the button is the one the header and the
+  footer have always had.
 {%- endcomment -%}
 
 {%- liquid
@@ -23,6 +30,9 @@
   if currencies.size > 1
     assign show_currencies = true
   endif
+
+  assign selector_show_currency = show_currency | default: true, allow_false: true
+  assign selector_show_arrow = show_arrow | default: true, allow_false: true
 -%}
 
 <div class="valor-localization__disclosure">
@@ -33,14 +43,30 @@
     aria-controls="{{ localPosition }}-country-results"
     aria-describedby="{{ localPosition }}Label"
   >
+    {%- if label != blank -%}
+      <span class="valor-localization__label">{{ label | escape }}</span>
+    {%- endif -%}
+    {%- if show_flag -%}
+      {{
+        localization.country
+        | image_url: width: 32
+        | image_tag: class: 'valor-localization__flag', alt: '', width: 20, height: 15, loading: 'lazy'
+      }}
+    {%- endif -%}
     <span>
-      {{- localization.country.name }} |
-      {{ localization.country.currency.iso_code }}
-      {{ localization.country.currency.symbol -}}
+      {%- if selector_show_currency -%}
+        {{- localization.country.name }} |
+        {{ localization.country.currency.iso_code }}
+        {{ localization.country.currency.symbol -}}
+      {%- else -%}
+        {{- localization.country.name -}}
+      {%- endif -%}
     </span>
-    <span class="valor-localization__chevron" aria-hidden="true">
-      {{ 'icon-chevron-down.svg' | inline_asset_content }}
-    </span>
+    {%- if selector_show_arrow -%}
+      <span class="valor-localization__chevron" aria-hidden="true">
+        {{ 'icon-chevron-down.svg' | inline_asset_content }}
+      </span>
+    {%- endif -%}
   </button>
 
   <div class="valor-localization__panel valor-localization__panel--country" hidden>
